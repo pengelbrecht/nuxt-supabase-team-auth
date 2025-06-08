@@ -1,0 +1,50 @@
+# Task ID: 1
+# Title: Initialize Nuxt 3 Module Structure and Package Configuration
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Set up the foundational Nuxt 3 module structure with proper TypeScript configuration, package.json setup, and CLI tooling for distribution
+# Details:
+Create module structure following Nuxt 3 module guidelines:
+- Initialize package.json with @yourco/team-auth name
+- Set up module.ts with defineNuxtModule
+- Configure TypeScript with proper types for Nuxt 3
+- Create CLI entry point for team-auth init/migrate commands
+- Set up build configuration for both module and CLI distribution
+- Configure exports for ESM/CJS compatibility
+- Add peer dependencies: nuxt ^3.0.0, @supabase/supabase-js, @nuxt/ui
+
+# Test Strategy:
+Unit tests for module registration, CLI command parsing, and package structure validation. Integration test for module loading in Nuxt 3 app.
+
+# Subtasks:
+## 1. Initialize package.json with proper configuration [done]
+### Dependencies: None
+### Description: Create and configure the package.json file with appropriate metadata, dependencies, and scripts for the Nuxt 3 module.
+### Details:
+Create package.json with name '@yourco/team-auth', set version to '0.1.0', add description, set type to 'module', configure main/module/types fields, add peer dependencies (nuxt ^3.0.0, @supabase/supabase-js, @nuxt/ui), set up dev dependencies (typescript, nuxt, unbuild, etc.), and create basic npm scripts for development, build, and publishing.
+
+## 2. Set up TypeScript configuration [done]
+### Dependencies: 1.1
+### Description: Configure TypeScript for the Nuxt 3 module with proper type definitions and compiler options.
+### Details:
+Create tsconfig.json with appropriate compiler options (target: ESNext, module: ESNext, moduleResolution: bundler, etc.), include necessary type definitions for Nuxt 3, set up paths for module resolution, configure strict type checking, and ensure proper declaration file generation for the module's public API.
+
+## 3. Create module.ts with defineNuxtModule implementation [done]
+### Dependencies: 1.2
+### Description: Implement the core module.ts file using defineNuxtModule to register the auth module with Nuxt 3.
+### Details:
+Create src/module.ts using defineNuxtModule with proper meta information, implement setup function that adds runtime directory, register composables, add module options interface with typed configuration, set default options, and implement basic hooks for module initialization. Ensure proper TypeScript typing throughout the implementation.
+
+## 4. Set up build configuration for module distribution [done]
+### Dependencies: 1.3
+### Description: Configure the build system to properly bundle and distribute the Nuxt module for both ESM and CJS compatibility.
+### Details:
+Create build.config.ts using unbuild or similar tool, configure entry points for the module, set up external dependencies, configure output formats (esm, cjs), set up proper exports in package.json for dual package hazard avoidance, configure TypeScript declaration file generation, and ensure source maps are generated for debugging.
+
+## 5. Implement CLI entry point for module commands [done]
+### Dependencies: 1.4
+### Description: Create a CLI interface for the module with init and migrate commands to help users set up and maintain the auth system.
+### Details:
+Create src/cli.ts using a CLI framework like commander or yargs, implement 'team-auth init' command to scaffold initial auth configuration, add 'team-auth migrate' command for schema updates, configure bin field in package.json to expose CLI commands, ensure proper error handling and user feedback, and add help text for all commands. Make CLI executable with proper shebang.
+

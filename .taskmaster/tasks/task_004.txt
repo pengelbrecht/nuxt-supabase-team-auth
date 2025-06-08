@@ -1,0 +1,77 @@
+# Task ID: 4
+# Title: Create Core Nuxt Composable useTeamAuth with Full API
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Implement the main useTeamAuth() composable providing reactive state management and all team authentication methods
+# Details:
+Create composable with TypeScript interface:
+- Reactive state: currentUser, currentTeam, currentRole, isImpersonating, impersonationExpiresAt
+- Auth methods: signUpWithTeam, signIn, signOut
+- Team management: inviteMember, revokeInvite, resendInvite, promote, demote, transferOwnership
+- Profile: updateProfile, renameTeam, deleteTeam
+- Impersonation: startImpersonation, stopImpersonation
+
+Integrate with Supabase client, handle JWT claims parsing, implement reactive updates on auth state changes. Include proper error handling with the defined error codes (TEAM_EXISTS, INVITE_EXPIRED, etc.). Implement defensive token storage across four tiers for impersonation sessions.
+
+# Test Strategy:
+Unit tests for all composable methods, reactive state updates, and error handling. Integration tests with Supabase Edge Functions. E2E tests for complete user flows.
+
+# Subtasks:
+## 1. Implement Core State and Type Definitions [pending]
+### Dependencies: None
+### Description: Create the foundation for useTeamAuth composable by defining TypeScript interfaces, reactive state, and initial setup with Supabase client
+### Details:
+1. Define TypeScript interfaces for all state objects (User, Team, Role, etc.)
+2. Create reactive state using Vue's ref/reactive for currentUser, currentTeam, currentRole, isImpersonating, impersonationExpiresAt
+3. Set up Supabase client integration
+4. Implement JWT claims parsing utility
+5. Create the basic composable structure with state initialization
+6. Add state reset functionality for sign-out
+
+## 2. Implement Authentication Methods [pending]
+### Dependencies: None
+### Description: Add core authentication methods to the composable: signUpWithTeam, signIn, and signOut with proper error handling
+### Details:
+1. Implement signUpWithTeam method that creates both user and team records
+2. Implement signIn method with email/password authentication
+3. Implement signOut method that clears state and Supabase session
+4. Add proper error handling with defined error codes (TEAM_EXISTS, etc.)
+5. Ensure reactive state updates after auth operations
+6. Implement auth state change listener to keep state in sync
+
+## 3. Implement Team Management Methods [pending]
+### Dependencies: None
+### Description: Add team management functionality: inviteMember, revokeInvite, resendInvite, promote, demote, and transferOwnership
+### Details:
+1. Implement inviteMember with email validation and role specification
+2. Add revokeInvite method to cancel pending invitations
+3. Implement resendInvite for expired invitations
+4. Create promote/demote methods for changing member roles
+5. Implement transferOwnership with confirmation checks
+6. Add proper permission validation for each operation
+7. Ensure reactive state updates after team changes
+
+## 4. Implement Profile and Team Settings Methods [pending]
+### Dependencies: None
+### Description: Add methods for managing user profile and team settings: updateProfile, renameTeam, and deleteTeam
+### Details:
+1. Implement updateProfile method for changing user details
+2. Add renameTeam method with validation
+3. Implement deleteTeam with proper confirmation and cleanup
+4. Add permission checks for team operations
+5. Ensure reactive state updates after profile/team changes
+6. Implement proper error handling for each operation
+
+## 5. Implement Impersonation System [pending]
+### Dependencies: 4.4
+### Description: Add user impersonation functionality with multi-tiered token storage: startImpersonation and stopImpersonation
+### Details:
+1. Implement four-tier token storage system for impersonation sessions
+2. Create startImpersonation method with proper permission checks
+3. Add stopImpersonation method to revert to original user
+4. Implement expiration handling for impersonation sessions
+5. Add reactive state updates for isImpersonating and impersonationExpiresAt
+6. Ensure proper cleanup of tokens when impersonation ends
+7. Add security measures to prevent privilege escalation
+

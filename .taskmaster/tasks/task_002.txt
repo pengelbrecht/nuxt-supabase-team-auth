@@ -1,0 +1,53 @@
+# Task ID: 2
+# Title: Design and Implement Database Schema with RLS Policies
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Create PostgreSQL schema for teams, team_members, invites, and impersonation_sessions tables with comprehensive Row Level Security policies
+# Details:
+Implement the exact schema from the ERD:
+- teams table: id (uuid), name (text), address (text), vat_number (text), created_at (timestamp)
+- team_members table: team_id (uuid FK), user_id (uuid FK), role (enum: owner|admin|member|super_admin), joined_at (timestamp)
+- invites table: id (uuid), team_id (uuid FK), email (text), token_hash (text), expires_at (timestamp), status (enum: pending|accepted|revoked)
+- impersonation_sessions table: id (uuid), admin_user_id (uuid FK), target_user_id (uuid FK), started_at (timestamp), ended_at (timestamp), reason (text)
+
+RLS Policies:
+- team_members: SELECT for members, INSERT/DELETE for admins/owners within team
+- teams: UPDATE for owners only, SELECT for all team members
+- invites: Full CRUD for admins/owners within team, SELECT for invitee by token
+- impersonation_sessions: Service-role only for INSERT/UPDATE, SELECT for super-admin own sessions
+
+# Test Strategy:
+Database tests for schema creation, RLS policy enforcement, foreign key constraints, and enum validation. Test each policy with different user roles.
+
+# Subtasks:
+## 1. Create Base Database Tables and Enums [pending]
+### Dependencies: None
+### Description: Set up the foundational database schema by creating the required tables and enum types according to the ERD specifications.
+### Details:
+Create the following PostgreSQL enum types: 'team_role' (owner, admin, member, super_admin) and 'invite_status' (pending, accepted, revoked). Then create the four tables with proper constraints: teams (with primary key id), team_members (with composite primary key of team_id and user_id), invites (with primary key id), and impersonation_sessions (with primary key id). Ensure all foreign key relationships are properly established.
+
+## 2. Implement RLS Policies for Teams Table [pending]
+### Dependencies: 2.1
+### Description: Create Row Level Security policies for the teams table to enforce proper access control.
+### Details:
+Enable RLS on the teams table with 'ALTER TABLE teams ENABLE ROW LEVEL SECURITY'. Create policies that allow: 1) SELECT access for all team members (by joining with team_members table), 2) UPDATE access only for team owners, 3) INSERT/DELETE access for service role only. Ensure the policies use the current user context via auth.uid() for user identification.
+
+## 3. Implement RLS Policies for Team Members Table [pending]
+### Dependencies: 2.1
+### Description: Create Row Level Security policies for the team_members table to control membership management.
+### Details:
+Enable RLS on the team_members table. Create policies that allow: 1) SELECT access for members of the same team, 2) INSERT/DELETE access for admins and owners within their team, 3) Full access for super_admins across all teams. Use auth.uid() to identify the current user and join with team_members to determine their role within each team.
+
+## 4. Implement RLS Policies for Invites Table [pending]
+### Dependencies: 2.1
+### Description: Create Row Level Security policies for the invites table to manage team invitation access.
+### Details:
+Enable RLS on the invites table. Create policies that allow: 1) Full CRUD operations for admins and owners within their team, 2) SELECT access for invitees based on their email and token, 3) No access for regular team members. Include a policy for service role access for system-level operations. Ensure proper joins with team_members to verify admin/owner status.
+
+## 5. Implement RLS Policies for Impersonation Sessions Table [pending]
+### Dependencies: 2.1
+### Description: Create Row Level Security policies for the impersonation_sessions table to enforce strict access control for this sensitive feature.
+### Details:
+Enable RLS on the impersonation_sessions table. Create policies that allow: 1) INSERT/UPDATE operations only for the service role, 2) SELECT access for super_admins but only for sessions they initiated (where admin_user_id = auth.uid()), 3) No direct access for regular users, admins, or owners. Add appropriate comments explaining the security implications of these policies.
+

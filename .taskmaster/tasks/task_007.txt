@@ -1,0 +1,53 @@
+# Task ID: 7
+# Title: Create CLI Tool for Project Initialization and Migrations
+# Status: pending
+# Dependencies: 2, 3
+# Priority: medium
+# Description: Build the team-auth CLI tool for init and migrate commands with automatic Supabase integration
+# Details:
+Implement CLI with commands:
+- team-auth init: Copy migrations to supabase/migrations/team-auth/, copy edge functions to supabase/functions/team-auth/, detect Supabase project linking, auto-run supabase db push, add package.json scripts
+- team-auth migrate: Apply new migrations in order, verify schema version compatibility
+
+Features:
+- Detect existing Supabase CLI installation and project linking
+- Version-aware migration system (patch/minor/major versioning policy)
+- Automatic file copying with proper directory structure
+- Integration with Supabase CLI commands
+- Clear user feedback and error messages
+- Commit reminders for CI/CD integration
+
+# Test Strategy:
+CLI integration tests with mocked file system and Supabase CLI. Version compatibility tests. Error handling tests for missing dependencies.
+
+# Subtasks:
+## 1. Set up CLI project structure with command framework [pending]
+### Dependencies: None
+### Description: Create the basic CLI tool structure using a command framework like Commander.js or yargs, with placeholder commands for 'init' and 'migrate'.
+### Details:
+Initialize a new Node.js project for the CLI tool. Install necessary dependencies (commander.js/yargs, chalk for colored output, fs-extra for file operations). Create the main CLI entry point with command registration. Set up the project structure with folders for commands, utilities, and templates. Implement basic command registration for 'init' and 'migrate' with placeholder functions. Create a package.json that properly defines the CLI binary.
+
+## 2. Implement Supabase detection and integration utilities [pending]
+### Dependencies: 7.1
+### Description: Create utility functions to detect Supabase CLI installation, project linking status, and execute Supabase CLI commands.
+### Details:
+Write functions to check if Supabase CLI is installed (using child_process to run 'supabase --version'). Create utilities to detect if the current directory is linked to a Supabase project (check for supabase/.branches file). Implement wrapper functions for executing Supabase CLI commands like 'supabase db push'. Add error handling for cases where Supabase CLI is missing or project is not linked. Create configuration helpers to store and retrieve team-auth version information.
+
+## 3. Implement 'init' command functionality [pending]
+### Dependencies: 7.2
+### Description: Build the 'init' command to copy migrations and edge functions to the appropriate Supabase directories and set up package.json scripts.
+### Details:
+Implement file copying logic to transfer migrations to supabase/migrations/team-auth/ and edge functions to supabase/functions/team-auth/. Create directory structure if it doesn't exist. Add package.json modification functionality to insert team-auth scripts. Integrate with Supabase detection utilities to conditionally run 'supabase db push'. Add user feedback with clear console messages about each step. Implement commit reminders for CI/CD integration. Handle error cases gracefully with helpful messages.
+
+## 4. Implement version-aware migration system [pending]
+### Dependencies: 7.2
+### Description: Create a migration system that tracks versions and can apply migrations in the correct order based on semantic versioning principles.
+### Details:
+Design a version tracking system that stores the current schema version in the database. Implement semantic version comparison (patch/minor/major) to determine which migrations need to be applied. Create utilities to read migration files and extract version information from filenames or metadata. Build logic to sort migrations by version and apply them in the correct order. Implement version compatibility checks to prevent applying incompatible migrations. Create a migration registry to track available migrations and their versions.
+
+## 5. Implement 'migrate' command with error handling and user feedback [pending]
+### Dependencies: 7.3, 7.4
+### Description: Build the 'migrate' command that applies new migrations in order, verifies schema compatibility, and provides clear user feedback.
+### Details:
+Implement the 'migrate' command using the version-aware migration system. Add logic to detect the current schema version from the database. Compare with available migrations to determine which need to be applied. Execute migrations in the correct order using Supabase CLI integration. Provide detailed console output about migration progress, with colored status indicators. Implement robust error handling for failed migrations, with clear error messages and potential rollback strategies. Add verification steps to ensure schema version compatibility before attempting migrations.
+

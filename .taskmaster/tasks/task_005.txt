@@ -1,0 +1,51 @@
+# Task ID: 5
+# Title: Build Vue 3 UI Components Using Nuxt UI Primitives
+# Status: pending
+# Dependencies: 4
+# Priority: medium
+# Description: Create all required Vue 3 components using only Nuxt UI open-source primitives as specified in the component mapping
+# Details:
+Implement components using specified Nuxt UI primitives:
+- <AuthSignIn> & <AuthSignUpWithTeam>: Use UCard, UFormGroup, UInput, UButton
+- <UserButton>: Use UAvatar, UDropdown for user menu
+- <ProfileForm>: Use UCard, UFormGroup, UInput, UButton for profile editing
+- <TeamMembersTable>: Use UTable, UBadge for role display
+- <TeamSettingsModal>: Use UModal, UFormGroup, UInput, UButton
+- <SignedIn> & <SignedOut>: Thin wrappers with v-if using isSignedIn from useTeamAuth
+
+Ensure WCAG 2.1 AA compliance, keyboard navigation, screen reader support. Expose slots and props for customization. Include impersonation banner component with countdown timer.
+
+# Test Strategy:
+Component tests with Vue Test Utils, accessibility tests with @vue/test-utils and axe-core, visual regression tests, keyboard navigation tests.
+
+# Subtasks:
+## 1. Implement Authentication Components [pending]
+### Dependencies: None
+### Description: Create the <AuthSignIn> and <AuthSignUpWithTeam> components using Nuxt UI primitives for user authentication flows.
+### Details:
+Use UCard as the container for both components. Implement form fields with UFormGroup and UInput for username/email, password, and team name (for signup). Add validation with appropriate error messages. Use UButton for submit actions with loading states. Ensure both components emit appropriate events (success, error) and integrate with the useTeamAuth composable. Include 'forgot password' link in the sign-in component. Ensure tab order is logical for keyboard navigation.
+
+## 2. Create User Profile Components [pending]
+### Dependencies: None
+### Description: Implement the <UserButton> dropdown and <ProfileForm> components for user profile management.
+### Details:
+For <UserButton>: Use UAvatar to display user profile image with fallback to initials. Implement UDropdown with menu items for profile, settings, team management, and logout. For <ProfileForm>: Create a form using UCard, UFormGroup, and UInput for name, email, and profile image upload. Add validation and error handling. Use UButton for save/cancel actions with appropriate loading states. Both components should use data from useTeamAuth composable. Ensure proper focus management when opening/closing dropdowns.
+
+## 3. Develop Team Management Components [pending]
+### Dependencies: None
+### Description: Build the <TeamMembersTable> and <TeamSettingsModal> components for team administration.
+### Details:
+For <TeamMembersTable>: Implement UTable with columns for user details, role (using UBadge with appropriate colors), and actions. Include pagination, sorting, and filtering capabilities. Add row actions for role changes and member removal. For <TeamSettingsModal>: Create a modal using UModal with tabs for general settings, billing, and permissions. Use UFormGroup and UInput for form fields. Implement save/cancel actions with UButton. Ensure proper focus trapping within the modal and restore focus on close.
+
+## 4. Implement Authentication State Components [pending]
+### Dependencies: None
+### Description: Create the <SignedIn> and <SignedOut> wrapper components and the impersonation banner with countdown timer.
+### Details:
+For <SignedIn> and <SignedOut>: Create thin wrapper components that conditionally render their slots based on authentication state from useTeamAuth. For the impersonation banner: Create a fixed position banner that appears when a user is being impersonated. Include user details, a countdown timer showing remaining session time, and an 'End Session' button. Use UButton and implement a reactive countdown timer. Ensure the banner is announced to screen readers appropriately.
+
+## 5. Ensure Accessibility and Component Customization [pending]
+### Dependencies: None
+### Description: Review and enhance all components for WCAG 2.1 AA compliance and implement customization options through props and slots.
+### Details:
+Audit all components for accessibility issues: ensure proper contrast ratios, keyboard navigation, focus indicators, and ARIA attributes. Test with screen readers. For customization: Add props for theming (colors, sizes, variants) to all components. Implement named slots for content customization (e.g., custom header/footer in cards, custom cell rendering in tables). Document all available props and slots. Create a consistent API across components. Ensure responsive behavior on all screen sizes.
+

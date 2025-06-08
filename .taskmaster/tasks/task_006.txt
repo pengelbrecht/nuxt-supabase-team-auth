@@ -1,0 +1,51 @@
+# Task ID: 6
+# Title: Implement Impersonation System with Security Controls
+# Status: pending
+# Dependencies: 4, 5
+# Priority: high
+# Description: Build complete impersonation functionality with JWT-based session management, MFA enforcement, and audit logging
+# Details:
+Implement Pattern A (Short-Lived JWT):
+- 30-minute JWT sessions with act_as claims
+- MFA re-prompt for super-admin before impersonation start
+- Session storage in Nuxt with automatic reload on context switch
+- Impersonation banner component with countdown and stop button
+- Auto-expiry handling with graceful fallback to admin context
+- Complete audit trail in impersonation_sessions table
+- Block admin routes when act_as=true to prevent privilege blending
+- Defensive token storage across server-verified, client-verified, storage restore, and manual tiers
+
+# Test Strategy:
+Security tests for MFA enforcement, privilege separation, session expiry. Audit tests for complete logging. Integration tests for session management and context switching.
+
+# Subtasks:
+## 1. Implement JWT Token Generation with act_as Claims [pending]
+### Dependencies: None
+### Description: Create the backend functionality to generate short-lived JWT tokens with act_as claims for impersonation sessions
+### Details:
+Modify the authentication service to include act_as claims in JWT tokens. Implement token generation with 30-minute expiration. Create endpoints for starting impersonation that validates super-admin permissions and enforces MFA verification before generating the impersonation token. Ensure the token includes the impersonated user's ID, the admin's original ID, and appropriate scope limitations.
+
+## 2. Develop Session Management for Impersonation Context [pending]
+### Dependencies: 6.1
+### Description: Implement client-side session management to handle impersonation tokens, context switching, and automatic reload
+### Details:
+Create a Nuxt plugin for managing impersonation sessions. Implement secure token storage with multiple verification tiers (server-verified, client-verified, storage restore, manual). Add functionality to detect token expiration and handle automatic reload when switching between admin and impersonated user contexts. Implement graceful fallback to admin context when impersonation expires.
+
+## 3. Create Impersonation Banner Component with Countdown [pending]
+### Dependencies: 6.2
+### Description: Develop a UI component that displays when impersonation is active, showing session details, countdown timer, and stop functionality
+### Details:
+Build a persistent banner component that appears across all pages when impersonation is active. Include a countdown timer showing remaining session time, the name of the impersonated user, and a prominent stop button to end impersonation. Ensure the banner is visually distinct and cannot be dismissed while impersonation is active. Implement real-time countdown that updates every minute.
+
+## 4. Implement Route Protection and Privilege Separation [pending]
+### Dependencies: 6.2
+### Description: Add security controls to prevent privilege blending by blocking admin routes during impersonation
+### Details:
+Modify the router middleware to check for act_as claims in the current token. Block access to all admin routes when impersonation is active to prevent privilege blending. Implement appropriate error handling and user feedback when blocked routes are attempted. Create a mechanism to temporarily exit impersonation for specific admin actions if needed, with MFA re-verification.
+
+## 5. Develop Comprehensive Audit Logging System [pending]
+### Dependencies: 6.1, 6.2, 6.3, 6.4
+### Description: Create a complete audit trail for all impersonation activities in the impersonation_sessions table
+### Details:
+Design and implement the impersonation_sessions database table to track all impersonation events. Log the start and end of each session, including admin ID, impersonated user ID, timestamp, duration, IP address, and reason for impersonation. Add endpoints to record session events. Implement automatic logging when sessions expire naturally or are manually ended. Create an admin interface to review the audit logs with filtering and search capabilities.
+

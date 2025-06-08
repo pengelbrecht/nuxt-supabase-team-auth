@@ -1,0 +1,53 @@
+# Task ID: 13
+# Title: Add Multi-Factor Authentication Integration
+# Status: pending
+# Dependencies: 4, 6
+# Priority: medium
+# Description: Implement MFA toggle functionality with TOTP support and enforce MFA for super-admin operations
+# Details:
+MFA Implementation:
+- TOTP (Time-based One-Time Password) support using authenticator apps
+- MFA enrollment flow with QR code generation
+- MFA toggle in user profile settings
+- Mandatory MFA for super-admin role
+- MFA verification before impersonation start
+- Backup codes generation and validation
+- MFA recovery flow for lost devices
+- Integration with Supabase Auth MFA features
+- Graceful fallback for MFA failures
+- MFA status indicators in UI components
+
+# Test Strategy:
+MFA enrollment tests, TOTP validation tests, backup code tests, super-admin MFA enforcement tests, recovery flow tests, integration tests with authenticator apps.
+
+# Subtasks:
+## 1. Implement TOTP generation and validation [pending]
+### Dependencies: None
+### Description: Create the core functionality for generating and validating Time-based One-Time Passwords (TOTP) using a secure library
+### Details:
+Integrate a TOTP library (like otplib) to handle the generation and validation of time-based codes. Create utility functions for: generating secret keys, validating TOTP codes against secrets, and handling time-drift tolerance. Implement QR code generation for easy secret sharing with authenticator apps. Store TOTP secrets securely in the database with proper encryption.
+
+## 2. Develop MFA enrollment and backup codes flow [pending]
+### Dependencies: 13.1
+### Description: Create the user interface and backend logic for MFA enrollment, including QR code display and backup codes generation
+### Details:
+Build an enrollment wizard that guides users through enabling MFA: 1) Generate and display QR code with the TOTP secret, 2) Verify the first TOTP code to confirm setup, 3) Generate and display backup codes (one-time use), 4) Store MFA status and backup codes in user profile. Implement responsive UI components for the enrollment process with clear instructions for users.
+
+## 3. Add MFA toggle in user profile settings [pending]
+### Dependencies: 13.2
+### Description: Implement the ability for users to enable/disable MFA from their profile settings, with appropriate verification steps
+### Details:
+Add MFA section to user profile settings with toggle control. When enabling, direct to the enrollment flow from subtask 2. When disabling, require password verification and current TOTP code. Update user interface to show MFA status indicators throughout the application. For super-admin accounts, prevent disabling MFA once enabled (or require additional approval process).
+
+## 4. Implement MFA verification during authentication [pending]
+### Dependencies: 13.1
+### Description: Modify the authentication flow to prompt for and validate TOTP codes when users with enabled MFA sign in
+### Details:
+Extend the login process to check if user has MFA enabled. If enabled, show TOTP input field after password verification. Implement validation of entered TOTP codes against stored secrets. Add support for backup codes as alternative to TOTP. Create session management logic to track MFA-verified sessions. Implement graceful fallback for MFA failures with appropriate error messages.
+
+## 5. Enforce MFA for privileged operations [pending]
+### Dependencies: 13.4
+### Description: Require MFA verification for sensitive operations like super-admin actions and user impersonation
+### Details:
+Create middleware to check MFA status before allowing access to super-admin functions. Implement MFA re-verification prompt before starting user impersonation. Add MFA requirement checks to API endpoints for sensitive operations. Create recovery flow for users who have lost their MFA device, requiring identity verification. Integrate with Supabase Auth MFA features for consistent behavior across the platform.
+

@@ -1,0 +1,79 @@
+# Task ID: 10
+# Title: Implement Role-Based Access Control and Permissions
+# Status: pending
+# Dependencies: 4, 6
+# Priority: high
+# Description: Build comprehensive RBAC system with role hierarchy, permission checks, and secure role transitions
+# Details:
+RBAC Implementation:
+- Role hierarchy: super_admin > owner > admin > member
+- Permission matrix for all operations (invite, promote, demote, delete, etc.)
+- Secure role transition validation (owner transfer, promotion/demotion rules)
+- Frontend permission guards for UI elements
+- Backend permission validation in Edge Functions
+- Role-based route protection middleware
+- Cascading team deletion with owner-only access
+- Prevention of self-demotion and orphaned teams
+- Integration with JWT claims for real-time permission checks
+
+# Test Strategy:
+Permission matrix tests for all role combinations, role transition security tests, UI permission guard tests, backend authorization tests, edge case handling (self-operations, last owner scenarios).
+
+# Subtasks:
+## 1. Define Role Hierarchy and Permission Matrix [pending]
+### Dependencies: None
+### Description: Create the foundational data structures for the RBAC system by defining the role hierarchy and comprehensive permission matrix for all operations.
+### Details:
+1. Define enum/constants for roles (super_admin, owner, admin, member)
+2. Create a hierarchical relationship map between roles
+3. Define all system operations (invite, promote, demote, delete, etc.)
+4. Build a permission matrix mapping roles to allowed operations
+5. Document the role hierarchy and permission rules
+6. Create utility functions to check if a role is higher than another
+
+## 2. Implement Backend Permission Validation [pending]
+### Dependencies: 10.1
+### Description: Build the server-side validation logic in Edge Functions to enforce permission checks based on the defined role hierarchy and permission matrix.
+### Details:
+1. Create middleware for extracting user roles from JWT claims
+2. Implement permission validation functions using the permission matrix
+3. Build role transition validation logic (promotion/demotion rules)
+4. Create owner transfer validation with security checks
+5. Implement prevention of self-demotion logic
+6. Add validation to prevent orphaned teams
+7. Create reusable permission check decorators/wrappers for Edge Functions
+
+## 3. Develop Role-Based Route Protection [pending]
+### Dependencies: 10.2
+### Description: Create middleware for protecting routes based on user roles and implement cascading team deletion with owner-only access.
+### Details:
+1. Develop middleware to protect routes based on required role level
+2. Implement cascading team deletion logic with owner-only access checks
+3. Create helper functions to validate user permissions for specific resources
+4. Add logging for permission denials and role changes for audit purposes
+5. Implement rate limiting for sensitive role operations
+6. Create error handlers for unauthorized access attempts
+
+## 4. Implement Frontend Permission Guards [pending]
+### Dependencies: 10.1
+### Description: Create UI permission guards to conditionally render elements and actions based on the user's role and permissions.
+### Details:
+1. Create a client-side permission utility to check user permissions
+2. Implement conditional rendering for UI elements based on permissions
+3. Add disabled states for actions not allowed for current role
+4. Create higher-order components or hooks for permission-based rendering
+5. Implement tooltips explaining why actions are unavailable
+6. Add visual indicators of user's current role in the UI
+
+## 5. Integrate JWT Claims for Real-Time Permission Checks [pending]
+### Dependencies: 10.2, 10.4
+### Description: Connect the RBAC system with JWT authentication to enable real-time permission checks and role updates.
+### Details:
+1. Update JWT payload structure to include role and permission data
+2. Implement JWT refresh logic to update permissions after role changes
+3. Create a permission context provider for the frontend
+4. Add real-time permission validation on both client and server
+5. Implement secure storage of permission data
+6. Add event listeners for role changes to trigger permission updates
+7. Create comprehensive documentation for the RBAC implementation
+
