@@ -200,7 +200,7 @@
       "id": 4,
       "title": "Create Core Nuxt Composable useTeamAuth with Full API",
       "description": "Implement the main useTeamAuth() composable providing reactive state management, session persistence, dual-session management for impersonation, and state restoration on page reload.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         3
       ],
@@ -214,7 +214,7 @@
           "description": "Create the foundation for useTeamAuth composable by defining TypeScript interfaces, reactive state, and initial setup with Supabase client.",
           "dependencies": [],
           "details": "1. Define TypeScript interfaces for all state objects (User, Team, Role, etc.)\n2. Create reactive state using Vue's ref/reactive for currentUser, currentTeam, currentRole, isImpersonating, impersonationExpiresAt\n3. Set up Supabase client integration\n4. Implement JWT claims parsing utility\n5. Create the basic composable structure with state initialization\n6. Add state reset functionality for sign-out",
-          "status": "pending",
+          "status": "done",
           "testStrategy": "Unit test the state initialization, reset functionality, and JWT parsing utility."
         },
         {
@@ -223,7 +223,7 @@
           "description": "Add core authentication methods to the composable: signUpWithTeam, signIn, and signOut with proper error handling.",
           "dependencies": [],
           "details": "1. Implement signUpWithTeam method that creates both user and team records\n2. Implement signIn method with email/password authentication\n3. Implement signOut method that clears state and Supabase session\n4. Add proper error handling with defined error codes (TEAM_EXISTS, etc.)\n5. Ensure reactive state updates after auth operations\n6. Implement auth state change listener to keep state in sync",
-          "status": "pending",
+          "status": "done",
           "testStrategy": "Test each auth method with mock Supabase responses, verify error handling for various scenarios."
         },
         {
@@ -232,7 +232,7 @@
           "description": "Add team management functionality: inviteMember, revokeInvite, resendInvite, promote, demote, and transferOwnership.",
           "dependencies": [],
           "details": "1. Implement inviteMember with email validation and role specification\n2. Add revokeInvite method to cancel pending invitations\n3. Implement resendInvite for expired invitations\n4. Create promote/demote methods for changing member roles\n5. Implement transferOwnership with confirmation checks\n6. Add proper permission validation for each operation\n7. Ensure reactive state updates after team changes",
-          "status": "pending",
+          "status": "done",
           "testStrategy": "Test each team management method with various permission scenarios, verify state updates."
         },
         {
@@ -241,7 +241,7 @@
           "description": "Add methods for managing user profile and team settings: updateProfile, renameTeam, and deleteTeam.",
           "dependencies": [],
           "details": "1. Implement updateProfile method for changing user details\n2. Add renameTeam method with validation\n3. Implement deleteTeam with proper confirmation and cleanup\n4. Add permission checks for team operations\n5. Ensure reactive state updates after profile/team changes\n6. Implement proper error handling for each operation",
-          "status": "pending",
+          "status": "done",
           "testStrategy": "Test each method with various scenarios including permission errors, validation failures."
         },
         {
@@ -252,7 +252,7 @@
             4
           ],
           "details": "1. Implement four-tier token storage system for impersonation sessions\n2. Create startImpersonation method with proper permission checks\n3. Add stopImpersonation method to revert to original user\n4. Implement expiration handling for impersonation sessions\n5. Add reactive state updates for isImpersonating and impersonationExpiresAt\n6. Ensure proper cleanup of tokens when impersonation ends\n7. Add security measures to prevent privilege escalation",
-          "status": "pending",
+          "status": "done",
           "testStrategy": "Test impersonation lifecycle, token storage, expiration handling, and security constraints."
         },
         {
@@ -267,7 +267,7 @@
             5
           ],
           "details": "1. Implement session persistence by storing relevant state in localStorage or sessionStorage\n2. Restore state from storage on page reload to maintain user session\n3. Handle synchronization between reactive state and stored session data\n4. Ensure security measures are in place to protect stored session data\n5. Test session persistence and state restoration across various scenarios",
-          "status": "pending",
+          "status": "done",
           "testStrategy": "Test session persistence and state restoration functionality, including edge cases such as manual clearing of storage or session expiration."
         },
         {
@@ -279,7 +279,7 @@
             6
           ],
           "details": "1. Implement mechanisms to maintain both original and impersonation sessions concurrently\n2. Ensure seamless switching between sessions without data loss\n3. Handle session expiration and cleanup for both sessions appropriately\n4. Implement security measures to prevent unauthorized access to either session\n5. Test dual-session management across various impersonation scenarios",
-          "status": "pending",
+          "status": "done",
           "testStrategy": "Test dual-session management functionality, including session switching, expiration handling, and security constraints."
         }
       ]
@@ -1114,7 +1114,7 @@
       "description": "Create Row Level Security policies for all tables - this is currently missing and represents a major security vulnerability. Implement team-scoped access control for teams, team_members, invites, and impersonation_sessions tables.",
       "details": "",
       "testStrategy": "",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         2
       ],

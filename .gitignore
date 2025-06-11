@@ -118,3 +118,7 @@ tasks/
 # Local development
 playground/
 dev/
+
+# Added by Task Master AI
+dev-debug.log
+.vscode

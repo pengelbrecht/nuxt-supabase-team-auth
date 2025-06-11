@@ -1,6 +1,6 @@
 # Task ID: 4
 # Title: Create Core Nuxt Composable useTeamAuth with Full API
-# Status: pending
+# Status: done
 # Dependencies: 3
 # Priority: high
 # Description: Implement the main useTeamAuth() composable providing reactive state management, session persistence, dual-session management for impersonation, and state restoration on page reload.
@@ -20,7 +20,7 @@ Ensure session persistence using localStorage or sessionStorage to maintain user
 Unit tests for all composable methods, reactive state updates, session persistence, dual-session management, and error handling. Integration tests with Supabase Edge Functions. E2E tests for complete user flows, including state restoration on page reload.
 
 # Subtasks:
-## 1. Implement Core State and Type Definitions [pending]
+## 1. Implement Core State and Type Definitions [done]
 ### Dependencies: None
 ### Description: Create the foundation for useTeamAuth composable by defining TypeScript interfaces, reactive state, and initial setup with Supabase client.
 ### Details:
@@ -31,7 +31,7 @@ Unit tests for all composable methods, reactive state updates, session persisten
 5. Create the basic composable structure with state initialization
 6. Add state reset functionality for sign-out
 
-## 2. Implement Authentication Methods [pending]
+## 2. Implement Authentication Methods [done]
 ### Dependencies: None
 ### Description: Add core authentication methods to the composable: signUpWithTeam, signIn, and signOut with proper error handling.
 ### Details:
@@ -42,7 +42,7 @@ Unit tests for all composable methods, reactive state updates, session persisten
 5. Ensure reactive state updates after auth operations
 6. Implement auth state change listener to keep state in sync
 
-## 3. Implement Team Management Methods [pending]
+## 3. Implement Team Management Methods [done]
 ### Dependencies: None
 ### Description: Add team management functionality: inviteMember, revokeInvite, resendInvite, promote, demote, and transferOwnership.
 ### Details:
@@ -54,7 +54,7 @@ Unit tests for all composable methods, reactive state updates, session persisten
 6. Add proper permission validation for each operation
 7. Ensure reactive state updates after team changes
 
-## 4. Implement Profile and Team Settings Methods [pending]
+## 4. Implement Profile and Team Settings Methods [done]
 ### Dependencies: None
 ### Description: Add methods for managing user profile and team settings: updateProfile, renameTeam, and deleteTeam.
 ### Details:
@@ -65,7 +65,7 @@ Unit tests for all composable methods, reactive state updates, session persisten
 5. Ensure reactive state updates after profile/team changes
 6. Implement proper error handling for each operation
 
-## 5. Implement Impersonation System [pending]
+## 5. Implement Impersonation System [done]
 ### Dependencies: 4.4
 ### Description: Add user impersonation functionality with multi-tiered token storage: startImpersonation and stopImpersonation.
 ### Details:
@@ -77,7 +77,7 @@ Unit tests for all composable methods, reactive state updates, session persisten
 6. Ensure proper cleanup of tokens when impersonation ends
 7. Add security measures to prevent privilege escalation
 
-## 6. Implement Session Persistence and State Restoration [pending]
+## 6. Implement Session Persistence and State Restoration [done]
 ### Dependencies: 4.1, 4.2, 4.3, 4.4, 4.5
 ### Description: Ensure session persistence using localStorage/sessionStorage and implement state restoration on page reload.
 ### Details:
@@ -87,7 +87,7 @@ Unit tests for all composable methods, reactive state updates, session persisten
 4. Ensure security measures are in place to protect stored session data
 5. Test session persistence and state restoration across various scenarios
 
-## 7. Implement Dual-Session Management for Impersonation [pending]
+## 7. Implement Dual-Session Management for Impersonation [done]
 ### Dependencies: 4.5, 4.6
 ### Description: Manage concurrent sessions for both the original user and the impersonated user during impersonation.
 ### Details:
