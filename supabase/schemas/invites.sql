@@ -1,27 +1,22 @@
--- Invites table - Team invitations with secure tokens
+-- Invites table - Simplified tracking for Supabase's built-in invite system
+-- This table tracks which invites were sent, relying on Supabase's auth.admin.inviteUserByEmail()
 CREATE TABLE invites (
     id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
     team_id uuid NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
     email text NOT NULL,
-    token_hash text NOT NULL UNIQUE,
-    expires_at timestamp with time zone NOT NULL,
-    status invite_status NOT NULL DEFAULT 'pending',
+    invited_by uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     
     -- Constraints
-    CONSTRAINT invites_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
-    CONSTRAINT invites_expires_at_future CHECK (expires_at > created_at)
+    CONSTRAINT invites_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
 );
 
 -- Indexes
 CREATE INDEX idx_invites_team_id ON invites(team_id);
 CREATE INDEX idx_invites_email ON invites(email);
-CREATE INDEX idx_invites_token_hash ON invites(token_hash);
-CREATE INDEX idx_invites_status ON invites(status);
-CREATE INDEX idx_invites_expires_at ON invites(expires_at);
+CREATE INDEX idx_invites_invited_by ON invites(invited_by);
 
 -- Comments
-COMMENT ON TABLE invites IS 'Team invitations sent via email with secure token-based acceptance.';
-COMMENT ON COLUMN invites.token_hash IS 'Hashed invitation token for security. Never store plain tokens.';
-COMMENT ON COLUMN invites.expires_at IS 'Invitation expiry time (typically 7 days from creation).';
-COMMENT ON COLUMN invites.status IS 'Current status of the invitation.';
+COMMENT ON TABLE invites IS 'Tracking table for team invitations sent via Supabase auth.admin.inviteUserByEmail().';
+COMMENT ON COLUMN invites.invited_by IS 'User who sent the invitation (admin or owner).';
+COMMENT ON COLUMN invites.email IS 'Email address that was invited to join the team.';

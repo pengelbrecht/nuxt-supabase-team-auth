@@ -1,6 +1,6 @@
 # Task ID: 2
 # Title: Design and Implement Database Schema with RLS Policies
-# Status: pending
+# Status: done
 # Dependencies: 1
 # Priority: high
 # Description: Create PostgreSQL schema for teams, team_members, invites, and impersonation_sessions tables with comprehensive Row Level Security policies
@@ -21,7 +21,7 @@ RLS Policies:
 Database tests for schema creation, RLS policy enforcement, foreign key constraints, and enum validation. Test each policy with different user roles.
 
 # Subtasks:
-## 1. Create Base Database Tables and Enums [pending]
+## 1. Create Base Database Tables and Enums [done]
 ### Dependencies: None
 ### Description: Set up the foundational database schema by creating the required tables and enum types according to the ERD specifications.
 ### Details:

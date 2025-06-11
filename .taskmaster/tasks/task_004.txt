@@ -3,7 +3,7 @@
 # Status: pending
 # Dependencies: 3
 # Priority: high
-# Description: Implement the main useTeamAuth() composable providing reactive state management and all team authentication methods
+# Description: Implement the main useTeamAuth() composable providing reactive state management, session persistence, dual-session management for impersonation, and state restoration on page reload.
 # Details:
 Create composable with TypeScript interface:
 - Reactive state: currentUser, currentTeam, currentRole, isImpersonating, impersonationExpiresAt
@@ -14,13 +14,15 @@ Create composable with TypeScript interface:
 
 Integrate with Supabase client, handle JWT claims parsing, implement reactive updates on auth state changes. Include proper error handling with the defined error codes (TEAM_EXISTS, INVITE_EXPIRED, etc.). Implement defensive token storage across four tiers for impersonation sessions.
 
+Ensure session persistence using localStorage or sessionStorage to maintain user state across page reloads. Implement dual-session management to handle both the original user session and the impersonation session concurrently. Restore state appropriately on page reload to maintain a seamless user experience.
+
 # Test Strategy:
-Unit tests for all composable methods, reactive state updates, and error handling. Integration tests with Supabase Edge Functions. E2E tests for complete user flows.
+Unit tests for all composable methods, reactive state updates, session persistence, dual-session management, and error handling. Integration tests with Supabase Edge Functions. E2E tests for complete user flows, including state restoration on page reload.
 
 # Subtasks:
 ## 1. Implement Core State and Type Definitions [pending]
 ### Dependencies: None
-### Description: Create the foundation for useTeamAuth composable by defining TypeScript interfaces, reactive state, and initial setup with Supabase client
+### Description: Create the foundation for useTeamAuth composable by defining TypeScript interfaces, reactive state, and initial setup with Supabase client.
 ### Details:
 1. Define TypeScript interfaces for all state objects (User, Team, Role, etc.)
 2. Create reactive state using Vue's ref/reactive for currentUser, currentTeam, currentRole, isImpersonating, impersonationExpiresAt
@@ -31,7 +33,7 @@ Unit tests for all composable methods, reactive state updates, and error handlin
 
 ## 2. Implement Authentication Methods [pending]
 ### Dependencies: None
-### Description: Add core authentication methods to the composable: signUpWithTeam, signIn, and signOut with proper error handling
+### Description: Add core authentication methods to the composable: signUpWithTeam, signIn, and signOut with proper error handling.
 ### Details:
 1. Implement signUpWithTeam method that creates both user and team records
 2. Implement signIn method with email/password authentication
@@ -42,7 +44,7 @@ Unit tests for all composable methods, reactive state updates, and error handlin
 
 ## 3. Implement Team Management Methods [pending]
 ### Dependencies: None
-### Description: Add team management functionality: inviteMember, revokeInvite, resendInvite, promote, demote, and transferOwnership
+### Description: Add team management functionality: inviteMember, revokeInvite, resendInvite, promote, demote, and transferOwnership.
 ### Details:
 1. Implement inviteMember with email validation and role specification
 2. Add revokeInvite method to cancel pending invitations
@@ -54,7 +56,7 @@ Unit tests for all composable methods, reactive state updates, and error handlin
 
 ## 4. Implement Profile and Team Settings Methods [pending]
 ### Dependencies: None
-### Description: Add methods for managing user profile and team settings: updateProfile, renameTeam, and deleteTeam
+### Description: Add methods for managing user profile and team settings: updateProfile, renameTeam, and deleteTeam.
 ### Details:
 1. Implement updateProfile method for changing user details
 2. Add renameTeam method with validation
@@ -65,7 +67,7 @@ Unit tests for all composable methods, reactive state updates, and error handlin
 
 ## 5. Implement Impersonation System [pending]
 ### Dependencies: 4.4
-### Description: Add user impersonation functionality with multi-tiered token storage: startImpersonation and stopImpersonation
+### Description: Add user impersonation functionality with multi-tiered token storage: startImpersonation and stopImpersonation.
 ### Details:
 1. Implement four-tier token storage system for impersonation sessions
 2. Create startImpersonation method with proper permission checks
@@ -74,4 +76,24 @@ Unit tests for all composable methods, reactive state updates, and error handlin
 5. Add reactive state updates for isImpersonating and impersonationExpiresAt
 6. Ensure proper cleanup of tokens when impersonation ends
 7. Add security measures to prevent privilege escalation
+
+## 6. Implement Session Persistence and State Restoration [pending]
+### Dependencies: 4.1, 4.2, 4.3, 4.4, 4.5
+### Description: Ensure session persistence using localStorage/sessionStorage and implement state restoration on page reload.
+### Details:
+1. Implement session persistence by storing relevant state in localStorage or sessionStorage
+2. Restore state from storage on page reload to maintain user session
+3. Handle synchronization between reactive state and stored session data
+4. Ensure security measures are in place to protect stored session data
+5. Test session persistence and state restoration across various scenarios
+
+## 7. Implement Dual-Session Management for Impersonation [pending]
+### Dependencies: 4.5, 4.6
+### Description: Manage concurrent sessions for both the original user and the impersonated user during impersonation.
+### Details:
+1. Implement mechanisms to maintain both original and impersonation sessions concurrently
+2. Ensure seamless switching between sessions without data loss
+3. Handle session expiration and cleanup for both sessions appropriately
+4. Implement security measures to prevent unauthorized access to either session
+5. Test dual-session management across various impersonation scenarios
 

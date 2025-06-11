@@ -1,6 +1,6 @@
 # Task ID: 16
 # Title: Set up GitHub Repository with gh CLI and Project Configuration
-# Status: in-progress
+# Status: pending
 # Dependencies: 1
 # Priority: medium
 # Description: Initialize a GitHub repository for the nuxt-supabase-team-auth project using gh CLI with proper configuration, documentation, and repository settings.

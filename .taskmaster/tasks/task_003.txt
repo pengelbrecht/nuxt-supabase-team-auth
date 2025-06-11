@@ -1,6 +1,6 @@
 # Task ID: 3
 # Title: Implement Supabase Edge Functions for Core Team Operations
-# Status: pending
+# Status: done
 # Dependencies: 2
 # Priority: high
 # Description: Create all required Supabase Edge Functions for team creation, invitations, role management, and impersonation with proper security
@@ -21,31 +21,31 @@ Implement email retrieval strategy cascade with single selected method for relia
 Unit tests for each function with mocked Supabase client. Integration tests with real database. Security tests for privilege escalation prevention and MFA enforcement.
 
 # Subtasks:
-## 1. Implement Team Creation and Invitation Edge Functions [pending]
+## 1. Implement Team Creation and Invitation Edge Functions [done]
 ### Dependencies: None
 ### Description: Create the Edge Functions for team creation and invitation management, including create_team_and_owner() and accept_invite() functions.
 ### Details:
 For create_team_and_owner(): Implement a transaction that creates a new team record, adds the creator as owner, and issues a JWT with appropriate team claims. For accept_invite(): Implement token validation logic, add the user to the team with specified role, and mark the invitation as accepted in the database. Both functions should include proper error handling and input validation.
 
-## 2. Implement Role Management Edge Functions [pending]
+## 2. Implement Role Management Edge Functions [done]
 ### Dependencies: None
 ### Description: Create the Edge Functions for team role management, specifically the transfer_ownership() function to change team ownership.
 ### Details:
 Implement transfer_ownership() to securely change the team owner role. The function should verify the current owner's identity, promote the target user to owner, and demote the previous owner to admin role. Include transaction handling to ensure atomicity of the role changes. Add proper authorization checks to ensure only the current owner can transfer ownership.
 
-## 3. Implement User Impersonation Edge Functions [pending]
+## 3. Implement User Impersonation Edge Functions [done]
 ### Dependencies: None
 ### Description: Create the Edge Functions for user impersonation, including start_impersonation() and stop_impersonation() functions.
 ### Details:
 For start_impersonation(): Implement verification of super-admin status and MFA completion, then mint a time-limited JWT (30 minutes) with act_as claims, and log the impersonation session. For stop_impersonation(): Implement logic to end the session, revoke the JWT, and update the ended_at timestamp in the session log. Both functions should include comprehensive security checks and audit logging.
 
-## 4. Implement Email Retrieval Edge Functions [pending]
+## 4. Implement Email Retrieval Edge Functions [done]
 ### Dependencies: 3.3
 ### Description: Create the Edge Functions for email retrieval, including get_user_emails() and get_user_email_by_id() functions with proper security controls.
 ### Details:
 Implement get_user_emails() as a security-definer function that allows super-admins to access user emails in bulk. Implement get_user_email_by_id() for single email lookup by super-admins. Both functions should implement the email retrieval strategy cascade for reliability. Add strict authorization checks to ensure only super-admins can access these functions, and implement rate limiting to prevent abuse.
 
-## 5. Implement Admin Authentication and Error Handling [pending]
+## 5. Implement Admin Authentication and Error Handling [done]
 ### Dependencies: 3.3, 3.4
 ### Description: Create the admin_login() Edge Function and implement comprehensive error handling across all functions.
 ### Details:

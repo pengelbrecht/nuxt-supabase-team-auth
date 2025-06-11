@@ -75,7 +75,7 @@
       "dependencies": [
         1
       ],
-      "status": "pending",
+      "status": "done",
       "subtasks": [
         {
           "id": 1,
@@ -83,7 +83,7 @@
           "description": "Set up the foundational database schema by creating the required tables and enum types according to the ERD specifications.",
           "dependencies": [],
           "details": "Create the following PostgreSQL enum types: 'team_role' (owner, admin, member, super_admin) and 'invite_status' (pending, accepted, revoked). Then create the four tables with proper constraints: teams (with primary key id), team_members (with composite primary key of team_id and user_id), invites (with primary key id), and impersonation_sessions (with primary key id). Ensure all foreign key relationships are properly established.",
-          "status": "pending",
+          "status": "done",
           "testStrategy": "Verify table creation with \\dt command in psql. Test enum types with sample inserts and validate constraints with intentional violations to ensure they're enforced."
         },
         {
@@ -142,7 +142,7 @@
       "dependencies": [
         2
       ],
-      "status": "pending",
+      "status": "done",
       "subtasks": [
         {
           "id": 1,
@@ -150,7 +150,7 @@
           "description": "Create the Edge Functions for team creation and invitation management, including create_team_and_owner() and accept_invite() functions.",
           "dependencies": [],
           "details": "For create_team_and_owner(): Implement a transaction that creates a new team record, adds the creator as owner, and issues a JWT with appropriate team claims. For accept_invite(): Implement token validation logic, add the user to the team with specified role, and mark the invitation as accepted in the database. Both functions should include proper error handling and input validation.",
-          "status": "pending",
+          "status": "done",
           "testStrategy": "Test with valid and invalid inputs, verify database state after operations, and check JWT claims for correctness. Test edge cases like duplicate team names and expired invitation tokens."
         },
         {
@@ -159,7 +159,7 @@
           "description": "Create the Edge Functions for team role management, specifically the transfer_ownership() function to change team ownership.",
           "dependencies": [],
           "details": "Implement transfer_ownership() to securely change the team owner role. The function should verify the current owner's identity, promote the target user to owner, and demote the previous owner to admin role. Include transaction handling to ensure atomicity of the role changes. Add proper authorization checks to ensure only the current owner can transfer ownership.",
-          "status": "pending",
+          "status": "done",
           "testStrategy": "Test successful ownership transfers, verify role changes in database, test authorization failures when non-owners attempt transfers, and verify error handling for invalid user IDs."
         },
         {
@@ -168,7 +168,7 @@
           "description": "Create the Edge Functions for user impersonation, including start_impersonation() and stop_impersonation() functions.",
           "dependencies": [],
           "details": "For start_impersonation(): Implement verification of super-admin status and MFA completion, then mint a time-limited JWT (30 minutes) with act_as claims, and log the impersonation session. For stop_impersonation(): Implement logic to end the session, revoke the JWT, and update the ended_at timestamp in the session log. Both functions should include comprehensive security checks and audit logging.",
-          "status": "pending",
+          "status": "done",
           "testStrategy": "Test impersonation lifecycle with valid super-admin credentials, verify JWT claims and expiration, test MFA requirement enforcement, and verify proper session logging and termination."
         },
         {
@@ -179,7 +179,7 @@
             3
           ],
           "details": "Implement get_user_emails() as a security-definer function that allows super-admins to access user emails in bulk. Implement get_user_email_by_id() for single email lookup by super-admins. Both functions should implement the email retrieval strategy cascade for reliability. Add strict authorization checks to ensure only super-admins can access these functions, and implement rate limiting to prevent abuse.",
-          "status": "pending",
+          "status": "done",
           "testStrategy": "Test authorization controls to verify only super-admins can access emails, test the email retrieval cascade strategy with various scenarios (primary method failure, fallback success), and verify rate limiting effectiveness."
         },
         {
@@ -191,7 +191,7 @@
             4
           ],
           "details": "Implement admin_login() to generate magic links with immediate OTP verification for super-admin session restoration. Add standardized error handling across all Edge Functions with appropriate HTTP status codes and error messages. Implement JWT claim validation helpers that can be reused across functions. Add logging for security events and errors to facilitate debugging and audit trails.",
-          "status": "pending",
+          "status": "done",
           "testStrategy": "Test admin login flow with valid and invalid credentials, verify OTP verification works correctly, test error handling with various error conditions across all functions, and verify logs contain appropriate information for debugging and auditing."
         }
       ]
@@ -199,61 +199,88 @@
     {
       "id": 4,
       "title": "Create Core Nuxt Composable useTeamAuth with Full API",
-      "description": "Implement the main useTeamAuth() composable providing reactive state management and all team authentication methods",
-      "details": "Create composable with TypeScript interface:\n- Reactive state: currentUser, currentTeam, currentRole, isImpersonating, impersonationExpiresAt\n- Auth methods: signUpWithTeam, signIn, signOut\n- Team management: inviteMember, revokeInvite, resendInvite, promote, demote, transferOwnership\n- Profile: updateProfile, renameTeam, deleteTeam\n- Impersonation: startImpersonation, stopImpersonation\n\nIntegrate with Supabase client, handle JWT claims parsing, implement reactive updates on auth state changes. Include proper error handling with the defined error codes (TEAM_EXISTS, INVITE_EXPIRED, etc.). Implement defensive token storage across four tiers for impersonation sessions.",
-      "testStrategy": "Unit tests for all composable methods, reactive state updates, and error handling. Integration tests with Supabase Edge Functions. E2E tests for complete user flows.",
-      "priority": "high",
+      "description": "Implement the main useTeamAuth() composable providing reactive state management, session persistence, dual-session management for impersonation, and state restoration on page reload.",
+      "status": "pending",
       "dependencies": [
         3
       ],
-      "status": "pending",
+      "priority": "high",
+      "details": "Create composable with TypeScript interface:\n- Reactive state: currentUser, currentTeam, currentRole, isImpersonating, impersonationExpiresAt\n- Auth methods: signUpWithTeam, signIn, signOut\n- Team management: inviteMember, revokeInvite, resendInvite, promote, demote, transferOwnership\n- Profile: updateProfile, renameTeam, deleteTeam\n- Impersonation: startImpersonation, stopImpersonation\n\nIntegrate with Supabase client, handle JWT claims parsing, implement reactive updates on auth state changes. Include proper error handling with the defined error codes (TEAM_EXISTS, INVITE_EXPIRED, etc.). Implement defensive token storage across four tiers for impersonation sessions.\n\nEnsure session persistence using localStorage or sessionStorage to maintain user state across page reloads. Implement dual-session management to handle both the original user session and the impersonation session concurrently. Restore state appropriately on page reload to maintain a seamless user experience.",
+      "testStrategy": "Unit tests for all composable methods, reactive state updates, session persistence, dual-session management, and error handling. Integration tests with Supabase Edge Functions. E2E tests for complete user flows, including state restoration on page reload.",
       "subtasks": [
         {
           "id": 1,
           "title": "Implement Core State and Type Definitions",
-          "description": "Create the foundation for useTeamAuth composable by defining TypeScript interfaces, reactive state, and initial setup with Supabase client",
+          "description": "Create the foundation for useTeamAuth composable by defining TypeScript interfaces, reactive state, and initial setup with Supabase client.",
           "dependencies": [],
           "details": "1. Define TypeScript interfaces for all state objects (User, Team, Role, etc.)\n2. Create reactive state using Vue's ref/reactive for currentUser, currentTeam, currentRole, isImpersonating, impersonationExpiresAt\n3. Set up Supabase client integration\n4. Implement JWT claims parsing utility\n5. Create the basic composable structure with state initialization\n6. Add state reset functionality for sign-out",
           "status": "pending",
-          "testStrategy": "Unit test the state initialization, reset functionality, and JWT parsing utility"
+          "testStrategy": "Unit test the state initialization, reset functionality, and JWT parsing utility."
         },
         {
           "id": 2,
           "title": "Implement Authentication Methods",
-          "description": "Add core authentication methods to the composable: signUpWithTeam, signIn, and signOut with proper error handling",
+          "description": "Add core authentication methods to the composable: signUpWithTeam, signIn, and signOut with proper error handling.",
           "dependencies": [],
           "details": "1. Implement signUpWithTeam method that creates both user and team records\n2. Implement signIn method with email/password authentication\n3. Implement signOut method that clears state and Supabase session\n4. Add proper error handling with defined error codes (TEAM_EXISTS, etc.)\n5. Ensure reactive state updates after auth operations\n6. Implement auth state change listener to keep state in sync",
           "status": "pending",
-          "testStrategy": "Test each auth method with mock Supabase responses, verify error handling for various scenarios"
+          "testStrategy": "Test each auth method with mock Supabase responses, verify error handling for various scenarios."
         },
         {
           "id": 3,
           "title": "Implement Team Management Methods",
-          "description": "Add team management functionality: inviteMember, revokeInvite, resendInvite, promote, demote, and transferOwnership",
+          "description": "Add team management functionality: inviteMember, revokeInvite, resendInvite, promote, demote, and transferOwnership.",
           "dependencies": [],
           "details": "1. Implement inviteMember with email validation and role specification\n2. Add revokeInvite method to cancel pending invitations\n3. Implement resendInvite for expired invitations\n4. Create promote/demote methods for changing member roles\n5. Implement transferOwnership with confirmation checks\n6. Add proper permission validation for each operation\n7. Ensure reactive state updates after team changes",
           "status": "pending",
-          "testStrategy": "Test each team management method with various permission scenarios, verify state updates"
+          "testStrategy": "Test each team management method with various permission scenarios, verify state updates."
         },
         {
           "id": 4,
           "title": "Implement Profile and Team Settings Methods",
-          "description": "Add methods for managing user profile and team settings: updateProfile, renameTeam, and deleteTeam",
+          "description": "Add methods for managing user profile and team settings: updateProfile, renameTeam, and deleteTeam.",
           "dependencies": [],
           "details": "1. Implement updateProfile method for changing user details\n2. Add renameTeam method with validation\n3. Implement deleteTeam with proper confirmation and cleanup\n4. Add permission checks for team operations\n5. Ensure reactive state updates after profile/team changes\n6. Implement proper error handling for each operation",
           "status": "pending",
-          "testStrategy": "Test each method with various scenarios including permission errors, validation failures"
+          "testStrategy": "Test each method with various scenarios including permission errors, validation failures."
         },
         {
           "id": 5,
           "title": "Implement Impersonation System",
-          "description": "Add user impersonation functionality with multi-tiered token storage: startImpersonation and stopImpersonation",
+          "description": "Add user impersonation functionality with multi-tiered token storage: startImpersonation and stopImpersonation.",
           "dependencies": [
             4
           ],
           "details": "1. Implement four-tier token storage system for impersonation sessions\n2. Create startImpersonation method with proper permission checks\n3. Add stopImpersonation method to revert to original user\n4. Implement expiration handling for impersonation sessions\n5. Add reactive state updates for isImpersonating and impersonationExpiresAt\n6. Ensure proper cleanup of tokens when impersonation ends\n7. Add security measures to prevent privilege escalation",
           "status": "pending",
-          "testStrategy": "Test impersonation lifecycle, token storage, expiration handling, and security constraints"
+          "testStrategy": "Test impersonation lifecycle, token storage, expiration handling, and security constraints."
+        },
+        {
+          "id": 6,
+          "title": "Implement Session Persistence and State Restoration",
+          "description": "Ensure session persistence using localStorage/sessionStorage and implement state restoration on page reload.",
+          "dependencies": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "details": "1. Implement session persistence by storing relevant state in localStorage or sessionStorage\n2. Restore state from storage on page reload to maintain user session\n3. Handle synchronization between reactive state and stored session data\n4. Ensure security measures are in place to protect stored session data\n5. Test session persistence and state restoration across various scenarios",
+          "status": "pending",
+          "testStrategy": "Test session persistence and state restoration functionality, including edge cases such as manual clearing of storage or session expiration."
+        },
+        {
+          "id": 7,
+          "title": "Implement Dual-Session Management for Impersonation",
+          "description": "Manage concurrent sessions for both the original user and the impersonated user during impersonation.",
+          "dependencies": [
+            5,
+            6
+          ],
+          "details": "1. Implement mechanisms to maintain both original and impersonation sessions concurrently\n2. Ensure seamless switching between sessions without data loss\n3. Handle session expiration and cleanup for both sessions appropriately\n4. Implement security measures to prevent unauthorized access to either session\n5. Test dual-session management across various impersonation scenarios",
+          "status": "pending",
+          "testStrategy": "Test dual-session management functionality, including session switching, expiration handling, and security constraints."
         }
       ]
     },
@@ -992,7 +1019,7 @@
       "description": "Initialize a GitHub repository for the nuxt-supabase-team-auth project using gh CLI with proper configuration, documentation, and repository settings.",
       "details": "Set up the GitHub repository infrastructure for the project:\n\n1. **Repository Creation with gh CLI:**\n   - Use `gh repo create nuxt-supabase-team-auth --public --clone` to create and clone repository\n   - Configure repository description: \"A Nuxt 3 module for team-based authentication with Supabase\"\n   - Set repository topics: nuxt, supabase, authentication, team-management, typescript\n\n2. **Repository Configuration:**\n   - Enable GitHub Pages for documentation hosting\n   - Configure branch protection rules for main branch\n   - Set up issue and PR templates in .github/ directory\n   - Configure repository settings for security and collaboration\n\n3. **Documentation Setup:**\n   - Create comprehensive README.md with project overview, installation, usage examples\n   - Include badges for build status, npm version, license\n   - Add getting started guide and API documentation structure\n   - Create CONTRIBUTING.md with development guidelines\n\n4. **License and Legal:**\n   - Add MIT license file using `gh repo edit --add-license mit`\n   - Create CODE_OF_CONDUCT.md for community guidelines\n   - Add SECURITY.md for vulnerability reporting\n\n5. **Initial Repository Structure:**\n   - Set up .gitignore for Node.js, Nuxt, and IDE files\n   - Configure .github/workflows/ directory for future CI/CD\n   - Add package.json validation and sync with repository metadata\n   - Create initial directory structure aligned with Nuxt 3 module standards\n\n6. **Repository Metadata:**\n   - Configure repository homepage URL\n   - Set up repository social preview image\n   - Add relevant keywords and description for discoverability",
       "testStrategy": "Verify repository setup completion:\n\n1. **Repository Verification:**\n   - Confirm repository exists and is publicly accessible on GitHub\n   - Verify repository description, topics, and metadata are correctly set\n   - Check that repository homepage and social preview are configured\n\n2. **Documentation Quality Check:**\n   - Validate README.md renders correctly with all sections and badges\n   - Ensure all links in documentation are functional\n   - Verify license file is properly recognized by GitHub\n   - Check that CONTRIBUTING.md and CODE_OF_CONDUCT.md are accessible\n\n3. **Repository Configuration Testing:**\n   - Test branch protection rules are active on main branch\n   - Verify issue and PR templates are available when creating new issues/PRs\n   - Confirm GitHub Pages is enabled and accessible\n   - Check repository settings match security and collaboration requirements\n\n4. **Local Development Setup:**\n   - Clone repository locally and verify all files are present\n   - Ensure .gitignore properly excludes intended files\n   - Validate package.json metadata matches repository information\n   - Test that repository structure aligns with Nuxt 3 module conventions\n\n5. **Integration Verification:**\n   - Confirm gh CLI commands work correctly with the repository\n   - Verify repository can be found through GitHub search with configured topics\n   - Test that repository is ready for future CI/CD pipeline integration",
-      "status": "in-progress",
+      "status": "pending",
       "dependencies": [
         1
       ],
@@ -1003,7 +1030,7 @@
       "id": 17,
       "title": "Set up Local Supabase Development Environment",
       "description": "Configure a local Supabase development environment with database initialization, environment variables, and development tooling for the team-auth module.",
-      "status": "done",
+      "status": "pending",
       "dependencies": [
         1
       ],
@@ -1048,6 +1075,284 @@
           "status": "done"
         }
       ]
+    },
+    {
+      "id": 19,
+      "title": "Session Management System",
+      "description": "Implement robust session management with token refresh, persistence, and cleanup",
+      "details": "Add functionality to handle user sessions including automatic token refresh, session persistence across browser refreshes, and proper session cleanup on logout",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "medium",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Implement Token Refresh Logic",
+          "description": "Create automatic token refresh mechanism to handle expired JWT tokens",
+          "details": "Build logic to detect token expiration and automatically refresh tokens before they expire",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 19
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "title": "Add Demo Login Page",
+      "description": "Create a simple demo login page to showcase the authentication flow with sign-in, sign-up, and team creation functionality",
+      "details": "Build a basic Vue component that demonstrates the team-auth module's authentication capabilities, including form validation, error handling, and successful authentication flow",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 21,
+      "title": "Implement Critical RLS Security Policies",
+      "description": "Create Row Level Security policies for all tables - this is currently missing and represents a major security vulnerability. Implement team-scoped access control for teams, team_members, invites, and impersonation_sessions tables.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        2
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 22,
+      "title": "Create Universal Confirmation Handler",
+      "description": "Implement a single confirmation page that handles both email confirmation after signup AND invitation acceptance, following the pattern from the reference implementation. Include hash parameter fallback for email clients that strip query strings.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        4
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 23,
+      "title": "Implement Session Persistence and State Management",
+      "description": "Add localStorage and sessionStorage integration for session persistence across page reloads. Implement proper session restoration and state hydration for the useTeamAuth composable, including impersonation context preservation.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        4
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 24,
+      "title": "Create Authentication Middleware and Route Protection",
+      "description": "Implement Nuxt middleware for route protection based on authentication status and user roles. Add global authentication checks and redirection logic for protected routes.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        4,
+        21
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 25,
+      "title": "Create Helper Functions for Secure Database Operations",
+      "description": "Implement SQL helper functions with SECURITY DEFINER for safe privilege escalation and team context scoping. Add functions for current_user_team(), user role checks, and other database utilities needed for RLS policies.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        21
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 26,
+      "title": "Enhance Invitation System with Better Tracking",
+      "description": "Improve the invites table to include status tracking (accepted_at, expires_at fields), custom token storage for fallback scenarios, and better audit trails while preserving our simplified auth.admin.inviteUserByEmail() approach.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        3,
+        21
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 27,
+      "title": "Add User Profile Storage and Management",
+      "description": "Create a users profile table or extend auth.users metadata to store user information like first_name, last_name, and other profile data. This enables better user management and profile features.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        21
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 28,
+      "title": "Set Up Testing Infrastructure and Framework",
+      "description": "Configure comprehensive testing environment with Vitest for unit tests, Playwright for E2E tests, and testing utilities for Nuxt composables and Edge Functions. Set up test databases, mocking strategies, and CI/CD integration following TDD best practices.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "high",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Configure Vitest for Unit Testing",
+          "description": "Set up Vitest as the primary unit testing framework with TypeScript support, Vue component testing utilities, and mocking capabilities for Supabase clients",
+          "details": "",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 28
+        },
+        {
+          "id": 2,
+          "title": "Set Up Playwright for E2E Testing",
+          "description": "Configure Playwright for end-to-end testing with cross-browser support, test database setup/teardown, and Supabase local environment integration",
+          "details": "",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 28
+        },
+        {
+          "id": 3,
+          "title": "Create Test Database Setup and Helpers",
+          "description": "Create test database utilities for seeding data, cleaning up between tests, and managing test user accounts. Include helpers for creating test teams and users with different roles",
+          "details": "",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 28
+        },
+        {
+          "id": 4,
+          "title": "Configure CI/CD Test Pipeline",
+          "description": "Set up GitHub Actions workflow for automated testing including unit tests, integration tests, and E2E tests with coverage reporting and performance benchmarks",
+          "details": "",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 28
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "title": "Write Unit Tests for useTeamAuth Composable",
+      "description": "Implement comprehensive unit tests for the useTeamAuth composable using TDD approach. Test all methods (signUpWithTeam, signIn, signOut, team management, impersonation) with input/output pairs, error scenarios, and state management including session persistence and dual-session handling.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        4,
+        28
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 30,
+      "title": "Write Unit Tests for Supabase Edge Functions",
+      "description": "Create comprehensive unit tests for all Edge Functions (create-team-and-owner, invite-member, accept-invite, start-impersonation, stop-impersonation, transfer-ownership) using TDD methodology. Test input validation, error handling, permission checks, and expected outputs with mocked Supabase clients.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        3,
+        28
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 31,
+      "title": "Write Integration Tests for Database Operations and RLS",
+      "description": "Implement integration tests for database schema, RLS policies, and SQL helper functions using real Supabase test database. Test team-scoped data access, permission boundaries, and cross-user data isolation. Verify RLS policies block unauthorized access and allow proper team member access.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        21,
+        25,
+        28
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 32,
+      "title": "Write Component Tests for Vue UI Components",
+      "description": "Create unit and integration tests for all Vue components (AuthSignIn, AuthSignUpWithTeam, UserButton, ProfileForm, TeamMembersTable, TeamSettingsModal, SignedIn, SignedOut) using Vue Test Utils. Test component rendering, user interactions, prop handling, and integration with useTeamAuth composable.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        5,
+        29,
+        28
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 33,
+      "title": "Write End-to-End Tests for Complete User Flows",
+      "description": "Implement E2E tests using Playwright covering complete user journeys: signup with team creation, invitation flow, team management, role changes, impersonation workflow, and session persistence across page reloads. Test both happy paths and error scenarios with real Supabase backend.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        22,
+        23,
+        24,
+        28
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 34,
+      "title": "Write Security and Performance Tests",
+      "description": "Create specialized tests for security vulnerabilities (SQL injection, privilege escalation, session hijacking) and performance benchmarks (≤150ms P95 latency requirement). Include load testing for Edge Functions and stress testing for concurrent impersonation sessions.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        12,
+        14,
+        28
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 35,
+      "title": "Write Tests for CLI Tool and Module Integration",
+      "description": "Create tests for the CLI tool commands (init, migrate), module installation process, and integration with consuming Nuxt applications. Test schema migration workflows, Edge Function deployment, and module configuration in various project setups.",
+      "details": "",
+      "testStrategy": "",
+      "status": "pending",
+      "dependencies": [
+        7,
+        28
+      ],
+      "priority": "low",
+      "subtasks": []
     }
   ]
 }
