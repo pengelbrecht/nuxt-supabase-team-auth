@@ -1,0 +1,78 @@
+{
+  "name": "pengelbrecht/nuxt-supabase-team-auth",
+  "version": "0.1.0",
+  "description": "Drop-in Nuxt 3 module for team-based authentication with Supabase",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/module.mjs",
+      "require": "./dist/module.cjs"
+    }
+  },
+  "main": "./dist/module.cjs",
+  "types": "./dist/types.d.ts",
+  "bin": {
+    "team-auth": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist",
+    "runtime",
+    "migrations",
+    "functions"
+  ],
+  "scripts": {
+    "build": "nuxt-module-build build",
+    "dev": "nuxi dev playground",
+    "dev:build": "nuxt-module-build build --stub && nuxi dev playground",
+    "dev:prepare": "nuxt-module-build build --stub && nuxi prepare playground",
+    "release": "npm run lint && npm run test && npm run prepack && changelogen --release && npm publish && git push --follow-tags",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:types": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit",
+    "prepack": "nuxt-module-build build",
+    "prepare": "nuxt-module-build build --stub"
+  },
+  "dependencies": {
+    "@nuxt/kit": "^3.13.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "defu": "^6.1.4",
+    "pathe": "^1.1.2"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "^1.5.0",
+    "@nuxt/eslint-config": "^0.5.7",
+    "@nuxt/module-builder": "^0.8.4",
+    "@nuxt/schema": "^3.13.0",
+    "@nuxt/test-utils": "^3.14.2",
+    "@types/node": "^22.7.4",
+    "changelogen": "^0.5.7",
+    "eslint": "^9.11.1",
+    "nuxt": "^3.13.0",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.1",
+    "vue-tsc": "^2.1.6"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt3",
+    "supabase",
+    "authentication",
+    "team",
+    "rbac",
+    "auth",
+    "module"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/pengelbrecht/nuxt-supabase-team-auth#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pengelbrecht/nuxt-supabase-team-auth.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pengelbrecht/nuxt-supabase-team-auth/issues"
+  }
+}
