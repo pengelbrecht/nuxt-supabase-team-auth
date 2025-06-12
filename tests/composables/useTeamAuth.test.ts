@@ -26,7 +26,7 @@ const createMockSupabaseClient = () => {
       updateUser: vi.fn()
     },
     functions: {
-      invoke: vi.fn()
+      invoke: vi.fn().mockResolvedValue({ error: null })
     },
     from: vi.fn(() => ({
       ...mockQueryBuilder,
@@ -290,11 +290,19 @@ describe('useTeamAuth', () => {
         error: null
       })
 
-      const mockUpdate = vi.fn().mockResolvedValue({ error: null })
+      // Set up the proper chain for database operations: .update().eq().eq().neq()
+      const mockChain = {
+        eq: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            neq: vi.fn().mockResolvedValue({ error: null })
+          }))
+        }))
+      }
+      
+      const mockUpdate = vi.fn(() => mockChain)
+      
       mockSupabaseClient.from.mockReturnValue({
-        update: mockUpdate,
-        eq: vi.fn().mockReturnThis(),
-        neq: vi.fn().mockReturnThis()
+        update: mockUpdate
       })
 
       const { promote } = useTeamAuth(mockSupabaseClient)
@@ -343,9 +351,14 @@ describe('useTeamAuth', () => {
         error: null
       })
 
-      const { currentUser } = useTeamAuth(mockSupabaseClient)
+      const { currentUser, $initializationPromise } = useTeamAuth(mockSupabaseClient)
       
+      // Wait for initialization to complete and state to be set
+      await $initializationPromise
+      
+      // Give Vue's reactivity system time to trigger the watch
       await nextTick()
+      await nextTick() // Extra tick for watch to fire
       
       expect(localStorage.setItem).toHaveBeenCalledWith(
         'team_auth_user_state',
