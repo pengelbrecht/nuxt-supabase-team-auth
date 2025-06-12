@@ -1030,7 +1030,7 @@
       "id": 17,
       "title": "Set up Local Supabase Development Environment",
       "description": "Configure a local Supabase development environment with database initialization, environment variables, and development tooling for the team-auth module.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         1
       ],
@@ -1127,7 +1127,7 @@
       "description": "Implement a single confirmation page that handles both email confirmation after signup AND invitation acceptance, following the pattern from the reference implementation. Include hash parameter fallback for email clients that strip query strings.",
       "details": "",
       "testStrategy": "",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         4
       ],
@@ -1140,7 +1140,7 @@
       "description": "Add localStorage and sessionStorage integration for session persistence across page reloads. Implement proper session restoration and state hydration for the useTeamAuth composable, including impersonation context preservation.",
       "details": "",
       "testStrategy": "",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         4
       ],
@@ -1207,7 +1207,7 @@
       "description": "Configure comprehensive testing environment with Vitest for unit tests, Playwright for E2E tests, and testing utilities for Nuxt composables and Edge Functions. Set up test databases, mocking strategies, and CI/CD integration following TDD best practices.",
       "details": "",
       "testStrategy": "",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": [
         1
       ],
@@ -1218,7 +1218,7 @@
           "title": "Configure Vitest for Unit Testing",
           "description": "Set up Vitest as the primary unit testing framework with TypeScript support, Vue component testing utilities, and mocking capabilities for Supabase clients",
           "details": "",
-          "status": "pending",
+          "status": "done",
           "dependencies": [],
           "parentTaskId": 28
         },

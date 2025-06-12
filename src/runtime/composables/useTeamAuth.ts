@@ -17,7 +17,7 @@ interface JWTClaims {
   impersonation_session_id?: string
 }
 
-export function useTeamAuth(): TeamAuth {
+export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   // Reactive state
   const currentUser = ref<User | null>(null)
   const currentTeam = ref<Team | null>(null)
@@ -26,8 +26,15 @@ export function useTeamAuth(): TeamAuth {
   const isImpersonating = ref(false)
   const impersonationExpiresAt = ref<Date | null>(null)
   
-  // Supabase client (will be injected by plugin)
-  const supabase = useNuxtApp().$teamAuthClient as SupabaseClient
+  // Supabase client (will be injected by plugin or provided for testing)
+  const supabase = injectedClient || (() => {
+    try {
+      const { useNuxtApp } = require('#app')
+      return useNuxtApp().$teamAuthClient as SupabaseClient
+    } catch (error) {
+      throw new Error('No Supabase client available. Ensure you are in a Nuxt context or provide a client.')
+    }
+  })()
   
   // JWT Claims parsing utility
   const parseJWTClaims = (token: string): JWTClaims => {

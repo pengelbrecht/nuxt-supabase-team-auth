@@ -1,6 +1,6 @@
 # Task ID: 17
 # Title: Set up Local Supabase Development Environment
-# Status: pending
+# Status: done
 # Dependencies: 1
 # Priority: high
 # Description: Configure a local Supabase development environment with database initialization, environment variables, and development tooling for the team-auth module.

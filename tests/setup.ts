@@ -70,21 +70,50 @@ config.global.mocks = {
   }
 }
 
+// Global storage mocks
+const localStorageMock = {
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn()
+}
+
+const sessionStorageMock = {
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn()
+}
+
 // Mock localStorage and sessionStorage
-Object.defineProperty(window, 'localStorage', {
-  value: {
-    getItem: vi.fn(),
-    setItem: vi.fn(),
-    removeItem: vi.fn(),
-    clear: vi.fn()
-  }
+Object.defineProperty(global, 'localStorage', {
+  value: localStorageMock,
+  writable: true
 })
 
-Object.defineProperty(window, 'sessionStorage', {
-  value: {
-    getItem: vi.fn(),
-    setItem: vi.fn(),
-    removeItem: vi.fn(),
-    clear: vi.fn()
-  }
+Object.defineProperty(global, 'sessionStorage', {
+  value: sessionStorageMock,
+  writable: true
 })
+
+// Also set on window for components
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'localStorage', {
+    value: localStorageMock,
+    writable: true
+  })
+
+  Object.defineProperty(window, 'sessionStorage', {
+    value: sessionStorageMock,
+    writable: true
+  })
+}
+
+// Make base64 functions available globally
+if (!global.btoa) {
+  global.btoa = (str: string) => Buffer.from(str).toString('base64')
+}
+
+if (!global.atob) {
+  global.atob = (str: string) => Buffer.from(str, 'base64').toString()
+}

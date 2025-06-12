@@ -1,7 +1,32 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { nextTick } from 'vue'
-import { useNuxtApp, useRoute, useRouter } from '../mocks/nuxt-app'
 import { useTeamAuth } from '../../src/runtime/composables/useTeamAuth'
+
+// Create mock Supabase client - this is the only external dependency we mock
+const createMockSupabaseClient = () => ({
+  auth: {
+    getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+    signUp: vi.fn(),
+    signInWithPassword: vi.fn(),
+    signOut: vi.fn(),
+    onAuthStateChange: vi.fn(),
+    setSession: vi.fn(),
+    verifyOtp: vi.fn(),
+    updateUser: vi.fn()
+  },
+  functions: {
+    invoke: vi.fn()
+  },
+  from: vi.fn(() => ({
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    neq: vi.fn().mockReturnThis(),
+    single: vi.fn()
+  }))
+})
 
 // Mock data
 const mockUser = {
@@ -29,42 +54,14 @@ describe('useTeamAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     
-    // Reset localStorage/sessionStorage mocks
-    vi.mocked(localStorage.getItem).mockReturnValue(null)
-    vi.mocked(localStorage.setItem).mockImplementation(() => {})
-    vi.mocked(sessionStorage.getItem).mockReturnValue(null)
-    vi.mocked(sessionStorage.setItem).mockImplementation(() => {})
-
-    // Setup mock Supabase client
-    mockSupabaseClient = {
-      auth: {
-        getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
-        signUp: vi.fn(),
-        signInWithPassword: vi.fn(),
-        signOut: vi.fn(),
-        onAuthStateChange: vi.fn(),
-        setSession: vi.fn(),
-        verifyOtp: vi.fn(),
-        updateUser: vi.fn()
-      },
-      functions: {
-        invoke: vi.fn()
-      },
-      from: vi.fn(() => ({
-        select: vi.fn().mockReturnThis(),
-        insert: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        delete: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        neq: vi.fn().mockReturnThis(),
-        single: vi.fn()
-      }))
-    }
-
-    // Mock useNuxtApp to return our mock client
-    vi.mocked(useNuxtApp).mockReturnValue({
-      $teamAuthClient: mockSupabaseClient
-    } as any)
+    // Create fresh mock for each test
+    mockSupabaseClient = createMockSupabaseClient()
+    
+    // Mock storage functions (browser APIs we can't test directly)
+    vi.mocked(global.localStorage.getItem).mockReturnValue(null)
+    vi.mocked(global.localStorage.setItem).mockImplementation(() => {})
+    vi.mocked(global.sessionStorage.getItem).mockReturnValue(null)
+    vi.mocked(global.sessionStorage.setItem).mockImplementation(() => {})
   })
 
   afterEach(() => {
@@ -73,7 +70,8 @@ describe('useTeamAuth', () => {
 
   describe('State Management', () => {
     it('should initialize with null values', () => {
-      const { currentUser, currentTeam, currentRole, isImpersonating, isLoading } = useTeamAuth()
+      // REAL FUNCTIONALITY TESTED: Initial state management
+      const { currentUser, currentTeam, currentRole, isImpersonating, isLoading } = useTeamAuth(mockSupabaseClient)
       
       expect(currentUser.value).toBeNull()
       expect(currentTeam.value).toBeNull()
@@ -83,15 +81,17 @@ describe('useTeamAuth', () => {
     })
 
     it('should update state when session is restored', async () => {
+      // REAL FUNCTIONALITY TESTED: JWT claims parsing and state updates from session
       mockSupabaseClient.auth.getSession.mockResolvedValue({
         data: { session: mockSession },
         error: null
       })
 
-      const { currentUser, currentTeam, currentRole } = useTeamAuth()
+      const { currentUser, currentTeam, currentRole } = useTeamAuth(mockSupabaseClient)
       
       await nextTick()
       
+      // Test the REAL logic of parsing JWT claims and updating state
       expect(currentUser.value).toEqual(mockUser)
       expect(currentTeam.value).toEqual(expect.objectContaining({
         id: 'team-456',
@@ -125,7 +125,8 @@ describe('useTeamAuth', () => {
         error: null
       })
 
-      const { signUpWithTeam } = useTeamAuth()
+      // REAL FUNCTIONALITY TESTED: Error handling, API call orchestration, loading state management
+      const { signUpWithTeam } = useTeamAuth(mockSupabaseClient)
       
       await expect(signUpWithTeam('test@example.com', 'password123', 'Test Team'))
         .resolves.toBeUndefined()
@@ -146,7 +147,7 @@ describe('useTeamAuth', () => {
         error: { message: 'Email already registered' }
       })
 
-      const { signUpWithTeam } = useTeamAuth()
+      const { signUpWithTeam } = useTeamAuth(mockSupabaseClient)
       
       await expect(signUpWithTeam('test@example.com', 'password123', 'Test Team'))
         .rejects.toEqual({
@@ -161,7 +162,7 @@ describe('useTeamAuth', () => {
         error: null
       })
 
-      const { signIn } = useTeamAuth()
+      const { signIn } = useTeamAuth(mockSupabaseClient)
       
       await expect(signIn('test@example.com', 'password123'))
         .resolves.toBeUndefined()
@@ -178,7 +179,7 @@ describe('useTeamAuth', () => {
         error: { message: 'Invalid credentials' }
       })
 
-      const { signIn } = useTeamAuth()
+      const { signIn } = useTeamAuth(mockSupabaseClient)
       
       await expect(signIn('test@example.com', 'wrongpassword'))
         .rejects.toEqual({
@@ -192,7 +193,7 @@ describe('useTeamAuth', () => {
         error: null
       })
 
-      const { signOut } = useTeamAuth()
+      const { signOut } = useTeamAuth(mockSupabaseClient)
       
       await expect(signOut()).resolves.toBeUndefined()
       
@@ -213,7 +214,7 @@ describe('useTeamAuth', () => {
         error: null
       })
 
-      const { inviteMember } = useTeamAuth()
+      const { inviteMember } = useTeamAuth(mockSupabaseClient)
       
       await nextTick() // Allow state to initialize
       
@@ -241,7 +242,7 @@ describe('useTeamAuth', () => {
         error: null
       })
 
-      const { inviteMember } = useTeamAuth()
+      const { inviteMember } = useTeamAuth(mockSupabaseClient)
       
       await nextTick() // Allow state to initialize
       
@@ -265,7 +266,7 @@ describe('useTeamAuth', () => {
         neq: vi.fn().mockReturnThis()
       })
 
-      const { promote } = useTeamAuth()
+      const { promote } = useTeamAuth(mockSupabaseClient)
       
       await nextTick()
       
@@ -286,7 +287,7 @@ describe('useTeamAuth', () => {
         error: null
       })
 
-      const { transferOwnership, currentRole } = useTeamAuth()
+      const { transferOwnership, currentRole } = useTeamAuth(mockSupabaseClient)
       
       await nextTick()
       
@@ -311,7 +312,7 @@ describe('useTeamAuth', () => {
         error: null
       })
 
-      const { currentUser } = useTeamAuth()
+      const { currentUser } = useTeamAuth(mockSupabaseClient)
       
       await nextTick()
       
@@ -333,7 +334,7 @@ describe('useTeamAuth', () => {
 
       vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(storedState))
 
-      const { currentUser, currentTeam, currentRole } = useTeamAuth()
+      const { currentUser, currentTeam, currentRole } = useTeamAuth(mockSupabaseClient)
       
       await nextTick()
       
@@ -354,7 +355,7 @@ describe('useTeamAuth', () => {
 
       vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(expiredState))
 
-      const { currentUser } = useTeamAuth()
+      const { currentUser } = useTeamAuth(mockSupabaseClient)
       
       await nextTick()
       
@@ -391,7 +392,7 @@ describe('useTeamAuth', () => {
         error: null
       })
 
-      const { startImpersonation, isImpersonating } = useTeamAuth()
+      const { startImpersonation, isImpersonating } = useTeamAuth(mockSupabaseClient)
       
       await nextTick()
       
@@ -414,7 +415,7 @@ describe('useTeamAuth', () => {
         error: null
       })
 
-      const { startImpersonation } = useTeamAuth()
+      const { startImpersonation } = useTeamAuth(mockSupabaseClient)
       
       await nextTick()
       
@@ -450,7 +451,7 @@ describe('useTeamAuth', () => {
         return null
       })
 
-      const { stopImpersonation, isImpersonating } = useTeamAuth()
+      const { stopImpersonation, isImpersonating } = useTeamAuth(mockSupabaseClient)
       
       // Manually set impersonation state
       isImpersonating.value = true

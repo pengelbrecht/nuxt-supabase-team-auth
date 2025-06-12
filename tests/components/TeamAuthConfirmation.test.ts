@@ -13,29 +13,42 @@ const mockRouter = {
   push: vi.fn()
 }
 
+// Mock vue-router composables
+vi.mock('vue-router', () => ({
+  useRoute: () => mockRoute,
+  useRouter: () => mockRouter
+}))
+
+// Mock Nuxt app
+const mockNuxtApp = {
+  $teamAuthClient: {
+    auth: {
+      verifyOtp: vi.fn()
+    },
+    functions: {
+      invoke: vi.fn()
+    }
+  }
+}
+
+vi.mock('#app', () => ({
+  useNuxtApp: () => mockNuxtApp
+}))
+
 describe('TeamAuthConfirmation', () => {
   let mockSupabaseClient: any
 
   beforeEach(() => {
     vi.clearAllMocks()
     
-    mockSupabaseClient = {
-      auth: {
-        verifyOtp: vi.fn()
-      },
-      functions: {
-        invoke: vi.fn()
-      }
-    }
-
-    // Mock useRoute and useRouter
-    vi.mocked(useRoute).mockReturnValue(mockRoute as any)
-    vi.mocked(useRouter).mockReturnValue(mockRouter as any)
+    // Reset mock values
+    mockRoute.query = {}
+    mockRoute.params = {}
     
-    // Mock useNuxtApp
-    vi.mocked(useNuxtApp).mockReturnValue({
-      $teamAuthClient: mockSupabaseClient
-    } as any)
+    // Reset mock functions
+    mockNuxtApp.$teamAuthClient.auth.verifyOtp.mockReset()
+    mockNuxtApp.$teamAuthClient.functions.invoke.mockReset()
+    mockRouter.push.mockReset()
 
     // Mock window.location.hash
     Object.defineProperty(window, 'location', {
