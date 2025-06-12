@@ -51,6 +51,17 @@ export interface TeamAuthState {
   impersonationExpiresAt: Ref<Date | null>
 }
 
+export interface SessionHealthResult {
+  isHealthy: boolean
+  issues: string[]
+}
+
+export interface ActiveTab {
+  tabId: string
+  timestamp: number
+  url: string
+}
+
 export interface TeamAuthMethods {
   signUpWithTeam: (email: string, password: string, teamName: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
@@ -66,6 +77,12 @@ export interface TeamAuthMethods {
   deleteTeam: () => Promise<void>
   startImpersonation: (targetUserId: string, reason: string) => Promise<void>
   stopImpersonation: () => Promise<void>
+  
+  // Session management utilities
+  sessionHealth: () => SessionHealthResult
+  triggerSessionRecovery: () => void
+  getActiveTabs: () => ActiveTab[]
+  isTabPrimary: boolean
 }
 
 export type TeamAuth = TeamAuthState & TeamAuthMethods

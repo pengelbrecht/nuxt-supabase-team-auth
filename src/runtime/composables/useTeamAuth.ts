@@ -2,6 +2,7 @@ import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
 import type { Ref } from 'vue'
 import type { SupabaseClient, AuthSession, User as SupabaseUser } from '@supabase/supabase-js'
 import type { User, Team, TeamMember, TeamAuth, TeamAuthState } from '../types'
+import { useSessionSync } from './useSessionSync'
 
 interface TeamAuthError {
   code: string
@@ -839,7 +840,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     }
   }
   
-  // Enhanced state initialization with dual-session awareness
+  // Enhanced state initialization with dual-session awareness and cross-tab sync
   const initializeStateWithRestore = async () => {
     try {
       isLoading.value = true
@@ -911,20 +912,40 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     })
   }
   
+  // Session sync setup
+  const sessionSync = useSessionSync()
+  let sessionSyncCleanup: (() => void) | null = null
+  
   // Initialize immediately for testing, or on mount for real usage
   const initializeComposable = async () => {
     await initializeStateWithRestore()
     setupEnhancedAuthListener()
+    
+    // Set up cross-tab session synchronization
+    sessionSyncCleanup = sessionSync.initializeSessionSync(
+      currentUser,
+      currentTeam, 
+      currentRole,
+      isImpersonating,
+      impersonationExpiresAt,
+      (state, eventType) => {
+        console.info(`Cross-tab sync: ${eventType}`, state)
+        // Additional handling for specific sync events can be added here
+      }
+    )
     
     // Set up periodic expiration checks for impersonation
     const expirationInterval = setInterval(() => {
       checkImpersonationExpiration()
     }, 60000) // Check every minute
     
-    // Clean up interval on unmount (only works in component context)
+    // Clean up intervals and session sync on unmount
     try {
       onUnmounted(() => {
         clearInterval(expirationInterval)
+        if (sessionSyncCleanup) {
+          sessionSyncCleanup()
+        }
       })
     } catch (error) {
       // Not in component context (likely testing) - ignore
@@ -974,6 +995,12 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     deleteTeam,
     startImpersonation,
     stopImpersonation,
+    
+    // Session management utilities
+    sessionHealth: () => sessionSync.performSessionHealthCheck(currentUser, currentTeam, currentRole, isImpersonating, impersonationExpiresAt),
+    triggerSessionRecovery: () => sessionSync.triggerSessionRecovery(currentUser, currentTeam, currentRole, isImpersonating, impersonationExpiresAt),
+    getActiveTabs: sessionSync.getActiveTabs,
+    isTabPrimary: sessionSync.isPrimaryTab,
     
     // Testing utilities
     $initializationPromise: initializationPromise

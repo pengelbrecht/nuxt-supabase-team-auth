@@ -1082,7 +1082,7 @@
       "description": "Implement robust session management with token refresh, persistence, and cleanup",
       "details": "Add functionality to handle user sessions including automatic token refresh, session persistence across browser refreshes, and proper session cleanup on logout",
       "testStrategy": "",
-      "status": "pending",
+      "status": "done",
       "dependencies": [],
       "priority": "medium",
       "subtasks": [
@@ -1091,7 +1091,7 @@
           "title": "Implement Token Refresh Logic",
           "description": "Create automatic token refresh mechanism to handle expired JWT tokens",
           "details": "Build logic to detect token expiration and automatically refresh tokens before they expire",
-          "status": "pending",
+          "status": "done",
           "dependencies": [],
           "parentTaskId": 19
         }
@@ -1300,7 +1300,7 @@
       "description": "Create comprehensive unit tests for all Edge Functions (create-team-and-owner, invite-member, accept-invite, start-impersonation, stop-impersonation, transfer-ownership) using TDD methodology. Test input validation, error handling, permission checks, and expected outputs with mocked Supabase clients.",
       "details": "",
       "testStrategy": "",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         3,
         28
