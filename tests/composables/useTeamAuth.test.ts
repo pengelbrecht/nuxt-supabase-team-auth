@@ -3,30 +3,44 @@ import { nextTick } from 'vue'
 import { useTeamAuth } from '../../src/runtime/composables/useTeamAuth'
 
 // Create mock Supabase client - this is the only external dependency we mock
-const createMockSupabaseClient = () => ({
-  auth: {
-    getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
-    signUp: vi.fn(),
-    signInWithPassword: vi.fn(),
-    signOut: vi.fn(),
-    onAuthStateChange: vi.fn(),
-    setSession: vi.fn(),
-    verifyOtp: vi.fn(),
-    updateUser: vi.fn()
-  },
-  functions: {
-    invoke: vi.fn()
-  },
-  from: vi.fn(() => ({
+const createMockSupabaseClient = () => {
+  const mockQueryBuilder = {
     select: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(), 
     update: vi.fn().mockReturnThis(),
     delete: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     neq: vi.fn().mockReturnThis(),
-    single: vi.fn()
-  }))
-})
+    single: vi.fn().mockResolvedValue({ data: null, error: null })
+  }
+  
+  return {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      signUp: vi.fn(),
+      signInWithPassword: vi.fn(),
+      signOut: vi.fn(),
+      onAuthStateChange: vi.fn(),
+      setSession: vi.fn(),
+      verifyOtp: vi.fn(),
+      updateUser: vi.fn()
+    },
+    functions: {
+      invoke: vi.fn()
+    },
+    from: vi.fn(() => ({
+      ...mockQueryBuilder,
+      // Make sure chained methods continue to return the builder
+      update: vi.fn(() => ({
+        ...mockQueryBuilder,
+        eq: vi.fn(() => ({
+          ...mockQueryBuilder,
+          neq: vi.fn().mockResolvedValue({ error: null })
+        }))
+      }))
+    }))
+  }
+}
 
 // Mock data
 const mockUser = {
@@ -41,8 +55,22 @@ const mockTeam = {
   created_at: '2023-01-01T00:00:00Z'
 }
 
+// Create a proper JWT token for testing JWT parsing logic
+const createMockJWT = (payload: any) => {
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+  const encodedPayload = btoa(JSON.stringify(payload))
+  const signature = 'mock-signature-for-testing'
+  return `${header}.${encodedPayload}.${signature}`
+}
+
 const mockSession = {
-  access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZWFtX2lkIjoidGVhbS00NTYiLCJ0ZWFtX25hbWUiOiJUZXN0IFRlYW0iLCJ0ZWFtX3JvbGUiOiJvd25lciJ9.test',
+  access_token: createMockJWT({
+    team_id: 'team-456',
+    team_name: 'Test Team', 
+    team_role: 'owner',
+    sub: 'user-123',
+    email: 'test@example.com'
+  }),
   refresh_token: 'refresh-token',
   expires_at: Date.now() / 1000 + 3600,
   user: mockUser
@@ -87,9 +115,12 @@ describe('useTeamAuth', () => {
         error: null
       })
 
-      const { currentUser, currentTeam, currentRole } = useTeamAuth(mockSupabaseClient)
+      const { currentUser, currentTeam, currentRole, $initializationPromise } = useTeamAuth(mockSupabaseClient)
       
-      await nextTick()
+      // Wait for initialization to complete
+      await $initializationPromise
+      
+      // Initialization complete, state should be updated
       
       // Test the REAL logic of parsing JWT claims and updating state
       expect(currentUser.value).toEqual(mockUser)

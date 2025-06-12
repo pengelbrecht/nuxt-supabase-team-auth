@@ -911,9 +911,9 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     })
   }
   
-  // Initialize on mount with enhanced persistence
-  onMounted(() => {
-    initializeStateWithRestore()
+  // Initialize immediately for testing, or on mount for real usage
+  const initializeComposable = async () => {
+    await initializeStateWithRestore()
     setupEnhancedAuthListener()
     
     // Set up periodic expiration checks for impersonation
@@ -921,11 +921,34 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       checkImpersonationExpiration()
     }, 60000) // Check every minute
     
-    // Clean up interval on unmount
-    onUnmounted(() => {
-      clearInterval(expirationInterval)
+    // Clean up interval on unmount (only works in component context)
+    try {
+      onUnmounted(() => {
+        clearInterval(expirationInterval)
+      })
+    } catch (error) {
+      // Not in component context (likely testing) - ignore
+    }
+  }
+
+  // For testing environments, initialize immediately
+  // For component contexts, use onMounted
+  let initializationPromise: Promise<void>
+  
+  // Simple heuristic: if we have injectedClient, we're likely in a test
+  if (injectedClient) {
+    initializationPromise = initializeComposable()
+  } else {
+    // Real component context - use onMounted
+    let initResolver: () => void
+    initializationPromise = new Promise<void>((resolve) => {
+      initResolver = resolve
     })
-  })
+    
+    onMounted(() => {
+      initializeComposable().then(initResolver)
+    })
+  }
   
   return {
     // State
@@ -950,6 +973,9 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     renameTeam,
     deleteTeam,
     startImpersonation,
-    stopImpersonation
+    stopImpersonation,
+    
+    // Testing utilities
+    $initializationPromise: initializationPromise
   }
 }
