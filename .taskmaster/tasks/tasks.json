@@ -1236,7 +1236,7 @@
           "title": "Create Test Database Setup and Helpers",
           "description": "Create test database utilities for seeding data, cleaning up between tests, and managing test user accounts. Include helpers for creating test teams and users with different roles",
           "details": "",
-          "status": "pending",
+          "status": "done",
           "dependencies": [],
           "parentTaskId": 28
         },
