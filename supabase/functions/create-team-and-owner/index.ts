@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 interface CreateTeamRequest {
@@ -81,6 +82,20 @@ serve(async (req) => {
     })
 
     if (authError || !authData.user) {
+      // Check if it's a duplicate email error
+      if (authError?.message?.includes('already been registered')) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'EMAIL_ALREADY_EXISTS', 
+            message: 'A user with this email address already exists' 
+          }),
+          { 
+            status: 409, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
+      
       return new Response(
         JSON.stringify({ error: 'Failed to create user account', details: authError?.message }),
         { 

@@ -1,6 +1,4 @@
-import { defineBuildConfig } from 'unbuild'
-
-export default defineBuildConfig({
+export default {
   declaration: true,
   entries: [
     'src/module',
@@ -8,7 +6,7 @@ export default defineBuildConfig({
   ],
   externals: [
     '@nuxt/kit',
-    '@nuxt/schema',
+    '@nuxt/schema', 
     'nuxt'
   ]
-})
+}

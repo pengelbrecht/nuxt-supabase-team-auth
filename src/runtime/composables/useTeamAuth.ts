@@ -1,7 +1,7 @@
-import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted, getCurrentInstance } from 'vue'
 import type { Ref } from 'vue'
 import type { SupabaseClient, AuthSession, User as SupabaseUser } from '@supabase/supabase-js'
-import type { User, Team, TeamMember, TeamAuth, TeamAuthState } from '../types'
+import type { User, Profile, Team, TeamMember, TeamAuth, TeamAuthState } from '../types'
 import { useSessionSync } from './useSessionSync'
 
 interface TeamAuthError {
@@ -9,14 +9,6 @@ interface TeamAuthError {
   message: string
 }
 
-interface JWTClaims {
-  team_id?: string
-  team_name?: string
-  team_role?: string
-  act_as?: boolean
-  original_admin_id?: string
-  impersonation_session_id?: string
-}
 
 export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   // Reactive state
@@ -27,33 +19,19 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   const isImpersonating = ref(false)
   const impersonationExpiresAt = ref<Date | null>(null)
   
-  // Supabase client (will be injected by plugin or provided for testing)
-  const supabase = injectedClient || (() => {
-    try {
-      const { useNuxtApp } = require('#app')
-      return useNuxtApp().$teamAuthClient as SupabaseClient
-    } catch (error) {
-      throw new Error('No Supabase client available. Ensure you are in a Nuxt context or provide a client.')
+  // Supabase client initialization - for client-only usage
+  const getSupabaseClient = (): SupabaseClient => {
+    if (injectedClient) return injectedClient
+    
+    const nuxtApp = useNuxtApp()
+    if (!nuxtApp?.$teamAuthClient) {
+      throw new Error('Supabase client not available. Ensure auth components are wrapped in <ClientOnly>')
     }
-  })()
-  
-  // JWT Claims parsing utility
-  const parseJWTClaims = (token: string): JWTClaims => {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      return {
-        team_id: payload.team_id,
-        team_name: payload.team_name,
-        team_role: payload.team_role,
-        act_as: payload.act_as,
-        original_admin_id: payload.original_admin_id,
-        impersonation_session_id: payload.impersonation_session_id
-      }
-    } catch (error) {
-      console.error('Failed to parse JWT claims:', error)
-      return {}
-    }
+    return nuxtApp.$teamAuthClient as SupabaseClient
   }
+  
+  const supabase = getSupabaseClient()
+  
   
   // State initialization
   const initializeState = async () => {
@@ -79,7 +57,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   // Update state from session
   const updateStateFromSession = async (session: AuthSession) => {
     const user = session.user
-    const claims = parseJWTClaims(session.access_token)
     
     // Set current user
     currentUser.value = {
@@ -88,21 +65,42 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       user_metadata: user.user_metadata
     }
     
-    // Set team information from JWT claims
-    if (claims.team_id && claims.team_name) {
-      currentTeam.value = {
-        id: claims.team_id,
-        name: claims.team_name,
-        created_at: '' // Will be populated when needed
+    // Fetch team information from database
+    try {
+      const { data: teamMember, error } = await supabase
+        .from('team_members')
+        .select(`
+          role,
+          teams (
+            id,
+            name,
+            created_at
+          )
+        `)
+        .eq('user_id', user.id)
+        .single()
+      
+      if (!error && teamMember) {
+        currentTeam.value = {
+          id: teamMember.teams.id,
+          name: teamMember.teams.name,
+          created_at: teamMember.teams.created_at
+        }
+        currentRole.value = teamMember.role
+      } else {
+        // No team membership found
+        currentTeam.value = null
+        currentRole.value = null
       }
-      currentRole.value = claims.team_role || null
+    } catch (error) {
+      console.warn('Failed to fetch team information:', error)
+      currentTeam.value = null
+      currentRole.value = null
     }
     
-    // Set impersonation state
-    isImpersonating.value = claims.act_as === true
-    if (isImpersonating.value && session.expires_at) {
-      impersonationExpiresAt.value = new Date(session.expires_at * 1000)
-    }
+    // Reset impersonation state (we're not using JWT claims for this yet)
+    isImpersonating.value = false
+    impersonationExpiresAt.value = null
   }
   
   // Reset state on sign out
@@ -132,36 +130,34 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     try {
       isLoading.value = true
       
-      // First, sign up the user
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password
-      })
-      
-      if (signUpError) {
-        throw { code: 'SIGNUP_FAILED', message: signUpError.message }
-      }
-      
-      if (!authData.user) {
-        throw { code: 'USER_NOT_CREATED', message: 'User was not created successfully' }
-      }
-      
-      // Create team and add user as owner using Edge Function
+      // Call Edge Function to create user and team in one transaction
       const { data, error } = await supabase.functions.invoke('create-team-and-owner', {
-        body: { teamName }
+        body: { 
+          email, 
+          password, 
+          team_name: teamName 
+        }
       })
       
       if (error) {
         throw { code: 'TEAM_CREATION_FAILED', message: error.message }
       }
       
-      // The Edge Function should return a new JWT with team claims
-      if (data?.access_token) {
-        await supabase.auth.setSession({
-          access_token: data.access_token,
-          refresh_token: data.refresh_token
-        })
+      if (!data?.success) {
+        throw { code: 'TEAM_CREATION_FAILED', message: 'Edge Function returned unsuccessful response' }
       }
+      
+      // The Edge Function creates the user and team, now we need to sign in
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
+      
+      if (signInError) {
+        throw { code: 'SIGNIN_FAILED', message: signInError.message }
+      }
+      
+      // State will be updated by the auth listener
     } catch (error: any) {
       console.error('Sign up with team failed:', error)
       throw error
@@ -386,26 +382,69 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     }
   }
   
-  // Profile and team settings methods
-  const updateProfile = async (updates: Partial<User>): Promise<void> => {
+  // Profile management methods
+  const getProfile = async (): Promise<Profile | null> => {
     try {
       if (!currentUser.value) {
         throw { code: 'NOT_AUTHENTICATED', message: 'User not authenticated' }
       }
       
-      const { error } = await supabase.auth.updateUser({
-        data: updates.user_metadata || {}
-      })
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.value.id)
+        .single()
       
       if (error) {
-        throw { code: 'UPDATE_FAILED', message: error.message }
+        if (error.code === 'PGRST116') {
+          // Profile doesn't exist, return null
+          return null
+        }
+        throw { code: 'FETCH_FAILED', message: error.message }
       }
       
-      // Update local state
-      if (currentUser.value) {
-        currentUser.value = {
-          ...currentUser.value,
-          ...updates
+      return data
+    } catch (error: any) {
+      console.error('Get profile failed:', error)
+      throw error
+    }
+  }
+  
+  const updateProfile = async (updates: Partial<Profile>): Promise<void> => {
+    try {
+      if (!currentUser.value) {
+        throw { code: 'NOT_AUTHENTICATED', message: 'User not authenticated' }
+      }
+      
+      // Handle password update separately through auth
+      const profileUpdates = { ...updates }
+      let authUpdates: any = {}
+      
+      if ('password' in updates) {
+        authUpdates.password = updates.password
+        delete profileUpdates.password
+      }
+      
+      // Update auth user if password is being changed
+      if (authUpdates.password) {
+        const { error: authError } = await supabase.auth.updateUser(authUpdates)
+        if (authError) {
+          throw { code: 'AUTH_UPDATE_FAILED', message: authError.message }
+        }
+      }
+      
+      // Update profile in profiles table
+      if (Object.keys(profileUpdates).length > 0) {
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({
+            id: currentUser.value.id,
+            ...profileUpdates
+          })
+          .eq('id', currentUser.value.id)
+        
+        if (error) {
+          throw { code: 'PROFILE_UPDATE_FAILED', message: error.message }
         }
       }
     } catch (error: any) {
@@ -500,6 +539,8 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   
   const storeImpersonationData = (originalSession: AuthSession, impersonationData: any) => {
     try {
+      if (typeof window === 'undefined') return
+      
       // Tier 1: Store current session backup
       localStorage.setItem(STORAGE_KEYS.TIER_1, JSON.stringify({
         access_token: originalSession.access_token,
@@ -539,6 +580,8 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   
   const clearImpersonationData = () => {
     try {
+      if (typeof window === 'undefined') return
+      
       Object.values(STORAGE_KEYS).forEach(key => {
         localStorage.removeItem(key)
         sessionStorage.removeItem(key)
@@ -550,6 +593,8 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   
   const getStoredOriginalSession = () => {
     try {
+      if (typeof window === 'undefined') return null
+      
       const tier1Data = localStorage.getItem(STORAGE_KEYS.TIER_1)
       const tier3Data = localStorage.getItem(STORAGE_KEYS.TIER_3)
       const tier4Data = sessionStorage.getItem(STORAGE_KEYS.TIER_4)
@@ -774,6 +819,15 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   
   // Dual-session management utilities
   const getDualSessionState = () => {
+    if (typeof window === 'undefined') {
+      return {
+        hasOriginalSession: false,
+        hasImpersonationSession: false,
+        originalSession: null,
+        impersonationData: null
+      }
+    }
+    
     const storedOriginal = getStoredOriginalSession()
     const storedImpersonation = sessionStorage.getItem(STORAGE_KEYS.TIER_2)
     
@@ -860,8 +914,9 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         
         // If we have an impersonation session stored but current session doesn't indicate impersonation,
         // there might be a session mismatch - clear impersonation data
-        const claims = parseJWTClaims(session.access_token)
-        if (!claims.act_as && isImpersonating.value) {
+        // Note: Since we no longer use JWT claims for impersonation detection, we rely on stored session data
+        const dualState = getDualSessionState()
+        if (!dualState.hasImpersonationSession && isImpersonating.value) {
           console.warn('Session mismatch detected, clearing impersonation state')
           isImpersonating.value = false
           impersonationExpiresAt.value = null
@@ -902,12 +957,25 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   // Enhanced auth listener that handles persistence
   const setupEnhancedAuthListener = () => {
     supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        await updateStateFromSession(session)
-      } else if (event === 'SIGNED_OUT') {
-        resetStateWithClear()
-      } else if (event === 'TOKEN_REFRESHED' && session) {
-        await updateStateFromSession(session)
+      try {
+        if (event === 'SIGNED_IN' && session) {
+          await updateStateFromSession(session)
+        } else if (event === 'SIGNED_OUT') {
+          resetStateWithClear()
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          await updateStateFromSession(session)
+        }
+      } catch (error) {
+        console.error('Auth state change error:', error)
+        // Don't let auth listener errors break the sign-in process
+        if (event === 'SIGNED_IN' && session) {
+          // Set minimal user state even if team fetching fails
+          currentUser.value = {
+            id: session.user.id,
+            email: session.user.email!,
+            user_metadata: session.user.user_metadata
+          }
+        }
       }
     })
   }
@@ -940,15 +1008,13 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     }, 60000) // Check every minute
     
     // Clean up intervals and session sync on unmount
-    try {
+    if (getCurrentInstance()) {
       onUnmounted(() => {
         clearInterval(expirationInterval)
         if (sessionSyncCleanup) {
           sessionSyncCleanup()
         }
       })
-    } catch (error) {
-      // Not in component context (likely testing) - ignore
     }
   }
 
@@ -990,6 +1056,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     promote,
     demote,
     transferOwnership,
+    getProfile,
     updateProfile,
     renameTeam,
     deleteTeam,

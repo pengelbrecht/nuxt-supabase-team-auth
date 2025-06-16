@@ -84,10 +84,9 @@ export default defineNuxtModule<ModuleOptions>({
       prefix: ''
     })
 
-    // Add CSS for components (if using Tailwind)
-    if (nuxt.options.css) {
-      nuxt.options.css.push(resolver.resolve('./runtime/assets/css/components.css'))
-    }
+    // Add CSS for components - only our custom styles, not conflicting with Nuxt UI
+    nuxt.options.css = nuxt.options.css || []
+    nuxt.options.css.push(resolver.resolve('./runtime/assets/css/components.css'))
 
     // Add type declarations
     nuxt.hook('prepare:types', (options) => {

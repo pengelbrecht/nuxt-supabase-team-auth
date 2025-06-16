@@ -9,6 +9,20 @@ export interface User {
   }
 }
 
+export interface Profile {
+  id: string
+  full_name?: string
+  avatar_url?: string
+  phone?: string
+  bio?: string
+  timezone?: string
+  language?: string
+  email_notifications?: boolean
+  marketing_emails?: boolean
+  created_at: string
+  updated_at: string
+}
+
 export interface Team {
   id: string
   name: string
@@ -72,7 +86,8 @@ export interface TeamAuthMethods {
   promote: (userId: string) => Promise<void>
   demote: (userId: string) => Promise<void>
   transferOwnership: (userId: string) => Promise<void>
-  updateProfile: (updates: Partial<User>) => Promise<void>
+  getProfile: () => Promise<Profile | null>
+  updateProfile: (updates: Partial<Profile>) => Promise<void>
   renameTeam: (name: string) => Promise<void>
   deleteTeam: () => Promise<void>
   startImpersonation: (targetUserId: string, reason: string) => Promise<void>

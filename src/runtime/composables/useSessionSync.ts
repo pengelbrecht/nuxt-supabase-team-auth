@@ -293,6 +293,8 @@ export function useSessionSync() {
   // Get list of active tabs
   function getActiveTabs() {
     try {
+      if (typeof window === 'undefined') return []
+      
       const stored = localStorage.getItem(STORAGE_KEYS.ACTIVE_TABS)
       if (!stored) return []
       
@@ -310,6 +312,8 @@ export function useSessionSync() {
   
   // Check if this is the primary tab (oldest active tab)
   function isPrimaryTab(): boolean {
+    if (typeof window === 'undefined') return true
+    
     const activeTabs = getActiveTabs()
     if (activeTabs.length === 0) return true
     
@@ -364,6 +368,11 @@ export function useSessionSync() {
     impersonationExpiresAt: Ref<Date | null>,
     onStateUpdate: (state: TeamSessionState, eventType: keyof SessionSyncEvents) => void = () => {}
   ) {
+    // Skip initialization during SSR
+    if (typeof window === 'undefined') {
+      return () => {} // Return empty cleanup function
+    }
+    
     registerActiveTab()
     
     // Set up cross-tab listener
