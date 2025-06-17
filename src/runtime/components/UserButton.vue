@@ -1,30 +1,45 @@
 <template>
-  <UDropdownMenu :items="dropdownItems" :content="{ align: 'end' }">
-    <UButton 
-      variant="ghost" 
-      class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-    >
-      <UAvatar
-        :src="currentUser?.user_metadata?.avatar_url || currentUser?.avatar_url || undefined"
-        :alt="currentUser?.user_metadata?.full_name || currentUser?.full_name || currentUser?.email || 'User'"
-        :size="props.size"
-        :icon="!currentUser ? 'i-lucide-user' : undefined"
-        class="ring-2 ring-white dark:ring-gray-900"
+  <div>
+    <UDropdownMenu :items="dropdownItems" :content="{ align: 'end' }">
+      <UButton 
+        variant="ghost" 
+        class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
       >
-        {{ avatarFallback }}
-      </UAvatar>
-      
-      <!-- Show name if requested -->
-      <span v-if="props.showName && currentUser" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-        {{ currentUser.user_metadata?.full_name || currentUser.full_name || currentUser.email }}
-      </span>
-    </UButton>
-  </UDropdownMenu>
+        <!-- Show name if requested -->
+        <span 
+          v-if="props.showName && currentUser" 
+          class="mr-3 text-sm font-medium !text-gray-700 dark:!text-gray-300"
+          style="color: rgb(55, 65, 81) !important;"
+        >
+          {{ currentProfile?.full_name || currentUser.user_metadata?.name || currentUser.email }}
+        </span>
+        
+        <UAvatar
+          :src="currentUser?.user_metadata?.avatar_url || undefined"
+          :alt="currentProfile?.full_name || currentUser?.user_metadata?.name || currentUser?.email || 'User'"
+          :size="props.size"
+          :icon="!currentUser ? 'i-lucide-user' : undefined"
+          class="ring-2 ring-white dark:ring-gray-900"
+        >
+          {{ avatarFallback }}
+        </UAvatar>
+      </UButton>
+    </UDropdownMenu>
+
+    <!-- Settings Modal -->
+    <SettingsModal 
+      v-model="showSettingsModal" 
+      :tab="settingsTab"
+      @saved="handleSettingsSaved"
+      @error="handleSettingsError"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
+import SettingsModal from './SettingsModal.vue'
 
 // Props
 interface Props {
@@ -47,33 +62,36 @@ const emit = defineEmits<{
 }>()
 
 // Get auth state
-const { currentUser, currentRole, signOut, isImpersonating, stopImpersonation } = useTeamAuth()
+const { currentUser, currentRole, signOut, isImpersonating, stopImpersonation, getAvatarFallback, getProfile } = useTeamAuth()
+
+// Profile data
+const currentProfile = ref<any>(null)
+
+// Modal state
+const showSettingsModal = ref(false)
+const settingsTab = ref<'profile' | 'team'>('profile')
+
+// Load profile data when user changes
+watch(() => currentUser.value?.id, async (newUserId, oldUserId) => {
+  if (newUserId && newUserId !== oldUserId) {
+    try {
+      currentProfile.value = await getProfile()
+    } catch (error) {
+      console.error('Failed to load profile in UserButton:', error)
+    }
+  }
+}, { immediate: true })
 
 // Computed properties
 const avatarFallback = computed(() => {
   if (!currentUser.value) return ''
   
-  // Try different paths for user data (user_metadata takes priority)
-  const fullName = currentUser.value.user_metadata?.full_name || currentUser.value.full_name
-  const email = currentUser.value.email
-  
-  // Get initials from full name if available
-  if (fullName && fullName.trim()) {
-    return fullName
-      .trim()
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
-  
-  // Fallback to first letter of email
-  if (email) {
-    return email[0].toUpperCase()
-  }
-  
-  return 'U'
+  // Use shared avatar fallback logic with profile data
+  const profileFullName = currentProfile.value?.full_name
+  return getAvatarFallback({
+    fullName: profileFullName,
+    email: undefined // Let it use currentUser.email
+  })
 })
 
 const isAdmin = computed(() => {
@@ -83,6 +101,27 @@ const isAdmin = computed(() => {
 const isSuperAdmin = computed(() => {
   return currentRole.value === 'super_admin'
 })
+
+// Modal handlers
+const openProfileSettings = () => {
+  settingsTab.value = 'profile'
+  showSettingsModal.value = true
+}
+
+const openTeamSettings = () => {
+  settingsTab.value = 'team'
+  showSettingsModal.value = true
+}
+
+const handleSettingsSaved = (data: any) => {
+  console.log('Settings saved:', data)
+  // Optionally close modal or show success message
+}
+
+const handleSettingsError = (error: string) => {
+  console.error('Settings error:', error)
+  // Handle error display
+}
 
 // Dropdown menu items for Nuxt UI v3
 const dropdownItems = computed(() => {
@@ -97,37 +136,37 @@ const dropdownItems = computed(() => {
 
   const items = []
   
-  // User info header
-  items.push({
-    label: currentUser.value.user_metadata?.full_name || currentUser.value.full_name || currentUser.value.email || 'User',
-    icon: 'i-lucide-user-circle',
-    type: 'label',
-    disabled: true
-  })
-  
-  // Separator
-  items.push({
-    type: 'separator'
-  })
+  // Only show user info header if name is NOT already shown next to button
+  if (!props.showName) {
+    items.push({
+      label: currentProfile.value?.full_name || currentUser.value.user_metadata?.name || currentUser.value.email || 'User',
+      icon: 'i-lucide-user-circle',
+      type: 'label',
+      disabled: true
+    })
+    
+    // Separator
+    items.push({
+      type: 'separator'
+    })
+  }
   
   // Main actions
   items.push({
     label: 'Profile & Settings',
     icon: 'i-lucide-user',
     onSelect: () => {
-      console.log('Profile clicked')
-      emit('profile')
+      openProfileSettings()
     }
   })
   
-  // Team management (admin/owner only)
-  if (isAdmin.value) {
+  // Team management (admin/owner + super_admin only)
+  if (isAdmin.value || isSuperAdmin.value) {
     items.push({
       label: 'Team Settings',
       icon: 'i-lucide-users',
       onSelect: () => {
-        console.log('Team Settings clicked')
-        emit('teamSettings')
+        openTeamSettings()
       }
     })
   }

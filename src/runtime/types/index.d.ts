@@ -4,6 +4,7 @@ export interface User {
   id: string
   email: string
   user_metadata?: {
+    // Standard Supabase auth field for user's display name
     name?: string
     avatar_url?: string
   }
@@ -92,6 +93,7 @@ export interface TeamAuthMethods {
   deleteTeam: () => Promise<void>
   startImpersonation: (targetUserId: string, reason: string) => Promise<void>
   stopImpersonation: () => Promise<void>
+  getAvatarFallback: (overrides?: { fullName?: string | null; email?: string | null }) => string
   
   // Session management utilities
   sessionHealth: () => SessionHealthResult

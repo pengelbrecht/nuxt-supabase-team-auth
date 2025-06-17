@@ -56,3 +56,113 @@ public.team_members (
 -  UserButton avatar fallback logic
 -  ProfileForm UX improvements
 -  RLS policies (keep them simple - users access own data only)
+
+## Form/Dialog Design Patterns
+
+### Proven Form Layout Structure
+Use this battle-tested hierarchy based on ProfileForm implementation:
+
+```vue
+<!-- Parent container card -->
+<UCard class="w-full">
+  <template #header>
+    <!-- Main title and action buttons -->
+    <div class="flex justify-between items-center">
+      <h2>Form Title</h2>
+      <UButton>Primary Action</UButton>
+    </div>
+  </template>
+
+  <div class="space-y-8">
+    <!-- Alert messages -->
+    <UAlert v-if="message" />
+    
+    <UForm>
+      <!-- Section cards -->
+      <UCard variant="subtle" class="mb-6">
+        <template #header>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Section Title
+          </h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Section description
+          </p>
+        </template>
+        
+        <!-- Standard form fields -->
+        <UFormField label="Field Name" name="field_name" required class="flex items-center justify-between mb-4 gap-2">
+          <UInput v-model="form.field_name" size="md" />
+        </UFormField>
+        
+        <!-- Avatar-style section with custom layout -->
+        <div class="flex items-center mb-4">
+          <UAvatar size="xl">PE</UAvatar>
+          <div style="width: 1rem; flex-shrink: 0;"></div>
+          <UFormField label="File Upload" name="file" description="File requirements" class="flex items-center justify-between gap-2 flex-1">
+            <UInput type="file" />
+          </UFormField>
+        </div>
+      </UCard>
+    </UForm>
+  </div>
+</UCard>
+```
+
+### Critical Spacing Rules (Hard-Won Lessons)
+- **NOT `not-last:pb-4`** - This class doesn't work reliably in Nuxt UI context
+- **USE `mb-4`** on individual UFormField components instead of complex selectors
+- **Text spacing**: Use `mt-1` for descriptions under headers (not `mt-2`)
+- **Card spacing**: `mb-6` between section cards works with Nuxt UI internal spacing
+- **Mixed margins**: Sometimes `mb-` works better than `pb-` depending on content flow
+
+### Form Field Patterns
+
+#### Standard Horizontal Fields
+```vue
+<UFormField 
+  label="Field Name" 
+  name="field_name" 
+  required 
+  class="flex items-center justify-between mb-4 gap-2"
+>
+  <UInput v-model="form.field_name" size="md" />
+</UFormField>
+```
+
+#### Avatar + File Upload Layout
+```vue
+<div class="flex items-center mb-4">
+  <UAvatar size="xl">{{ initials }}</UAvatar>
+  <div style="width: 1rem; flex-shrink: 0;"></div>
+  <UFormField 
+    label="Profile Picture" 
+    name="avatar" 
+    description="JPG, GIF or PNG. Max size 2MB." 
+    class="flex items-center justify-between gap-2 flex-1"
+  >
+    <UInput type="file" accept="image/*" />
+  </UFormField>
+</div>
+```
+
+#### Section Headers
+```vue
+<div class="mb-6">
+  <h4 class="font-medium text-gray-900 dark:text-gray-100">Section Name</h4>
+  <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+    Section explanation text.
+  </p>
+</div>
+```
+
+### Loading States
+- **Separate loading states** for different actions (profile vs password)
+- Use component-level loading (`isProfileLoading`) not global (`isLoading`)
+- Apply loading state to both button and related form fields
+
+### Form Organization
+1. **Parent UCard** - Main container with title and primary action
+2. **Section UCards** - `variant="subtle"` for logical groupings  
+3. **No wrapper divs** - Direct form fields in card content
+4. **Independent actions** - Separate buttons for different operations
+5. **Inline spacers** - Use `<div style="width: 1rem; flex-shrink: 0;"></div>` for precise spacing

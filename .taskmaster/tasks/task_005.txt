@@ -1,16 +1,16 @@
 # Task ID: 5
 # Title: Build Vue 3 UI Components Using Nuxt UI Primitives
-# Status: pending
+# Status: in-progress
 # Dependencies: 4
 # Priority: medium
-# Description: Create all required Vue 3 components using only Nuxt UI open-source primitives as specified in the component mapping
+# Description: Create all required Vue 3 components using only Nuxt UI open-source primitives as specified in the component mapping.
 # Details:
 Implement components using specified Nuxt UI primitives:
-- <AuthSignIn> & <AuthSignUpWithTeam>: Use UCard, UFormGroup, UInput, UButton
-- <UserButton>: Use UAvatar, UDropdown for user menu
-- <ProfileForm>: Use UCard, UFormGroup, UInput, UButton for profile editing
+- <AuthSignIn> & <AuthSignUpWithTeam>: Use UCard, UFormField, UInput, UButton
+- <UserButton>: Use UAvatar, UDropdownMenu for user menu
+- <ProfileForm>: Use UCard, UFormField, UInput, UButton for profile editing
 - <TeamMembersTable>: Use UTable, UBadge for role display
-- <TeamSettingsModal>: Use UModal, UFormGroup, UInput, UButton
+- <TeamSettingsModal>: Use UModal, UFormField, UInput, UButton
 - <SignedIn> & <SignedOut>: Thin wrappers with v-if using isSignedIn from useTeamAuth
 
 Ensure WCAG 2.1 AA compliance, keyboard navigation, screen reader support. Expose slots and props for customization. Include impersonation banner component with countdown timer.
@@ -19,31 +19,58 @@ Ensure WCAG 2.1 AA compliance, keyboard navigation, screen reader support. Expos
 Component tests with Vue Test Utils, accessibility tests with @vue/test-utils and axe-core, visual regression tests, keyboard navigation tests.
 
 # Subtasks:
-## 1. Implement Authentication Components [pending]
+## 1. Implement Authentication Components [done]
 ### Dependencies: None
 ### Description: Create the <AuthSignIn> and <AuthSignUpWithTeam> components using Nuxt UI primitives for user authentication flows.
 ### Details:
-Use UCard as the container for both components. Implement form fields with UFormGroup and UInput for username/email, password, and team name (for signup). Add validation with appropriate error messages. Use UButton for submit actions with loading states. Ensure both components emit appropriate events (success, error) and integrate with the useTeamAuth composable. Include 'forgot password' link in the sign-in component. Ensure tab order is logical for keyboard navigation.
+Use UCard as the container for both components. Implement form fields with UFormField and UInput for username/email, password, and team name (for signup). Add validation with appropriate error messages. Use UButton for submit actions with loading states. Ensure both components emit appropriate events (success, error) and integrate with the useTeamAuth composable. Include 'forgot password' link in the sign-in component. Ensure tab order is logical for keyboard navigation.
 
-## 2. Create User Profile Components [pending]
+## 2. Create User Profile Components [done]
 ### Dependencies: None
 ### Description: Implement the <UserButton> dropdown and <ProfileForm> components for user profile management.
 ### Details:
-For <UserButton>: Use UAvatar to display user profile image with fallback to initials. Implement UDropdown with menu items for profile, settings, team management, and logout. For <ProfileForm>: Create a form using UCard, UFormGroup, and UInput for name, email, and profile image upload. Add validation and error handling. Use UButton for save/cancel actions with appropriate loading states. Both components should use data from useTeamAuth composable. Ensure proper focus management when opening/closing dropdowns.
+For <UserButton>: Use UAvatar to display user profile image with fallback to initials. Implement UDropdownMenu with menu items for profile, settings, team management, and logout. For <ProfileForm>: Create a form using UCard, UFormField, and UInput for name, email, and profile image upload. Add validation and error handling. Use UButton for save/cancel actions with appropriate loading states. Both components should use data from useTeamAuth composable. Ensure proper focus management when opening/closing dropdowns.
+<info added on 2025-06-16T09:39:52.163Z>
+**UserButton Component:**
+- Created with UAvatar and UDropdown primitives
+- Role-based dropdown menu (different items for member/admin/super_admin)
+- Integrated with useTeamAuth composable (currentUser, currentRole, signOut)
+- Avatar with fallback to user initials
+- Proper event emission for profile/teamSettings/impersonation actions
+- Accessibility attributes and keyboard navigation support
 
-## 3. Develop Team Management Components [pending]
+**ProfileForm Component:**
+- Created with UCard, UFormField, UInput, UButton primitives
+- Complete profile editing: name, email (readonly), avatar upload, password change
+- MFA toggle functionality with UToggle
+- Form validation using Valibot schema
+- File upload for avatar with 2MB size limit and preview
+- Change detection and form reset functionality
+- Integration with useTeamAuth.updateProfile method
+- Loading states and error/success messaging
+
+**Playground Testing:**
+- Both components added to playground and working
+- Proper Nuxt UI v3 styling matching existing components
+- All interactive elements functioning correctly
+- ClientOnly wrapper with loading fallbacks
+
+Both components are production-ready and follow all PRD requirements (FR-5, FR-6). Ready to proceed with Team Management Components (subtask 5.3).
+</info added on 2025-06-16T09:39:52.163Z>
+
+## 3. Develop Team Management Components [in-progress]
 ### Dependencies: None
 ### Description: Build the <TeamMembersTable> and <TeamSettingsModal> components for team administration.
 ### Details:
-For <TeamMembersTable>: Implement UTable with columns for user details, role (using UBadge with appropriate colors), and actions. Include pagination, sorting, and filtering capabilities. Add row actions for role changes and member removal. For <TeamSettingsModal>: Create a modal using UModal with tabs for general settings, billing, and permissions. Use UFormGroup and UInput for form fields. Implement save/cancel actions with UButton. Ensure proper focus trapping within the modal and restore focus on close.
+For <TeamMembersTable>: Implement UTable with columns for user details, role (using UBadge with appropriate colors), and actions. Include pagination, sorting, and filtering capabilities. Add row actions for role changes and member removal. For <TeamSettingsModal>: Create a modal using UModal with tabs for general settings, billing, and permissions. Use UFormField and UInput for form fields. Implement save/cancel actions with UButton. Ensure proper focus trapping within the modal and restore focus on close.
 
-## 4. Implement Authentication State Components [pending]
+## 4. Implement Authentication State Components [in-progress]
 ### Dependencies: None
 ### Description: Create the <SignedIn> and <SignedOut> wrapper components and the impersonation banner with countdown timer.
 ### Details:
 For <SignedIn> and <SignedOut>: Create thin wrapper components that conditionally render their slots based on authentication state from useTeamAuth. For the impersonation banner: Create a fixed position banner that appears when a user is being impersonated. Include user details, a countdown timer showing remaining session time, and an 'End Session' button. Use UButton and implement a reactive countdown timer. Ensure the banner is announced to screen readers appropriately.
 
-## 5. Ensure Accessibility and Component Customization [pending]
+## 5. Ensure Accessibility and Component Customization [in-progress]
 ### Dependencies: None
 ### Description: Review and enhance all components for WCAG 2.1 AA compliance and implement customization options through props and slots.
 ### Details:

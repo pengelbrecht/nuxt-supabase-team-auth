@@ -287,22 +287,22 @@
     {
       "id": 5,
       "title": "Build Vue 3 UI Components Using Nuxt UI Primitives",
-      "description": "Create all required Vue 3 components using only Nuxt UI open-source primitives as specified in the component mapping",
-      "details": "Implement components using specified Nuxt UI primitives:\n- <AuthSignIn> & <AuthSignUpWithTeam>: Use UCard, UFormGroup, UInput, UButton\n- <UserButton>: Use UAvatar, UDropdown for user menu\n- <ProfileForm>: Use UCard, UFormGroup, UInput, UButton for profile editing\n- <TeamMembersTable>: Use UTable, UBadge for role display\n- <TeamSettingsModal>: Use UModal, UFormGroup, UInput, UButton\n- <SignedIn> & <SignedOut>: Thin wrappers with v-if using isSignedIn from useTeamAuth\n\nEnsure WCAG 2.1 AA compliance, keyboard navigation, screen reader support. Expose slots and props for customization. Include impersonation banner component with countdown timer.",
-      "testStrategy": "Component tests with Vue Test Utils, accessibility tests with @vue/test-utils and axe-core, visual regression tests, keyboard navigation tests.",
-      "priority": "medium",
+      "description": "Create all required Vue 3 components using only Nuxt UI open-source primitives as specified in the component mapping.",
+      "status": "in-progress",
       "dependencies": [
         4
       ],
-      "status": "pending",
+      "priority": "medium",
+      "details": "Implement components using specified Nuxt UI primitives:\n- <AuthSignIn> & <AuthSignUpWithTeam>: Use UCard, UFormField, UInput, UButton\n- <UserButton>: Use UAvatar, UDropdownMenu for user menu\n- <ProfileForm>: Use UCard, UFormField, UInput, UButton for profile editing\n- <TeamMembersTable>: Use UTable, UBadge for role display\n- <TeamSettingsModal>: Use UModal, UFormField, UInput, UButton\n- <SignedIn> & <SignedOut>: Thin wrappers with v-if using isSignedIn from useTeamAuth\n\nEnsure WCAG 2.1 AA compliance, keyboard navigation, screen reader support. Expose slots and props for customization. Include impersonation banner component with countdown timer.",
+      "testStrategy": "Component tests with Vue Test Utils, accessibility tests with @vue/test-utils and axe-core, visual regression tests, keyboard navigation tests.",
       "subtasks": [
         {
           "id": 1,
           "title": "Implement Authentication Components",
           "description": "Create the <AuthSignIn> and <AuthSignUpWithTeam> components using Nuxt UI primitives for user authentication flows.",
           "dependencies": [],
-          "details": "Use UCard as the container for both components. Implement form fields with UFormGroup and UInput for username/email, password, and team name (for signup). Add validation with appropriate error messages. Use UButton for submit actions with loading states. Ensure both components emit appropriate events (success, error) and integrate with the useTeamAuth composable. Include 'forgot password' link in the sign-in component. Ensure tab order is logical for keyboard navigation.",
-          "status": "pending",
+          "details": "Use UCard as the container for both components. Implement form fields with UFormField and UInput for username/email, password, and team name (for signup). Add validation with appropriate error messages. Use UButton for submit actions with loading states. Ensure both components emit appropriate events (success, error) and integrate with the useTeamAuth composable. Include 'forgot password' link in the sign-in component. Ensure tab order is logical for keyboard navigation.",
+          "status": "done",
           "testStrategy": "Test with various input combinations, validation errors, and success states. Verify ARIA attributes and keyboard navigation. Test screen reader announcements for form errors."
         },
         {
@@ -310,18 +310,40 @@
           "title": "Create User Profile Components",
           "description": "Implement the <UserButton> dropdown and <ProfileForm> components for user profile management.",
           "dependencies": [],
-          "details": "For <UserButton>: Use UAvatar to display user profile image with fallback to initials. Implement UDropdown with menu items for profile, settings, team management, and logout. For <ProfileForm>: Create a form using UCard, UFormGroup, and UInput for name, email, and profile image upload. Add validation and error handling. Use UButton for save/cancel actions with appropriate loading states. Both components should use data from useTeamAuth composable. Ensure proper focus management when opening/closing dropdowns.",
-          "status": "pending",
-          "testStrategy": "Test dropdown opening/closing, menu item selection, and form submission flows. Verify form validation and error states. Test keyboard navigation through dropdown menu items."
+          "details": "For <UserButton>: Use UAvatar to display user profile image with fallback to initials. Implement UDropdownMenu with menu items for profile, settings, team management, and logout. For <ProfileForm>: Create a form using UCard, UFormField, and UInput for name, email, and profile image upload. Add validation and error handling. Use UButton for save/cancel actions with appropriate loading states. Both components should use data from useTeamAuth composable. Ensure proper focus management when opening/closing dropdowns.\n<info added on 2025-06-16T09:39:52.163Z>\n**UserButton Component:**\n- Created with UAvatar and UDropdown primitives\n- Role-based dropdown menu (different items for member/admin/super_admin)\n- Integrated with useTeamAuth composable (currentUser, currentRole, signOut)\n- Avatar with fallback to user initials\n- Proper event emission for profile/teamSettings/impersonation actions\n- Accessibility attributes and keyboard navigation support\n\n**ProfileForm Component:**\n- Created with UCard, UFormField, UInput, UButton primitives\n- Complete profile editing: name, email (readonly), avatar upload, password change\n- MFA toggle functionality with UToggle\n- Form validation using Valibot schema\n- File upload for avatar with 2MB size limit and preview\n- Change detection and form reset functionality\n- Integration with useTeamAuth.updateProfile method\n- Loading states and error/success messaging\n\n**Playground Testing:**\n- Both components added to playground and working\n- Proper Nuxt UI v3 styling matching existing components\n- All interactive elements functioning correctly\n- ClientOnly wrapper with loading fallbacks\n\nBoth components are production-ready and follow all PRD requirements (FR-5, FR-6). Ready to proceed with Team Management Components (subtask 5.3).\n</info added on 2025-06-16T09:39:52.163Z>",
+          "status": "done",
+          "testStrategy": "Test dropdown opening/closing, menu item selection, and form submission flows. Verify form validation and error states. Test keyboard navigation through dropdown menu items.",
+          "subtasks": [
+            {
+              "id": 6,
+              "title": "Test User Profile Components in Playground",
+              "description": "Integrate and test the <UserButton> and <ProfileForm> components within the Nuxt UI v3 playground environment to ensure proper styling and functionality.",
+              "dependencies": [],
+              "details": "Add the <UserButton> and <ProfileForm> components to the playground. Verify that they render correctly with Nuxt UI styling. Test all interactive elements for proper behavior, including dropdown interactions and form submissions. Ensure that all components are responsive and accessible.",
+              "status": "pending",
+              "testStrategy": "Manual testing within the playground environment to verify component rendering, styling, and functionality. Automated tests for accessibility and responsiveness."
+            }
+          ]
         },
         {
           "id": 3,
           "title": "Develop Team Management Components",
           "description": "Build the <TeamMembersTable> and <TeamSettingsModal> components for team administration.",
           "dependencies": [],
-          "details": "For <TeamMembersTable>: Implement UTable with columns for user details, role (using UBadge with appropriate colors), and actions. Include pagination, sorting, and filtering capabilities. Add row actions for role changes and member removal. For <TeamSettingsModal>: Create a modal using UModal with tabs for general settings, billing, and permissions. Use UFormGroup and UInput for form fields. Implement save/cancel actions with UButton. Ensure proper focus trapping within the modal and restore focus on close.",
-          "status": "pending",
-          "testStrategy": "Test table sorting, filtering, and pagination. Verify role changes and member removal flows. Test modal opening/closing, tab switching, and form submission. Verify focus management and keyboard navigation within the modal."
+          "details": "For <TeamMembersTable>: Implement UTable with columns for user details, role (using UBadge with appropriate colors), and actions. Include pagination, sorting, and filtering capabilities. Add row actions for role changes and member removal. For <TeamSettingsModal>: Create a modal using UModal with tabs for general settings, billing, and permissions. Use UFormField and UInput for form fields. Implement save/cancel actions with UButton. Ensure proper focus trapping within the modal and restore focus on close.",
+          "status": "in-progress",
+          "testStrategy": "Test table sorting, filtering, and pagination. Verify role changes and member removal flows. Test modal opening/closing, tab switching, and form submission. Verify focus management and keyboard navigation within the modal.",
+          "subtasks": [
+            {
+              "id": 7,
+              "title": "Test Team Management Components in Playground",
+              "description": "Integrate and test the <TeamMembersTable> and <TeamSettingsModal> components within the Nuxt UI v3 playground environment to ensure proper styling and functionality.",
+              "dependencies": [],
+              "details": "Add the <TeamMembersTable> and <TeamSettingsModal> components to the playground. Verify that they render correctly with Nuxt UI styling. Test all interactive elements for proper behavior, including table interactions and modal dialogs. Ensure that all components are responsive and accessible.",
+              "status": "pending",
+              "testStrategy": "Manual testing within the playground environment to verify component rendering, styling, and functionality. Automated tests for accessibility and responsiveness."
+            }
+          ]
         },
         {
           "id": 4,
@@ -329,8 +351,19 @@
           "description": "Create the <SignedIn> and <SignedOut> wrapper components and the impersonation banner with countdown timer.",
           "dependencies": [],
           "details": "For <SignedIn> and <SignedOut>: Create thin wrapper components that conditionally render their slots based on authentication state from useTeamAuth. For the impersonation banner: Create a fixed position banner that appears when a user is being impersonated. Include user details, a countdown timer showing remaining session time, and an 'End Session' button. Use UButton and implement a reactive countdown timer. Ensure the banner is announced to screen readers appropriately.",
-          "status": "pending",
-          "testStrategy": "Test conditional rendering based on authentication state changes. Verify the countdown timer updates correctly and ends session at zero. Test keyboard accessibility of the impersonation banner and screen reader announcements."
+          "status": "in-progress",
+          "testStrategy": "Test conditional rendering based on authentication state changes. Verify the countdown timer updates correctly and ends session at zero. Test keyboard accessibility of the impersonation banner and screen reader announcements.",
+          "subtasks": [
+            {
+              "id": 8,
+              "title": "Test Authentication State Components in Playground",
+              "description": "Integrate and test the <SignedIn>, <SignedOut>, and impersonation banner components within the Nuxt UI v3 playground environment to ensure proper styling and functionality.",
+              "dependencies": [],
+              "details": "Add the <SignedIn>, <SignedOut>, and impersonation banner components to the playground. Verify that they render correctly with Nuxt UI styling. Test all interactive elements for proper behavior, including conditional rendering and countdown timer functionality. Ensure that all components are responsive and accessible.",
+              "status": "pending",
+              "testStrategy": "Manual testing within the playground environment to verify component rendering, styling, and functionality. Automated tests for accessibility and responsiveness."
+            }
+          ]
         },
         {
           "id": 5,
@@ -338,8 +371,19 @@
           "description": "Review and enhance all components for WCAG 2.1 AA compliance and implement customization options through props and slots.",
           "dependencies": [],
           "details": "Audit all components for accessibility issues: ensure proper contrast ratios, keyboard navigation, focus indicators, and ARIA attributes. Test with screen readers. For customization: Add props for theming (colors, sizes, variants) to all components. Implement named slots for content customization (e.g., custom header/footer in cards, custom cell rendering in tables). Document all available props and slots. Create a consistent API across components. Ensure responsive behavior on all screen sizes.",
-          "status": "pending",
-          "testStrategy": "Run automated accessibility tests (e.g., axe-core). Perform manual testing with keyboard-only navigation and screen readers. Test customization options by creating variant examples of each component with different props and slot content."
+          "status": "in-progress",
+          "testStrategy": "Run automated accessibility tests (e.g., axe-core). Perform manual testing with keyboard-only navigation and screen readers. Test customization options by creating variant examples of each component with different props and slot content.",
+          "subtasks": [
+            {
+              "id": 9,
+              "title": "Test Component Accessibility and Customization in Playground",
+              "description": "Integrate and test all components within the Nuxt UI v3 playground environment to ensure accessibility compliance and verify customization options.",
+              "dependencies": [],
+              "details": "Add all components to the playground. Verify that they meet WCAG 2.1 AA compliance standards. Test customization options through props and slots to ensure flexibility and consistency. Ensure that all components are responsive and accessible.",
+              "status": "pending",
+              "testStrategy": "Manual testing within the playground environment to verify accessibility compliance and customization options. Automated tests for accessibility and responsiveness."
+            }
+          ]
         }
       ]
     },
@@ -1096,17 +1140,6 @@
           "parentTaskId": 19
         }
       ]
-    },
-    {
-      "id": 20,
-      "title": "Add Demo Login Page",
-      "description": "Create a simple demo login page to showcase the authentication flow with sign-in, sign-up, and team creation functionality",
-      "details": "Build a basic Vue component that demonstrates the team-auth module's authentication capabilities, including form validation, error handling, and successful authentication flow",
-      "testStrategy": "",
-      "status": "pending",
-      "dependencies": [],
-      "priority": "medium",
-      "subtasks": []
     },
     {
       "id": 21,

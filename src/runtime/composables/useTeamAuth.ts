@@ -953,6 +953,44 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     clearPersistedState()
     clearImpersonationData()
   }
+
+  // Avatar fallback generation utility
+  const getAvatarFallback = (overrides?: {
+    fullName?: string | null
+    email?: string | null
+  }): string => {
+    // Priority order for full name:
+    // 1. Override value (typically from profiles.full_name)
+    // 2. Current user's user_metadata.name (standard Supabase auth field)
+    const fullName = overrides?.fullName !== undefined 
+      ? overrides.fullName
+      : currentUser.value?.user_metadata?.name
+    
+    // Priority order for email:
+    // 1. Override value  
+    // 2. Current user's email
+    const email = overrides?.email !== undefined
+      ? overrides.email
+      : currentUser.value?.email
+    
+    // Generate initials from full name if available
+    if (fullName && fullName.trim()) {
+      return fullName
+        .trim()
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    }
+    
+    // Fallback to first letter of email
+    if (email) {
+      return email[0].toUpperCase()
+    }
+    
+    return 'U'
+  }
   
   // Enhanced auth listener that handles persistence
   const setupEnhancedAuthListener = () => {
@@ -1062,6 +1100,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     deleteTeam,
     startImpersonation,
     stopImpersonation,
+    getAvatarFallback,
     
     // Session management utilities
     sessionHealth: () => sessionSync.performSessionHealthCheck(currentUser, currentTeam, currentRole, isImpersonating, impersonationExpiresAt),
