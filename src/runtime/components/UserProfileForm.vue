@@ -90,7 +90,7 @@
       <UFormField
         label="Confirm Password"
         name="confirmPassword"
-        class="flex items-center justify-between gap-2"
+        class="flex items-center justify-between mb-4 gap-2"
       >
         <UInput
           v-model="form.confirmPassword"
@@ -101,7 +101,7 @@
         />
       </UFormField>
 
-      <div class="flex justify-end mt-6">
+      <div class="flex justify-end">
         <UButton
           type="button"
           variant="outline"
