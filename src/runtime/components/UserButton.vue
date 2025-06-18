@@ -153,7 +153,7 @@ const dropdownItems = computed(() => {
   
   // Main actions
   items.push({
-    label: 'Profile & Settings',
+    label: 'User Settings',
     icon: 'i-lucide-user',
     onSelect: () => {
       openProfileSettings()
