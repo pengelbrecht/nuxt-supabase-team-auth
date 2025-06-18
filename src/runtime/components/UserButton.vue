@@ -7,6 +7,8 @@
       <UButton
         variant="ghost"
         class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+        :aria-label="currentUser ? `User menu for ${currentProfile?.full_name || currentUser.user_metadata?.name || currentUser.email}` : 'User menu'"
+        :aria-expanded="false"
       >
         <!-- Show name if requested -->
         <span
