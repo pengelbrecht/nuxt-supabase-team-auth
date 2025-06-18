@@ -31,6 +31,7 @@
 - `supabase status` - check if services running
 - `supabase db reset` - reset database and apply migrations
 - `pnpm run dev` - start dev server
+- **Use `psql` not supabase cli for terminal/bash sql commands**
 
 ## Database Schema (Stable)
 ```sql
@@ -51,11 +52,11 @@ public.team_members (
 ```
 
 ## Don't Re-implement
--  JWT claims parsing (we don't use custom claims)
--  Profiles table structure 
--  UserButton avatar fallback logic
--  ProfileForm UX improvements
--  RLS policies (keep them simple - users access own data only)
+-  JWT claims parsing (we don't use custom claims)
+-  Profiles table structure 
+-  UserButton avatar fallback logic
+-  ProfileForm UX improvements
+-  RLS policies (keep them simple - users access own data only)
 
 ## Form/Dialog Design Patterns
 
