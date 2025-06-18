@@ -32,13 +32,13 @@ export default defineNuxtModule<ModuleOptions>({
     name: 'nuxt-supabase-team-auth',
     configKey: 'teamAuth',
     compatibility: {
-      nuxt: '^3.0.0'
-    }
+      nuxt: '^3.0.0',
+    },
   },
   defaults: {
     debug: false,
     redirectTo: '/dashboard',
-    emailTemplates: {}
+    emailTemplates: {},
   },
   setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
@@ -50,38 +50,38 @@ export default defineNuxtModule<ModuleOptions>({
         supabaseUrl: options.supabaseUrl || process.env.SUPABASE_URL,
         supabaseKey: options.supabaseKey || process.env.SUPABASE_ANON_KEY,
         debug: options.debug,
-        redirectTo: options.redirectTo
-      }
+        redirectTo: options.redirectTo,
+      },
     )
 
     // Add plugin for Supabase client initialization
     addPlugin({
       src: resolver.resolve('./runtime/plugins/supabase.client.ts'),
-      mode: 'client'
+      mode: 'client',
     })
 
     // Add server plugin for SSR
     addPlugin({
       src: resolver.resolve('./runtime/plugins/supabase.server.ts'),
-      mode: 'server'
+      mode: 'server',
     })
 
     // Add composables
     addImports([
       {
         name: 'useTeamAuth',
-        from: resolver.resolve('./runtime/composables/useTeamAuth')
+        from: resolver.resolve('./runtime/composables/useTeamAuth'),
       },
       {
         name: 'useSupabaseClient',
-        from: resolver.resolve('./runtime/composables/useSupabaseClient')
-      }
+        from: resolver.resolve('./runtime/composables/useSupabaseClient'),
+      },
     ])
 
     // Add components directory
     addComponentsDir({
       path: resolver.resolve('./runtime/components'),
-      prefix: ''
+      prefix: '',
     })
 
     // Add CSS for components - only our custom styles, not conflicting with Nuxt UI
@@ -91,8 +91,8 @@ export default defineNuxtModule<ModuleOptions>({
     // Add type declarations
     nuxt.hook('prepare:types', (options) => {
       options.references.push({
-        path: resolver.resolve('./runtime/types/index.d.ts')
+        path: resolver.resolve('./runtime/types/index.d.ts'),
       })
     })
-  }
+  },
 })

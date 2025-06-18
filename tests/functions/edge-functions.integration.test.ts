@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 /**
  * Integration tests for Edge Function business logic patterns
- * 
+ *
  * Since Edge Functions run in Deno and have complex external dependencies,
  * these tests focus on testing the core business logic patterns and
  * validation flows that the functions implement.
@@ -34,7 +34,7 @@ function createMockRequest(method: string, body: any, authHeader?: string): Mock
   if (authHeader) {
     headers.set('Authorization', authHeader)
   }
-  
+
   return { method, headers, body }
 }
 
@@ -43,7 +43,7 @@ function createMockResponse(status: number, body: any): MockResponse {
   const headers = new Map<string, string>()
   headers.set('Content-Type', 'application/json')
   headers.set('Access-Control-Allow-Origin', '*')
-  
+
   return { status, headers, body }
 }
 
@@ -52,20 +52,20 @@ const testData = {
   users: {
     validUser: { id: 'user-123', email: 'test@example.com' },
     adminUser: { id: 'admin-456', email: 'admin@example.com' },
-    targetUser: { id: 'target-789', email: 'target@example.com' }
+    targetUser: { id: 'target-789', email: 'target@example.com' },
   },
   teams: {
     validTeam: { id: 'team-123', name: 'Test Team' },
-    existingTeam: { id: 'team-456', name: 'Existing Team' }
+    existingTeam: { id: 'team-456', name: 'Existing Team' },
   },
   invites: {
     validInvite: {
       id: 'invite-123',
       team_id: 'team-123',
       email: 'test@example.com',
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-    }
-  }
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    },
+  },
 }
 
 describe('Edge Functions Business Logic Integration Tests', () => {
@@ -79,16 +79,17 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         { body: {}, expectedError: 'Missing required fields: email, password, team_name' },
         { body: { email: 'test@example.com' }, expectedError: 'Missing required fields: email, password, team_name' },
         { body: { email: 'test@example.com', password: 'pass' }, expectedError: 'Missing required fields: email, password, team_name' },
-        { body: { email: 'test@example.com', password: 'pass', team_name: '   ' }, expectedError: 'Team name cannot be empty' }
+        { body: { email: 'test@example.com', password: 'pass', team_name: '   ' }, expectedError: 'Team name cannot be empty' },
       ]
 
       testCases.forEach(({ body, expectedError }) => {
         // Simulate validation logic from the actual function
         const { email, password, team_name } = body
-        
+
         if (!email || !password || !team_name) {
           expect(expectedError).toBe('Missing required fields: email, password, team_name')
-        } else if (team_name.trim().length === 0) {
+        }
+        else if (team_name.trim().length === 0) {
           expect(expectedError).toBe('Team name cannot be empty')
         }
       })
@@ -102,18 +103,18 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         'create_team',
         'add_owner_membership',
         'generate_session',
-        'return_success'
+        'return_success',
       ]
 
       // Test that we understand the correct order
       expect(flowSteps).toEqual([
         'validate_input',
-        'check_team_exists', 
+        'check_team_exists',
         'create_user',
         'create_team',
         'add_owner_membership',
         'generate_session',
-        'return_success'
+        'return_success',
       ])
     })
 
@@ -121,15 +122,15 @@ describe('Edge Functions Business Logic Integration Tests', () => {
       const cleanupScenarios = [
         {
           failureAt: 'create_team',
-          cleanupActions: ['delete_user']
+          cleanupActions: ['delete_user'],
         },
         {
           failureAt: 'add_owner_membership',
-          cleanupActions: ['delete_team', 'delete_user']
-        }
+          cleanupActions: ['delete_team', 'delete_user'],
+        },
       ]
 
-      cleanupScenarios.forEach(scenario => {
+      cleanupScenarios.forEach((scenario) => {
         expect(scenario.cleanupActions.length).toBeGreaterThan(0)
       })
     })
@@ -141,16 +142,18 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         { authHeader: null, expectedError: 'Missing authorization header' },
         { authHeader: 'Bearer invalid-token', expectedError: 'Invalid or expired token' },
         { authHeader: 'Bearer valid-token', user: null, expectedError: 'Invalid or expired token' },
-        { authHeader: 'Bearer valid-token', user: testData.users.validUser, expectedError: null }
+        { authHeader: 'Bearer valid-token', user: testData.users.validUser, expectedError: null },
       ]
 
       authTestCases.forEach(({ authHeader, user, expectedError }) => {
         // Simulate auth validation logic
         if (!authHeader) {
           expect(expectedError).toBe('Missing authorization header')
-        } else if (!user) {
+        }
+        else if (!user) {
           expect(expectedError).toBe('Invalid or expired token')
-        } else {
+        }
+        else {
           expect(expectedError).toBeNull()
         }
       })
@@ -160,15 +163,17 @@ describe('Edge Functions Business Logic Integration Tests', () => {
       const inviteTestCases = [
         { invite: null, expectedError: 'INVITE_NOT_FOUND' },
         { invite: testData.invites.validInvite, existingMember: true, expectedError: 'ALREADY_MEMBER' },
-        { invite: testData.invites.validInvite, existingMember: false, expectedError: null }
+        { invite: testData.invites.validInvite, existingMember: false, expectedError: null },
       ]
 
       inviteTestCases.forEach(({ invite, existingMember, expectedError }) => {
         if (!invite) {
           expect(expectedError).toBe('INVITE_NOT_FOUND')
-        } else if (existingMember) {
+        }
+        else if (existingMember) {
           expect(expectedError).toBe('ALREADY_MEMBER')
-        } else {
+        }
+        else {
           expect(expectedError).toBeNull()
         }
       })
@@ -183,7 +188,7 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         'verify_team_exists',
         'add_team_member',
         'remove_invite',
-        'return_success'
+        'return_success',
       ]
 
       expect(flowSteps).toEqual([
@@ -194,7 +199,7 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         'verify_team_exists',
         'add_team_member',
         'remove_invite',
-        'return_success'
+        'return_success',
       ])
     })
   })
@@ -205,13 +210,14 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         { userRole: 'member', expectedError: 'IMPERSONATION_UNAUTHORIZED' },
         { userRole: 'admin', expectedError: 'IMPERSONATION_UNAUTHORIZED' },
         { userRole: 'owner', expectedError: 'IMPERSONATION_UNAUTHORIZED' },
-        { userRole: 'super_admin', expectedError: null }
+        { userRole: 'super_admin', expectedError: null },
       ]
 
       permissionTestCases.forEach(({ userRole, expectedError }) => {
         if (userRole !== 'super_admin') {
           expect(expectedError).toBe('IMPERSONATION_UNAUTHORIZED')
-        } else {
+        }
+        else {
           expect(expectedError).toBeNull()
         }
       })
@@ -221,15 +227,17 @@ describe('Edge Functions Business Logic Integration Tests', () => {
       const targetTestCases = [
         { targetExists: false, expectedError: 'USER_NOT_FOUND' },
         { targetExists: true, isSelfTarget: true, expectedError: 'SELF_IMPERSONATION' },
-        { targetExists: true, isSelfTarget: false, expectedError: null }
+        { targetExists: true, isSelfTarget: false, expectedError: null },
       ]
 
       targetTestCases.forEach(({ targetExists, isSelfTarget, expectedError }) => {
         if (!targetExists) {
           expect(expectedError).toBe('USER_NOT_FOUND')
-        } else if (isSelfTarget) {
+        }
+        else if (isSelfTarget) {
           expect(expectedError).toBe('SELF_IMPERSONATION')
-        } else {
+        }
+        else {
           expect(expectedError).toBeNull()
         }
       })
@@ -240,14 +248,14 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         'create_impersonation_record',
         'generate_magic_link',
         'verify_otp_immediately',
-        'return_dual_sessions'
+        'return_dual_sessions',
       ]
 
       expect(sessionFlow).toEqual([
         'create_impersonation_record',
-        'generate_magic_link', 
+        'generate_magic_link',
         'verify_otp_immediately',
-        'return_dual_sessions'
+        'return_dual_sessions',
       ])
     })
   })
@@ -258,17 +266,20 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         { admin_user_id: 'admin-123', target_user_id: 'target-456', pattern: 'specific_session' },
         { admin_user_id: 'admin-123', target_user_id: null, pattern: 'admin_sessions' },
         { admin_user_id: null, target_user_id: 'target-456', pattern: 'target_sessions' },
-        { admin_user_id: null, target_user_id: null, pattern: 'user_involved_sessions' }
+        { admin_user_id: null, target_user_id: null, pattern: 'user_involved_sessions' },
       ]
 
       queryPatterns.forEach(({ admin_user_id, target_user_id, pattern }) => {
         if (admin_user_id && target_user_id) {
           expect(pattern).toBe('specific_session')
-        } else if (admin_user_id) {
+        }
+        else if (admin_user_id) {
           expect(pattern).toBe('admin_sessions')
-        } else if (target_user_id) {
+        }
+        else if (target_user_id) {
           expect(pattern).toBe('target_sessions')
-        } else {
+        }
+        else {
           expect(pattern).toBe('user_involved_sessions')
         }
       })
@@ -277,7 +288,7 @@ describe('Edge Functions Business Logic Integration Tests', () => {
     it('should handle multiple session termination', () => {
       const sessions = [
         { id: 'session-1', admin_user_id: 'admin-123', target_user_id: 'target-456' },
-        { id: 'session-2', admin_user_id: 'admin-123', target_user_id: 'target-789' }
+        { id: 'session-2', admin_user_id: 'admin-123', target_user_id: 'target-789' },
       ]
 
       // Should be able to terminate multiple sessions
@@ -291,13 +302,14 @@ describe('Edge Functions Business Logic Integration Tests', () => {
       const ownershipTestCases = [
         { currentRole: 'member', expectedError: 'ROLE_FORBIDDEN' },
         { currentRole: 'admin', expectedError: 'ROLE_FORBIDDEN' },
-        { currentRole: 'owner', expectedError: null }
+        { currentRole: 'owner', expectedError: null },
       ]
 
       ownershipTestCases.forEach(({ currentRole, expectedError }) => {
         if (currentRole !== 'owner') {
           expect(expectedError).toBe('ROLE_FORBIDDEN')
-        } else {
+        }
+        else {
           expect(expectedError).toBeNull()
         }
       })
@@ -307,15 +319,17 @@ describe('Edge Functions Business Logic Integration Tests', () => {
       const eligibilityTestCases = [
         { isTeamMember: false, expectedError: 'USER_NOT_MEMBER' },
         { isTeamMember: true, isSelfTransfer: true, expectedError: 'SELF_TRANSFER' },
-        { isTeamMember: true, isSelfTransfer: false, expectedError: null }
+        { isTeamMember: true, isSelfTransfer: false, expectedError: null },
       ]
 
       eligibilityTestCases.forEach(({ isTeamMember, isSelfTransfer, expectedError }) => {
         if (!isTeamMember) {
           expect(expectedError).toBe('USER_NOT_MEMBER')
-        } else if (isSelfTransfer) {
+        }
+        else if (isSelfTransfer) {
           expect(expectedError).toBe('SELF_TRANSFER')
-        } else {
+        }
+        else {
           expect(expectedError).toBeNull()
         }
       })
@@ -327,7 +341,7 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         'validate_new_owner_membership',
         'promote_new_owner',
         'demote_previous_owner',
-        'rollback_on_failure'
+        'rollback_on_failure',
       ]
 
       expect(transferFlow).toEqual([
@@ -335,7 +349,7 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         'validate_new_owner_membership',
         'promote_new_owner',
         'demote_previous_owner',
-        'rollback_on_failure'
+        'rollback_on_failure',
       ])
     })
   })
@@ -346,15 +360,17 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         { memberRole: 'member', expectedError: 'ROLE_FORBIDDEN' },
         { memberRole: 'admin', expectedError: null },
         { memberRole: 'owner', expectedError: null },
-        { memberRole: null, expectedError: 'User is not a member of this team' }
+        { memberRole: null, expectedError: 'User is not a member of this team' },
       ]
 
       permissionTestCases.forEach(({ memberRole, expectedError }) => {
         if (!memberRole) {
           expect(expectedError).toBe('User is not a member of this team')
-        } else if (!['owner', 'admin'].includes(memberRole)) {
+        }
+        else if (!['owner', 'admin'].includes(memberRole)) {
           expect(expectedError).toBe('ROLE_FORBIDDEN')
-        } else {
+        }
+        else {
           expect(expectedError).toBeNull()
         }
       })
@@ -363,13 +379,14 @@ describe('Edge Functions Business Logic Integration Tests', () => {
     it('should handle duplicate invitation scenarios', () => {
       const inviteTestCases = [
         { existingMember: true, expectedError: 'User is already a member of this team' },
-        { existingMember: false, expectedError: null }
+        { existingMember: false, expectedError: null },
       ]
 
       inviteTestCases.forEach(({ existingMember, expectedError }) => {
         if (existingMember) {
           expect(expectedError).toBe('User is already a member of this team')
-        } else {
+        }
+        else {
           expect(expectedError).toBeNull()
         }
       })
@@ -382,7 +399,7 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         'verify_team_exists',
         'send_supabase_invite',
         'track_invite_in_db',
-        'return_success'
+        'return_success',
       ]
 
       expect(inviteFlow).toEqual([
@@ -391,7 +408,7 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         'verify_team_exists',
         'send_supabase_invite',
         'track_invite_in_db',
-        'return_success'
+        'return_success',
       ])
     })
   })
@@ -401,7 +418,7 @@ describe('Edge Functions Business Logic Integration Tests', () => {
       const corsResponse = {
         status: 200,
         headers: corsHeaders,
-        body: 'ok'
+        body: 'ok',
       }
 
       expect(corsResponse.status).toBe(200)
@@ -415,14 +432,14 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         { status: 403, error: 'ROLE_FORBIDDEN', hasDetails: true },
         { status: 404, error: 'USER_NOT_FOUND', hasDetails: true },
         { status: 409, error: 'ALREADY_MEMBER', hasDetails: true },
-        { status: 500, error: 'Internal server error', hasDetails: true }
+        { status: 500, error: 'Internal server error', hasDetails: true },
       ]
 
       errorFormats.forEach(({ status, error, hasDetails }) => {
         const response = {
           status,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
-          body: { error, ...(hasDetails && { message: 'Additional details' }) }
+          body: { error, ...(hasDetails && { message: 'Additional details' }) },
         }
 
         expect(response.status).toBeGreaterThanOrEqual(400)
@@ -433,14 +450,14 @@ describe('Edge Functions Business Logic Integration Tests', () => {
 
     it('should handle unexpected errors with proper fallback', () => {
       const unexpectedError = new Error('Database connection failed')
-      
+
       const errorResponse = {
         status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
         body: {
           error: 'Internal server error',
-          message: unexpectedError.message
-        }
+          message: unexpectedError.message,
+        },
       }
 
       expect(errorResponse.status).toBe(500)
@@ -455,11 +472,11 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         { email: '', isValid: false },
         { email: 'invalid-email', isValid: false },
         { email: 'test@example.com', isValid: true },
-        { email: 'user+tag@domain.co.uk', isValid: true }
+        { email: 'user+tag@domain.co.uk', isValid: true },
       ]
 
       emailTests.forEach(({ email, isValid }) => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        const emailRegex = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/
         const actuallyValid = emailRegex.test(email) && email.length > 0
         expect(actuallyValid).toBe(isValid)
       })
@@ -470,7 +487,7 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         { id: '', isValid: false },
         { id: 'not-a-uuid', isValid: false },
         { id: 'user-123', isValid: false }, // Not a proper UUID but allowed in our system
-        { id: '550e8400-e29b-41d4-a716-446655440000', isValid: true }
+        { id: '550e8400-e29b-41d4-a716-446655440000', isValid: true },
       ]
 
       uuidTests.forEach(({ id, isValid }) => {
@@ -487,7 +504,7 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         super_admin: 4,
         owner: 3,
         admin: 2,
-        member: 1
+        member: 1,
       }
 
       expect(roleHierarchy.super_admin).toBeGreaterThan(roleHierarchy.owner)
@@ -500,7 +517,7 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         { adminRole: 'super_admin', canImpersonate: true },
         { adminRole: 'owner', canImpersonate: false },
         { adminRole: 'admin', canImpersonate: false },
-        { adminRole: 'member', canImpersonate: false }
+        { adminRole: 'member', canImpersonate: false },
       ]
 
       impersonationRules.forEach(({ adminRole, canImpersonate }) => {
@@ -514,12 +531,12 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         'transfer_ownership',
         'delete_team',
         'change_billing',
-        'modify_super_admin_users'
+        'modify_super_admin_users',
       ]
 
       // During impersonation, these should be blocked
-      const blockedDuringImpersonation = dangerousOperations.every(op => 
-        ['transfer_ownership', 'delete_team', 'change_billing', 'modify_super_admin_users'].includes(op)
+      const blockedDuringImpersonation = dangerousOperations.every(op =>
+        ['transfer_ownership', 'delete_team', 'change_billing', 'modify_super_admin_users'].includes(op),
       )
 
       expect(blockedDuringImpersonation).toBe(true)

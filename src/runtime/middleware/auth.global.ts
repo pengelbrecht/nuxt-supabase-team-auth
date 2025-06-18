@@ -1,5 +1,5 @@
-import { navigateTo } from '#app'
 import { useTeamAuth } from '../composables/useTeamAuth'
+import { navigateTo } from '#app'
 
 /**
  * Global authentication middleware
@@ -7,7 +7,7 @@ import { useTeamAuth } from '../composables/useTeamAuth'
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   // Skip middleware on server-side rendering for performance
-  if (process.server) return
+  if (import.meta.server) return
 
   const { currentUser, currentTeam, currentRole, isLoading, isImpersonating } = useTeamAuth()
 
@@ -28,7 +28,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     '/teams',
     '/admin',
     '/profile',
-    '/settings'
+    '/settings',
   ]
 
   // Define public routes that don't require authentication
@@ -42,14 +42,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
     '/about',
     '/contact',
     '/privacy',
-    '/terms'
+    '/terms',
   ]
 
   const currentPath = to.path
 
   // Check if current route is public
-  const isPublicRoute = publicRoutes.some(route => 
-    currentPath === route || currentPath.startsWith(route + '/')
+  const isPublicRoute = publicRoutes.some(route =>
+    currentPath === route || currentPath.startsWith(route + '/'),
   )
 
   // Allow access to public routes
@@ -58,8 +58,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   // Check if current route is protected
-  const isProtectedRoute = protectedRoutes.some(route => 
-    currentPath.startsWith(route)
+  const isProtectedRoute = protectedRoutes.some(route =>
+    currentPath.startsWith(route),
   )
 
   // Require authentication for protected routes
@@ -86,7 +86,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Handle team-specific routes
   if (currentPath.startsWith('/teams/') && currentPath !== '/teams') {
     const teamIdFromRoute = currentPath.split('/teams/')[1]?.split('/')[0]
-    
+
     if (teamIdFromRoute && currentTeam.value?.id !== teamIdFromRoute) {
       return navigateTo('/teams?error=unauthorized_team_access')
     }
@@ -95,7 +95,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Handle routes that require team membership
   const teamRequiredRoutes = ['/team/', '/dashboard']
   const requiresTeam = teamRequiredRoutes.some(route => currentPath.startsWith(route))
-  
+
   if (requiresTeam && currentUser.value && !currentTeam.value) {
     return navigateTo('/teams?message=select_team_first')
   }

@@ -18,8 +18,8 @@ describe('Route Protection Middleware', () => {
         route: { path: '/dashboard' },
         auth: {
           currentUser: { value: { id: 'user-123', email: 'test@example.com' } },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       mockProtectedRoute.mockImplementation((ctx) => {
@@ -36,8 +36,8 @@ describe('Route Protection Middleware', () => {
         route: { path: '/dashboard' },
         auth: {
           currentUser: { value: null },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       mockProtectedRoute.mockImplementation((ctx) => {
@@ -52,14 +52,14 @@ describe('Route Protection Middleware', () => {
 
     it('should preserve query parameters in redirect', async () => {
       const context = createMockNuxtContext({
-        route: { 
+        route: {
           path: '/dashboard',
-          query: { tab: 'settings', filter: 'active' }
+          query: { tab: 'settings', filter: 'active' },
         },
         auth: {
           currentUser: { value: null },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       mockProtectedRoute.mockImplementation((ctx) => {
@@ -81,8 +81,8 @@ describe('Route Protection Middleware', () => {
         auth: {
           currentUser: { value: { id: 'user-123' } },
           currentRole: { value: 'admin' },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       mockAdminRoute.mockImplementation((ctx) => {
@@ -101,8 +101,8 @@ describe('Route Protection Middleware', () => {
         auth: {
           currentUser: { value: { id: 'user-123' } },
           currentRole: { value: 'owner' },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       mockAdminRoute.mockImplementation((ctx) => {
@@ -121,8 +121,8 @@ describe('Route Protection Middleware', () => {
         auth: {
           currentUser: { value: { id: 'user-123' } },
           currentRole: { value: 'member' },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       mockAdminRoute.mockImplementation((ctx) => {
@@ -143,8 +143,8 @@ describe('Route Protection Middleware', () => {
           currentUser: { value: { id: 'user-123' } },
           currentRole: { value: null },
           currentTeam: { value: null },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       mockAdminRoute.mockImplementation((ctx) => {
@@ -161,22 +161,22 @@ describe('Route Protection Middleware', () => {
   describe('Team-specific Route Middleware', () => {
     it('should allow access when route team matches user team', async () => {
       const context = createMockNuxtContext({
-        route: { 
+        route: {
           path: '/teams/team-456/dashboard',
-          params: { teamId: 'team-456' }
+          params: { teamId: 'team-456' },
         },
         auth: {
           currentUser: { value: { id: 'user-123' } },
           currentTeam: { value: { id: 'team-456', name: 'Test Team' } },
           currentRole: { value: 'member' },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       mockTeamRoute.mockImplementation((ctx) => {
         const routeTeamId = ctx.route.params.teamId
         const currentTeamId = ctx.auth.currentTeam.value?.id
-        
+
         if (routeTeamId !== currentTeamId) {
           throw new Error('Team access denied')
         }
@@ -187,22 +187,22 @@ describe('Route Protection Middleware', () => {
 
     it('should deny access when route team does not match user team', async () => {
       const context = createMockNuxtContext({
-        route: { 
+        route: {
           path: '/teams/team-999/dashboard',
-          params: { teamId: 'team-999' }
+          params: { teamId: 'team-999' },
         },
         auth: {
           currentUser: { value: { id: 'user-123' } },
           currentTeam: { value: { id: 'team-456', name: 'Test Team' } },
           currentRole: { value: 'member' },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       mockTeamRoute.mockImplementation((ctx) => {
         const routeTeamId = ctx.route.params.teamId
         const currentTeamId = ctx.auth.currentTeam.value?.id
-        
+
         if (routeTeamId !== currentTeamId) {
           mockNavigateTo('/teams?error=unauthorized_team_access')
         }
@@ -214,16 +214,16 @@ describe('Route Protection Middleware', () => {
 
     it('should redirect users without team to team selection', async () => {
       const context = createMockNuxtContext({
-        route: { 
+        route: {
           path: '/teams/team-456/dashboard',
-          params: { teamId: 'team-456' }
+          params: { teamId: 'team-456' },
         },
         auth: {
           currentUser: { value: { id: 'user-123' } },
           currentTeam: { value: null },
           currentRole: { value: null },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       mockTeamRoute.mockImplementation((ctx) => {
@@ -245,8 +245,8 @@ describe('Route Protection Middleware', () => {
           currentUser: { value: { id: 'user-123' } },
           currentTeam: { value: { id: 'team-456' } },
           currentRole: { value: 'owner' },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       mockOwnerRoute.mockImplementation((ctx) => {
@@ -265,8 +265,8 @@ describe('Route Protection Middleware', () => {
           currentUser: { value: { id: 'user-123' } },
           currentTeam: { value: { id: 'team-456' } },
           currentRole: { value: 'admin' },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       mockOwnerRoute.mockImplementation((ctx) => {
@@ -286,8 +286,8 @@ describe('Route Protection Middleware', () => {
           currentUser: { value: { id: 'user-123' } },
           currentTeam: { value: { id: 'team-456' } },
           currentRole: { value: 'member' },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       mockOwnerRoute.mockImplementation((ctx) => {
@@ -309,8 +309,8 @@ describe('Route Protection Middleware', () => {
           currentUser: { value: { id: 'user-123' } },
           currentRole: { value: 'super_admin' },
           isImpersonating: { value: true },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       const impersonationMiddleware = vi.fn().mockImplementation((ctx) => {
@@ -330,8 +330,8 @@ describe('Route Protection Middleware', () => {
           currentUser: { value: { id: 'user-123' } },
           currentRole: { value: 'member' },
           isImpersonating: { value: true },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       const impersonationMiddleware = vi.fn().mockImplementation((ctx) => {
@@ -350,13 +350,13 @@ describe('Route Protection Middleware', () => {
           currentUser: { value: { id: 'user-123' } },
           currentRole: { value: 'super_admin' },
           isImpersonating: { value: false },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       const superAdminMiddleware = vi.fn().mockImplementation((ctx) => {
-        if (ctx.route.path.includes('/impersonate') && 
-            ctx.auth.currentRole.value !== 'super_admin') {
+        if (ctx.route.path.includes('/impersonate')
+          && ctx.auth.currentRole.value !== 'super_admin') {
           throw new Error('Super admin required')
         }
       })
@@ -372,18 +372,18 @@ describe('Route Protection Middleware', () => {
       // 2. Team membership
       // 3. Admin role or higher
       // 4. Matching team ID
-      
+
       const context = createMockNuxtContext({
-        route: { 
+        route: {
           path: '/teams/team-456/admin/members',
-          params: { teamId: 'team-456' }
+          params: { teamId: 'team-456' },
         },
         auth: {
           currentUser: { value: { id: 'user-123' } },
           currentTeam: { value: { id: 'team-456' } },
           currentRole: { value: 'admin' },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       const complexMiddleware = vi.fn().mockImplementation((ctx) => {
@@ -391,17 +391,17 @@ describe('Route Protection Middleware', () => {
         if (!ctx.auth.currentUser.value) {
           throw new Error('Authentication required')
         }
-        
+
         // Check team membership
         if (!ctx.auth.currentTeam.value) {
           throw new Error('Team membership required')
         }
-        
+
         // Check team ID match
         if (ctx.route.params.teamId !== ctx.auth.currentTeam.value.id) {
           throw new Error('Team mismatch')
         }
-        
+
         // Check admin role
         const adminRoles = ['admin', 'owner']
         if (!adminRoles.includes(ctx.auth.currentRole.value)) {
@@ -414,22 +414,22 @@ describe('Route Protection Middleware', () => {
 
     it('should handle route with optional team parameter', async () => {
       const context = createMockNuxtContext({
-        route: { 
+        route: {
           path: '/dashboard',
-          params: {} // No team ID in route
+          params: {}, // No team ID in route
         },
         auth: {
           currentUser: { value: { id: 'user-123' } },
           currentTeam: { value: { id: 'team-456' } },
           currentRole: { value: 'member' },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       const optionalTeamMiddleware = vi.fn().mockImplementation((ctx) => {
         // Route doesn't require specific team, but user has one
-        if (ctx.route.params.teamId && 
-            ctx.route.params.teamId !== ctx.auth.currentTeam.value?.id) {
+        if (ctx.route.params.teamId
+          && ctx.route.params.teamId !== ctx.auth.currentTeam.value?.id) {
           throw new Error('Team mismatch')
         }
         // Should pass without error
@@ -442,8 +442,8 @@ describe('Route Protection Middleware', () => {
       const context = createMockNuxtContext({
         auth: {
           currentUser: { value: { id: 'user-123' } },
-          isLoading: { value: false }
-        }
+          isLoading: { value: false },
+        },
       })
 
       const middleware1 = vi.fn().mockResolvedValue(undefined)
@@ -453,7 +453,7 @@ describe('Route Protection Middleware', () => {
       const results = await Promise.all([
         middleware1(context),
         middleware2(context),
-        middleware3(context)
+        middleware3(context),
       ])
 
       expect(results).toEqual([undefined, undefined, undefined])

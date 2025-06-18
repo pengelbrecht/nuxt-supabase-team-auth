@@ -1,5 +1,5 @@
-import { navigateTo } from '#app'
 import { useTeamAuth } from '../composables/useTeamAuth'
+import { navigateTo } from '#app'
 
 type TeamRole = 'owner' | 'admin' | 'member' | 'super_admin'
 
@@ -10,7 +10,7 @@ const ROLE_HIERARCHY: Record<TeamRole, number> = {
   super_admin: 4,
   owner: 3,
   admin: 2,
-  member: 1
+  member: 1,
 }
 
 /**
@@ -24,7 +24,7 @@ export function createRequireRoleMiddleware(
     redirectTo?: string
     errorMessage?: string
     strict?: boolean // If true, requires exact role match
-  } = {}
+  } = {},
 ) {
   return defineNuxtRouteMiddleware(async (to) => {
     const { currentUser, currentRole, currentTeam, isLoading } = useTeamAuth()
@@ -59,8 +59,8 @@ export function createRequireRoleMiddleware(
     }
 
     // Check if user has sufficient role level
-    const hasPermission = options.strict 
-      ? userRoleLevel === requiredRoleLevel 
+    const hasPermission = options.strict
+      ? userRoleLevel === requiredRoleLevel
       : userRoleLevel >= requiredRoleLevel
 
     if (!hasPermission) {
@@ -91,7 +91,7 @@ export const requireSuperAdminOnly = createRequireRoleMiddleware('super_admin', 
 export default defineNuxtRouteMiddleware(async (to) => {
   // This middleware can be used with route meta to specify required role
   const requiredRole = to.meta.requireRole as TeamRole
-  
+
   if (!requiredRole) {
     console.warn('require-role middleware used without specifying required role in route meta')
     return

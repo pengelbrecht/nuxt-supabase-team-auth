@@ -1,5 +1,5 @@
-import { navigateTo } from '#app'
 import { useTeamAuth } from '../composables/useTeamAuth'
+import { navigateTo } from '#app'
 
 /**
  * Middleware to require team membership
@@ -90,11 +90,12 @@ export function createTeamAccessMiddleware(options: {
           // This would make an API call to verify current membership
           // For now, we trust the local state from useTeamAuth
           const isValidMember = currentRole.value !== null
-          
+
           if (!isValidMember) {
             return navigateTo('/teams?error=membership_invalid')
           }
-        } catch (error) {
+        }
+        catch (error) {
           console.error('Team membership validation failed:', error)
           return navigateTo('/teams?error=validation_failed')
         }

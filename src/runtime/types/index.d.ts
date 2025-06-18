@@ -93,8 +93,8 @@ export interface TeamAuthMethods {
   deleteTeam: () => Promise<void>
   startImpersonation: (targetUserId: string, reason: string) => Promise<void>
   stopImpersonation: () => Promise<void>
-  getAvatarFallback: (overrides?: { fullName?: string | null; email?: string | null }) => string
-  
+  getAvatarFallback: (overrides?: { fullName?: string | null, email?: string | null }) => string
+
   // Session management utilities
   sessionHealth: () => SessionHealthResult
   triggerSessionRecovery: () => void

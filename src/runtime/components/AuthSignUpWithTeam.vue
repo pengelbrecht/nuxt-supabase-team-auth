@@ -6,7 +6,10 @@
           <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
             {{ title }}
           </h2>
-          <p v-if="subtitle" class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+          <p
+            v-if="subtitle"
+            class="text-sm text-gray-600 dark:text-gray-400 mt-2"
+          >
             {{ subtitle }}
           </p>
         </div>
@@ -14,7 +17,10 @@
     </template>
 
     <!-- Social Login Buttons -->
-    <div v-if="showSocialLogin" class="space-y-3 mb-4">
+    <div
+      v-if="showSocialLogin"
+      class="space-y-3 mb-4"
+    >
       <slot name="social-buttons">
         <UButton
           v-if="googleAuth"
@@ -24,15 +30,18 @@
           block
           :disabled="isLoading"
           :loading="isGoogleLoading"
-          @click="handleGoogleSignUp"
           class="justify-center"
+          @click="handleGoogleSignUp"
         >
           <template #leading>
-            <Icon name="logos:google-icon" class="w-5 h-5" />
+            <Icon
+              name="logos:google-icon"
+              class="w-5 h-5"
+            />
           </template>
           Continue with Google
         </UButton>
-        
+
         <UButton
           v-if="githubAuth"
           type="button"
@@ -41,30 +50,41 @@
           block
           :disabled="isLoading"
           :loading="isGithubLoading"
-          @click="handleGithubSignUp"
           class="justify-center"
+          @click="handleGithubSignUp"
         >
           <template #leading>
-            <Icon name="logos:github-icon" class="w-5 h-5" />
+            <Icon
+              name="logos:github-icon"
+              class="w-5 h-5"
+            />
           </template>
           Continue with GitHub
         </UButton>
       </slot>
     </div>
-      
+
     <!-- Divider -->
-    <div v-if="showSocialLogin" class="flex items-center my-8">
-      <div class="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
+    <div
+      v-if="showSocialLogin"
+      class="flex items-center my-8"
+    >
+      <div class="flex-1 border-t border-gray-300 dark:border-gray-600" />
       <div class="font-medium text-gray-500 dark:text-gray-400 flex mx-3 whitespace-nowrap">
         <span class="text-sm">Or continue with email</span>
       </div>
-      <div class="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
+      <div class="flex-1 border-t border-gray-300 dark:border-gray-600" />
     </div>
 
-    <UForm :schema="signUpSchema" :state="form" @submit="handleSignUp" class="space-y-4">
+    <UForm
+      :schema="signUpSchema"
+      :state="form"
+      class="space-y-4"
+      @submit="handleSignUp"
+    >
       <!-- Team Name Field -->
       <UFormField
-        label="Team name" 
+        label="Team name"
         name="teamName"
         required
         :help="teamNameHelp"
@@ -81,7 +101,7 @@
 
       <!-- Email Field -->
       <UFormField
-        label="Email address" 
+        label="Email address"
         name="email"
         required
       >
@@ -97,8 +117,8 @@
       </UFormField>
 
       <!-- Password Field -->
-      <UFormField 
-        label="Password" 
+      <UFormField
+        label="Password"
         name="password"
         required
         :help="passwordHelp"
@@ -128,8 +148,8 @@
       </UFormField>
 
       <!-- Password Confirmation Field -->
-      <UFormField 
-        label="Confirm password" 
+      <UFormField
+        label="Confirm password"
         name="confirmPassword"
         required
       >
@@ -158,7 +178,10 @@
       </UFormField>
 
       <!-- Terms and Privacy -->
-      <div v-if="requireTermsAcceptance" class="space-y-3">
+      <div
+        v-if="requireTermsAcceptance"
+        class="space-y-3"
+      >
         <UCheckbox
           v-model="form.acceptTerms"
           required
@@ -166,24 +189,24 @@
         >
           <template #label>
             <span class="text-sm text-gray-600 dark:text-gray-400">
-              I agree to the 
+              I agree to the
               <slot name="terms-link">
                 <UButton
                   variant="ghost"
                   size="sm"
-                  @click="$emit('view-terms')"
                   class="p-0 h-auto text-primary-600 hover:text-primary-500"
+                  @click="$emit('view-terms')"
                 >
                   Terms of Service
                 </UButton>
               </slot>
-              and 
+              and
               <slot name="privacy-link">
                 <UButton
                   variant="ghost"
                   size="sm"
-                  @click="$emit('view-privacy')"
                   class="p-0 h-auto text-primary-600 hover:text-primary-500"
+                  @click="$emit('view-privacy')"
                 >
                   Privacy Policy
                 </UButton>
@@ -213,8 +236,8 @@
         :title="getErrorTitle(errorMessage)"
         :description="getErrorDescription(errorMessage)"
         :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'ghost' }"
-        @close="errorMessage = ''"
         class="mb-4"
+        @close="errorMessage = ''"
       />
 
       <!-- Submit Button -->
@@ -239,8 +262,8 @@
             variant="ghost"
             size="sm"
             :disabled="isLoading"
-            @click="$emit('switch-to-signin')"
             class="font-medium text-primary-600 hover:text-primary-500"
+            @click="$emit('switch-to-signin')"
           >
             Sign in
           </UButton>
@@ -304,11 +327,11 @@ const props = withDefaults(defineProps<AuthSignUpProps>(), {
   requireTermsAcceptance: true,
   showMarketingConsent: true,
   teamNameHelp: 'Choose a name for your team workspace',
-  passwordHelp: 'Must be at least 8 characters with numbers and letters'
+  passwordHelp: 'Must be at least 8 characters with numbers and letters',
 })
 
 const emit = defineEmits<{
-  'success': [data: { user: any; team: any }]
+  'success': [data: { user: any, team: any }]
   'error': [error: string]
   'switch-to-signin': []
   'view-terms': []
@@ -324,7 +347,7 @@ const form = reactive<SignUpForm>({
   password: '',
   confirmPassword: '',
   acceptTerms: false,
-  marketingConsent: false
+  marketingConsent: false,
 })
 
 // Custom validation for password confirmation
@@ -332,25 +355,25 @@ const passwordMatchValidation = v.pipe(
   v.string(),
   v.check((val) => {
     return val === form.password
-  }, 'Passwords do not match')
+  }, 'Passwords do not match'),
 )
 
 // Validation schema using Valibot
 const signUpSchema = v.object({
   teamName: v.pipe(
-    v.string(), 
+    v.string(),
     v.minLength(2, 'Team name must be at least 2 characters'),
-    v.maxLength(50, 'Team name must be less than 50 characters')
+    v.maxLength(50, 'Team name must be less than 50 characters'),
   ),
   email: v.pipe(v.string(), v.email('Please enter a valid email address')),
   password: v.pipe(
-    v.string(), 
+    v.string(),
     v.minLength(8, 'Password must be at least 8 characters'),
-    v.regex(/(?=.*[a-zA-Z])(?=.*\d)/, 'Password must contain both letters and numbers')
+    v.regex(/(?=.*[a-z])(?=.*\d)/i, 'Password must contain both letters and numbers'),
   ),
   confirmPassword: passwordMatchValidation,
   acceptTerms: v.literal(true, 'You must accept the terms and conditions'),
-  marketingConsent: v.optional(v.boolean())
+  marketingConsent: v.optional(v.boolean()),
 })
 
 // Composables - declared after form to avoid issues
@@ -370,13 +393,13 @@ const handleSignUp = async (event: FormSubmitEvent<any>) => {
     isLoading.value = true
 
     await signUpWithTeam(event.data.email, event.data.password, event.data.teamName)
-    
-    emit('success', { 
+
+    emit('success', {
       user: { email: event.data.email },
       team: { name: event.data.teamName },
-      marketingConsent: event.data.marketingConsent
+      marketingConsent: event.data.marketingConsent,
     })
-    
+
     // Clear form on success
     Object.assign(form, {
       teamName: '',
@@ -384,14 +407,15 @@ const handleSignUp = async (event: FormSubmitEvent<any>) => {
       password: '',
       confirmPassword: '',
       acceptTerms: false,
-      marketingConsent: false
+      marketingConsent: false,
     })
-    
-  } catch (error: any) {
+  }
+  catch (error: any) {
     console.error('Signup error:', error)
     errorMessage.value = error.message || 'Failed to create account'
     emit('error', errorMessage.value)
-  } finally {
+  }
+  finally {
     isLoading.value = false
   }
 }
@@ -400,31 +424,32 @@ const handleSignUp = async (event: FormSubmitEvent<any>) => {
 const handleGoogleSignUp = async () => {
   try {
     isGoogleLoading.value = true
-    
+
     // Get Supabase client
     const nuxtApp = useNuxtApp()
-    
+
     if (!nuxtApp?.$teamAuthClient?.auth?.signInWithOAuth) {
       throw new Error('Supabase client not available for OAuth')
     }
-    
+
     const { data, error } = await nuxtApp.$teamAuthClient.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?mode=signup&team_name=${encodeURIComponent(form.teamName || 'My Team')}`
-      }
+        redirectTo: `${window.location.origin}/auth/callback?mode=signup&team_name=${encodeURIComponent(form.teamName || 'My Team')}`,
+      },
     })
-    
+
     if (error) {
       throw error
     }
-    
+
     emit('social-success', 'google', data)
-    
-  } catch (error: any) {
+  }
+  catch (error: any) {
     const errorMessage = error.message || 'Failed to sign up with Google'
     emit('social-error', 'google', errorMessage)
-  } finally {
+  }
+  finally {
     isGoogleLoading.value = false
   }
 }
@@ -432,31 +457,32 @@ const handleGoogleSignUp = async () => {
 const handleGithubSignUp = async () => {
   try {
     isGithubLoading.value = true
-    
+
     // Get Supabase client
     const nuxtApp = useNuxtApp()
-    
+
     if (!nuxtApp?.$teamAuthClient?.auth?.signInWithOAuth) {
       throw new Error('Supabase client not available for OAuth')
     }
-    
+
     const { data, error } = await nuxtApp.$teamAuthClient.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?mode=signup&team_name=${encodeURIComponent(form.teamName || 'My Team')}`
-      }
+        redirectTo: `${window.location.origin}/auth/callback?mode=signup&team_name=${encodeURIComponent(form.teamName || 'My Team')}`,
+      },
     })
-    
+
     if (error) {
       throw error
     }
-    
+
     emit('social-success', 'github', data)
-    
-  } catch (error: any) {
+  }
+  catch (error: any) {
     const errorMessage = error.message || 'Failed to sign up with GitHub'
     emit('social-error', 'github', errorMessage)
-  } finally {
+  }
+  finally {
     isGithubLoading.value = false
   }
 }

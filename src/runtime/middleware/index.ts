@@ -1,6 +1,6 @@
 /**
  * Team Auth Middleware Index
- * 
+ *
  * Centralized exports for all authentication and authorization middleware
  */
 
@@ -20,7 +20,7 @@ export {
   requireSuperAdmin,
   requireAdminOnly,
   requireOwnerOnly,
-  requireSuperAdminOnly
+  requireSuperAdminOnly,
 } from './require-role'
 
 // Team-specific middleware
@@ -28,7 +28,7 @@ export {
   createTeamAccessMiddleware,
   requireTeamMembership,
   requireAnyTeam,
-  requireValidatedTeam
+  requireValidatedTeam,
 } from './require-team'
 
 // Redirect middleware variants
@@ -36,14 +36,14 @@ export {
   createRedirectAuthenticated,
   redirectToDashboard,
   redirectToTeams,
-  redirectBasedOnTeam
+  redirectBasedOnTeam,
 } from './redirect-authenticated'
 
 // Impersonation middleware
 export {
   requireSuperAdminForImpersonation,
   blockDuringImpersonation,
-  createImpersonationRestriction
+  createImpersonationRestriction,
 } from './impersonation'
 
 /**
@@ -52,29 +52,29 @@ export {
 export const middlewareConfig = {
   // Global middleware (runs on every route)
   global: {
-    auth: 'auth.global'
+    auth: 'auth.global',
   },
-  
+
   // Named middleware for specific routes
   named: {
     // Authentication
     requireAuth: 'require-auth',
     redirectAuth: 'redirect-authenticated',
-    
+
     // Role-based
     requireAdmin: 'require-admin',
     requireOwner: 'require-owner',
     requireSuperAdmin: 'require-super-admin',
-    
+
     // Team-based
     requireTeam: 'require-team',
     requireTeamMembership: 'require-team-membership',
-    
+
     // Impersonation
     impersonation: 'impersonation',
     requireSuperAdminForImpersonation: 'require-super-admin-for-impersonation',
-    blockDuringImpersonation: 'block-during-impersonation'
-  }
+    blockDuringImpersonation: 'block-during-impersonation',
+  },
 }
 
 /**
@@ -83,27 +83,27 @@ export const middlewareConfig = {
 export const middlewareCombinations = {
   // Public pages (login, signup, etc.)
   public: ['redirect-authenticated'],
-  
+
   // Protected pages requiring authentication
   protected: ['require-auth'],
-  
+
   // Dashboard and general team pages
   dashboard: ['require-auth', 'require-team'],
-  
+
   // Admin pages within a team
   teamAdmin: ['require-auth', 'require-team', 'require-admin'],
-  
+
   // Owner-only pages
   teamOwner: ['require-auth', 'require-team', 'require-owner'],
-  
+
   // Super admin pages
   superAdmin: ['require-auth', 'require-super-admin'],
-  
+
   // Impersonation pages
   impersonation: ['require-auth', 'require-super-admin-for-impersonation'],
-  
+
   // Sensitive operations (blocked during impersonation)
-  sensitive: ['require-auth', 'require-team', 'block-during-impersonation']
+  sensitive: ['require-auth', 'require-team', 'block-during-impersonation'],
 }
 
 /**
@@ -121,12 +121,12 @@ export function getMiddlewareForRoute(type: keyof typeof middlewareCombinations)
  * @returns Object for definePageMeta
  */
 export function defineRouteProtection(
-  protection: keyof typeof middlewareCombinations | string[]
+  protection: keyof typeof middlewareCombinations | string[],
 ): { middleware: string[] } {
-  const middleware = Array.isArray(protection) 
-    ? protection 
+  const middleware = Array.isArray(protection)
+    ? protection
     : getMiddlewareForRoute(protection)
-    
+
   return { middleware }
 }
 
@@ -142,7 +142,7 @@ export const protect = {
   superAdmin: () => defineRouteProtection('superAdmin'),
   impersonation: () => defineRouteProtection('impersonation'),
   sensitive: () => defineRouteProtection('sensitive'),
-  custom: (middleware: string[]) => defineRouteProtection(middleware)
+  custom: (middleware: string[]) => defineRouteProtection(middleware),
 }
 
 /**
@@ -163,15 +163,15 @@ export interface MiddlewareOptions {
  * Middleware factory for creating custom middleware with options
  */
 export const createMiddleware = {
-  requireRole: (role: string, options?: MiddlewareOptions) => 
+  requireRole: (role: string, options?: MiddlewareOptions) =>
     createRequireRoleMiddleware(role as any, options),
-    
-  teamAccess: (options?: MiddlewareOptions) => 
+
+  teamAccess: (options?: MiddlewareOptions) =>
     createTeamAccessMiddleware(options),
-    
-  redirectAuth: (redirectTo: string | Function, condition?: Function) => 
+
+  redirectAuth: (redirectTo: string | Function, condition?: Function) =>
     createRedirectAuthenticated(redirectTo as any, condition),
-    
-  impersonationRestriction: (options?: MiddlewareOptions) => 
-    createImpersonationRestriction(options)
+
+  impersonationRestriction: (options?: MiddlewareOptions) =>
+    createImpersonationRestriction(options),
 }

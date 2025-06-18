@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,9 +27,9 @@ serve(async (req) => {
       {
         auth: {
           autoRefreshToken: false,
-          persistSession: false
-        }
-      }
+          persistSession: false,
+        },
+      },
     )
 
     // Parse request body
@@ -39,10 +39,10 @@ serve(async (req) => {
     if (!email || !password || !team_name) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields: email, password, team_name' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -50,10 +50,10 @@ serve(async (req) => {
     if (team_name.trim().length === 0) {
       return new Response(
         JSON.stringify({ error: 'Team name cannot be empty' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -67,10 +67,10 @@ serve(async (req) => {
     if (existingTeam) {
       return new Response(
         JSON.stringify({ error: 'TEAM_EXISTS', message: 'Team name already in use' }),
-        { 
-          status: 409, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 409,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -85,23 +85,23 @@ serve(async (req) => {
       // Check if it's a duplicate email error
       if (authError?.message?.includes('already been registered')) {
         return new Response(
-          JSON.stringify({ 
-            error: 'EMAIL_ALREADY_EXISTS', 
-            message: 'A user with this email address already exists' 
+          JSON.stringify({
+            error: 'EMAIL_ALREADY_EXISTS',
+            message: 'A user with this email address already exists',
           }),
-          { 
-            status: 409, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
+          {
+            status: 409,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          },
         )
       }
-      
+
       return new Response(
         JSON.stringify({ error: 'Failed to create user account', details: authError?.message }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -119,13 +119,13 @@ serve(async (req) => {
     if (teamError || !team) {
       // Cleanup: Delete the created user if team creation fails
       await supabaseAdmin.auth.admin.deleteUser(userId)
-      
+
       return new Response(
         JSON.stringify({ error: 'Failed to create team', details: teamError?.message }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -135,20 +135,20 @@ serve(async (req) => {
       .insert({
         team_id: team.id,
         user_id: userId,
-        role: 'owner'
+        role: 'owner',
       })
 
     if (memberError) {
       // Cleanup: Delete team and user if member addition fails
       await supabaseAdmin.from('teams').delete().eq('id', team.id)
       await supabaseAdmin.auth.admin.deleteUser(userId)
-      
+
       return new Response(
         JSON.stringify({ error: 'Failed to add user as team owner', details: memberError.message }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -157,8 +157,8 @@ serve(async (req) => {
       type: 'magiclink',
       email,
       options: {
-        redirectTo: `${Deno.env.get('SITE_URL') || 'http://localhost:3000'}/dashboard`
-      }
+        redirectTo: `${Deno.env.get('SITE_URL') || 'http://localhost:3000'}/dashboard`,
+      },
     })
 
     if (sessionError) {
@@ -167,35 +167,35 @@ serve(async (req) => {
 
     // Return success response
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
         user: {
           id: userId,
-          email: authData.user.email
+          email: authData.user.email,
         },
         team: {
           id: team.id,
-          name: team.name
+          name: team.name,
         },
-        session_url: sessionData?.properties?.action_link || null
+        session_url: sessionData?.properties?.action_link || null,
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     )
-
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Unexpected error in create-team-and-owner:', error)
-    
+
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     )
   }
 })

@@ -1,19 +1,22 @@
 <template>
   <div>
-    <UDropdownMenu :items="dropdownItems" :content="{ align: 'end' }">
-      <UButton 
-        variant="ghost" 
+    <UDropdownMenu
+      :items="dropdownItems"
+      :content="{ align: 'end' }"
+    >
+      <UButton
+        variant="ghost"
         class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
       >
         <!-- Show name if requested -->
-        <span 
-          v-if="props.showName && currentUser" 
+        <span
+          v-if="props.showName && currentUser"
           class="mr-3 text-sm font-medium !text-gray-700 dark:!text-gray-300"
           style="color: rgb(55, 65, 81) !important;"
         >
           {{ currentProfile?.full_name || currentUser.user_metadata?.name || currentUser.email }}
         </span>
-        
+
         <UAvatar
           :src="currentUser?.user_metadata?.avatar_url || undefined"
           :alt="currentProfile?.full_name || currentUser?.user_metadata?.name || currentUser?.email || 'User'"
@@ -27,8 +30,8 @@
     </UDropdownMenu>
 
     <!-- Settings Modal -->
-    <SettingsModal 
-      v-model="showSettingsModal" 
+    <SettingsModal
+      v-model="showSettingsModal"
       :tab="settingsTab"
       @saved="handleSettingsSaved"
       @error="handleSettingsError"
@@ -51,7 +54,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   size: 'sm',
-  showName: false
+  showName: false,
 })
 
 // Emits
@@ -62,35 +65,21 @@ const emit = defineEmits<{
 }>()
 
 // Get auth state
-const { currentUser, currentRole, signOut, isImpersonating, stopImpersonation, getAvatarFallback, getProfile } = useTeamAuth()
-
-// Profile data
-const currentProfile = ref<any>(null)
+const { currentUser, currentProfile, currentRole, signOut, isImpersonating, stopImpersonation, getAvatarFallback } = useTeamAuth()
 
 // Modal state
 const showSettingsModal = ref(false)
 const settingsTab = ref<'profile' | 'team'>('profile')
 
-// Load profile data when user changes
-watch(() => currentUser.value?.id, async (newUserId, oldUserId) => {
-  if (newUserId && newUserId !== oldUserId) {
-    try {
-      currentProfile.value = await getProfile()
-    } catch (error) {
-      console.error('Failed to load profile in UserButton:', error)
-    }
-  }
-}, { immediate: true })
-
 // Computed properties
 const avatarFallback = computed(() => {
   if (!currentUser.value) return ''
-  
+
   // Use shared avatar fallback logic with profile data
   const profileFullName = currentProfile.value?.full_name
   return getAvatarFallback({
     fullName: profileFullName,
-    email: undefined // Let it use currentUser.email
+    email: undefined, // Let it use currentUser.email
   })
 })
 
@@ -114,8 +103,9 @@ const openTeamSettings = () => {
 }
 
 const handleSettingsSaved = (data: any) => {
-  console.log('Settings saved:', data)
-  // Optionally close modal or show success message
+  console.log('UserButton: Settings saved:', data)
+  console.log('UserButton: currentProfile after save:', currentProfile.value)
+  // Profile updates automatically via reactive state in composable
 }
 
 const handleSettingsError = (error: string) => {
@@ -129,37 +119,37 @@ const dropdownItems = computed(() => {
     return [
       {
         label: 'Not signed in',
-        disabled: true
-      }
+        disabled: true,
+      },
     ]
   }
 
   const items = []
-  
+
   // Only show user info header if name is NOT already shown next to button
   if (!props.showName) {
     items.push({
       label: currentProfile.value?.full_name || currentUser.value.user_metadata?.name || currentUser.value.email || 'User',
       icon: 'i-lucide-user-circle',
       type: 'label',
-      disabled: true
+      disabled: true,
     })
-    
+
     // Separator
     items.push({
-      type: 'separator'
+      type: 'separator',
     })
   }
-  
+
   // Main actions
   items.push({
     label: 'User Settings',
     icon: 'i-lucide-user',
     onSelect: () => {
       openProfileSettings()
-    }
+    },
   })
-  
+
   // Team management (admin/owner + super_admin only)
   if (isAdmin.value || isSuperAdmin.value) {
     items.push({
@@ -167,16 +157,16 @@ const dropdownItems = computed(() => {
       icon: 'i-lucide-users',
       onSelect: () => {
         openTeamSettings()
-      }
+      },
     })
   }
-  
+
   // Impersonation section (super admin only)
   if (isSuperAdmin.value) {
     items.push({
-      type: 'separator'
+      type: 'separator',
     })
-    
+
     if (isImpersonating.value) {
       items.push({
         label: 'Stop Impersonation',
@@ -184,25 +174,26 @@ const dropdownItems = computed(() => {
         onSelect: () => {
           console.log('Stop Impersonation clicked')
           stopImpersonation()
-        }
+        },
       })
-    } else {
+    }
+    else {
       items.push({
         label: 'Start Impersonation',
         icon: 'i-lucide-arrow-right',
         onSelect: () => {
           console.log('Start Impersonation clicked')
           emit('impersonation')
-        }
+        },
       })
     }
   }
-  
+
   // Separator before sign out
   items.push({
-    type: 'separator'
+    type: 'separator',
   })
-  
+
   // Sign out
   items.push({
     label: 'Sign Out',
@@ -210,9 +201,9 @@ const dropdownItems = computed(() => {
     onSelect: () => {
       console.log('Sign Out clicked')
       signOut()
-    }
+    },
   })
-  
+
   return items
 })
 </script>

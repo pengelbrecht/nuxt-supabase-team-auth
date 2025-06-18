@@ -1,5 +1,5 @@
-import { navigateTo } from '#app'
 import { useTeamAuth } from '../composables/useTeamAuth'
+import { navigateTo } from '#app'
 
 /**
  * Middleware to handle impersonation restrictions
@@ -38,12 +38,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const blockedPaths = [
       '/admin/',
       '/super-admin/',
-      '/impersonate/'
+      '/impersonate/',
     ]
 
     const isBlockedPath = blockedPaths.some(path => currentPath.startsWith(path))
-    const isStopImpersonation = currentPath.includes('/impersonate/stop') || 
-                                currentPath.includes('/stop-impersonation')
+    const isStopImpersonation = currentPath.includes('/impersonate/stop')
+      || currentPath.includes('/stop-impersonation')
 
     if (isBlockedPath && !isStopImpersonation) {
       return navigateTo('/dashboard?error=admin_routes_blocked_during_impersonation')
@@ -56,11 +56,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
       '/team/delete',
       '/billing/',
       '/api-keys/',
-      '/security/'
+      '/security/',
     ]
 
     const isDangerousPath = dangerousPaths.some(path => currentPath.includes(path))
-    
+
     if (isDangerousPath) {
       return navigateTo('/dashboard?error=dangerous_operations_blocked_during_impersonation')
     }

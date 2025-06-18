@@ -1,4 +1,5 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 
 /**
  * Database utilities for testing
@@ -9,14 +10,14 @@ export class TestDatabase {
 
   constructor() {
     const supabaseUrl = process.env.SUPABASE_URL || 'http://localhost:54321'
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
-    
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+      || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
+
     this.supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
-        persistSession: false
-      }
+        persistSession: false,
+      },
     })
   }
 
@@ -30,7 +31,7 @@ export class TestDatabase {
       await this.supabase.from('invites').delete().neq('id', '')
       await this.supabase.from('team_members').delete().neq('id', '')
       await this.supabase.from('teams').delete().neq('id', '')
-      
+
       // Clean up auth users (be careful - this is destructive)
       const { data: users } = await this.supabase.auth.admin.listUsers()
       if (users?.users) {
@@ -41,9 +42,10 @@ export class TestDatabase {
           }
         }
       }
-      
+
       console.log('✅ Database reset complete')
-    } catch (error) {
+    }
+    catch (error) {
       console.error('❌ Database reset failed:', error)
       throw error
     }
@@ -59,7 +61,7 @@ export class TestDatabase {
         .from('teams')
         .delete()
         .like('name', `%${pattern}%`)
-      
+
       // Clean up users with test pattern
       const { data: users } = await this.supabase.auth.admin.listUsers()
       if (users?.users) {
@@ -69,9 +71,10 @@ export class TestDatabase {
           }
         }
       }
-      
+
       console.log(`✅ Cleaned up test data with pattern: ${pattern}`)
-    } catch (error) {
+    }
+    catch (error) {
       console.error('❌ Test data cleanup failed:', error)
       throw error
     }
@@ -87,36 +90,37 @@ export class TestDatabase {
       const adminUser = await this.createTestUser('admin@test.com', 'TestPassword123!')
       const memberUser = await this.createTestUser('member@test.com', 'TestPassword123!')
       const guestUser = await this.createTestUser('guest@test.com', 'TestPassword123!')
-      
+
       // Create test team
       const team = await this.createTestTeam('Test Team', ownerUser.id)
-      
+
       // Add team members with roles
       await this.addTeamMember(team.id, ownerUser.id, 'owner')
       await this.addTeamMember(team.id, adminUser.id, 'admin')
       await this.addTeamMember(team.id, memberUser.id, 'member')
-      
+
       // Create some test invitations
       const pendingInvite = await this.createTestInvite(team.id, 'pending@test.com', 'member')
       const expiredInvite = await this.createTestInvite(team.id, 'expired@test.com', 'member', true)
-      
+
       const seedData: SeedData = {
         users: {
           owner: ownerUser,
           admin: adminUser,
           member: memberUser,
-          guest: guestUser
+          guest: guestUser,
         },
         team,
         invites: {
           pending: pendingInvite,
-          expired: expiredInvite
-        }
+          expired: expiredInvite,
+        },
       }
-      
+
       console.log('✅ Test data seeded successfully')
       return seedData
-    } catch (error) {
+    }
+    catch (error) {
       console.error('❌ Test data seeding failed:', error)
       throw error
     }
@@ -129,17 +133,17 @@ export class TestDatabase {
     const { data, error } = await this.supabase.auth.admin.createUser({
       email,
       password,
-      email_confirm: true
+      email_confirm: true,
     })
-    
+
     if (error || !data.user) {
       throw new Error(`Failed to create test user: ${error?.message}`)
     }
-    
+
     return {
       id: data.user.id,
       email: data.user.email!,
-      password
+      password,
     }
   }
 
@@ -151,20 +155,20 @@ export class TestDatabase {
       .from('teams')
       .insert({
         name,
-        created_by: createdBy
+        created_by: createdBy,
       })
       .select()
       .single()
-    
+
     if (error || !data) {
       throw new Error(`Failed to create test team: ${error?.message}`)
     }
-    
+
     return {
       id: data.id,
       name: data.name,
       created_by: data.created_by,
-      created_at: data.created_at
+      created_at: data.created_at,
     }
   }
 
@@ -177,9 +181,9 @@ export class TestDatabase {
       .insert({
         team_id: teamId,
         user_id: userId,
-        role
+        role,
       })
-    
+
     if (error) {
       throw new Error(`Failed to add team member: ${error.message}`)
     }
@@ -189,15 +193,15 @@ export class TestDatabase {
    * Create a test invitation
    */
   async createTestInvite(
-    teamId: string, 
-    email: string, 
-    role: TeamRole, 
-    expired: boolean = false
+    teamId: string,
+    email: string,
+    role: TeamRole,
+    expired: boolean = false,
   ): Promise<TestInvite> {
-    const expiresAt = expired 
+    const expiresAt = expired
       ? new Date(Date.now() - 24 * 60 * 60 * 1000) // 24 hours ago
       : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
-    
+
     const { data, error } = await this.supabase
       .from('invites')
       .insert({
@@ -205,22 +209,22 @@ export class TestDatabase {
         email,
         role,
         expires_at: expiresAt.toISOString(),
-        status: 'pending'
+        status: 'pending',
       })
       .select()
       .single()
-    
+
     if (error || !data) {
       throw new Error(`Failed to create test invite: ${error?.message}`)
     }
-    
+
     return {
       id: data.id,
       team_id: data.team_id,
       email: data.email,
       role: data.role,
       status: data.status,
-      expires_at: data.expires_at
+      expires_at: data.expires_at,
     }
   }
 
@@ -232,14 +236,14 @@ export class TestDatabase {
       this.supabase.auth.admin.listUsers(),
       this.supabase.from('teams').select('id'),
       this.supabase.from('team_members').select('id'),
-      this.supabase.from('invites').select('id')
+      this.supabase.from('invites').select('id'),
     ])
-    
+
     return {
       users: usersResult.data?.users?.length || 0,
       teams: teamsResult.data?.length || 0,
       teamMembers: membersResult.data?.length || 0,
-      invites: invitesResult.data?.length || 0
+      invites: invitesResult.data?.length || 0,
     }
   }
 
@@ -248,14 +252,14 @@ export class TestDatabase {
    */
   async verifyState(expectedState: Partial<DatabaseStats>): Promise<boolean> {
     const actualState = await this.getStats()
-    
+
     for (const [key, expectedValue] of Object.entries(expectedState)) {
       if (actualState[key as keyof DatabaseStats] !== expectedValue) {
         console.error(`State mismatch for ${key}: expected ${expectedValue}, got ${actualState[key as keyof DatabaseStats]}`)
         return false
       }
     }
-    
+
     return true
   }
 

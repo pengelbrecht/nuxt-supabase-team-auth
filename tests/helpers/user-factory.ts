@@ -1,5 +1,6 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
-import { TestUser, TeamRole } from './database'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
+import type { TestUser, TeamRole } from './database'
 
 /**
  * Factory for creating test users with various configurations
@@ -10,14 +11,14 @@ export class TestUserFactory {
 
   constructor() {
     const supabaseUrl = process.env.SUPABASE_URL || 'http://localhost:54321'
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
-    
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+      || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
+
     this.supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
-        persistSession: false
-      }
+        persistSession: false,
+      },
     })
   }
 
@@ -30,7 +31,7 @@ export class TestUserFactory {
       password: 'TestPassword123!',
       emailConfirmed: true,
       metadata: {},
-      ...overrides
+      ...overrides,
     }
 
     const timestamp = Date.now()
@@ -40,7 +41,7 @@ export class TestUserFactory {
       email,
       password: config.password,
       email_confirm: config.emailConfirmed,
-      user_metadata: config.metadata
+      user_metadata: config.metadata,
     })
 
     if (error || !data.user) {
@@ -53,7 +54,7 @@ export class TestUserFactory {
     return {
       id: data.user.id,
       email: data.user.email!,
-      password: config.password
+      password: config.password,
     }
   }
 
@@ -63,7 +64,7 @@ export class TestUserFactory {
   async createUserWithRole(teamId: string, role: TeamRole, overrides: Partial<UserConfig> = {}): Promise<TestUser> {
     const user = await this.createUser({
       emailPrefix: `${role}-user`,
-      ...overrides
+      ...overrides,
     })
 
     // Add user to team with specified role
@@ -72,7 +73,7 @@ export class TestUserFactory {
       .insert({
         team_id: teamId,
         user_id: user.id,
-        role
+        role,
       })
 
     if (error) {
@@ -88,16 +89,16 @@ export class TestUserFactory {
   async createOwnerWithTeam(overrides: Partial<UserConfig & TeamConfig> = {}): Promise<UserWithTeam> {
     const user = await this.createUser({
       emailPrefix: 'owner',
-      ...overrides
+      ...overrides,
     })
 
     const teamName = overrides.teamName || `${user.email.split('@')[0]}'s Team`
-    
+
     const { data: team, error: teamError } = await this.supabase
       .from('teams')
       .insert({
         name: teamName,
-        created_by: user.id
+        created_by: user.id,
       })
       .select()
       .single()
@@ -112,7 +113,7 @@ export class TestUserFactory {
       .insert({
         team_id: team.id,
         user_id: user.id,
-        role: 'owner'
+        role: 'owner',
       })
 
     if (memberError) {
@@ -125,8 +126,8 @@ export class TestUserFactory {
         id: team.id,
         name: team.name,
         created_by: team.created_by,
-        created_at: team.created_at
-      }
+        created_at: team.created_at,
+      },
     }
   }
 
@@ -137,7 +138,7 @@ export class TestUserFactory {
     return this.createUser({
       emailPrefix: 'super-admin',
       metadata: { role: 'super_admin' },
-      ...overrides
+      ...overrides,
     })
   }
 
@@ -147,7 +148,7 @@ export class TestUserFactory {
   async createTeamWithUsers(teamName?: string): Promise<TeamWithUsers> {
     // Create owner with team
     const ownerWithTeam = await this.createOwnerWithTeam({
-      teamName: teamName || `Test Team ${Date.now()}`
+      teamName: teamName || `Test Team ${Date.now()}`,
     })
 
     // Create additional team members
@@ -160,8 +161,8 @@ export class TestUserFactory {
       users: {
         owner: ownerWithTeam.user,
         admin,
-        members: [member1, member2]
-      }
+        members: [member1, member2],
+      },
     }
   }
 
@@ -169,13 +170,13 @@ export class TestUserFactory {
    * Create a user with custom JWT claims for testing impersonation
    */
   async createUserWithCustomClaims(
-    claims: Record<string, any>, 
-    overrides: Partial<UserConfig> = {}
+    claims: Record<string, any>,
+    overrides: Partial<UserConfig> = {},
   ): Promise<TestUser> {
     const user = await this.createUser({
       emailPrefix: 'custom-claims',
       metadata: { custom_claims: claims },
-      ...overrides
+      ...overrides,
     })
 
     return user
@@ -191,7 +192,7 @@ export class TestUserFactory {
     for (let i = 0; i < count; i++) {
       const user = await this.createUser({
         emailPrefix: `batch-${batchId}-user-${i}`,
-        ...config
+        ...config,
       })
       users.push(user)
     }
@@ -205,29 +206,29 @@ export class TestUserFactory {
   async createUserWithAuthState(state: AuthState, overrides: Partial<UserConfig> = {}): Promise<TestUser> {
     const baseConfig = {
       emailPrefix: `${state}-user`,
-      ...overrides
+      ...overrides,
     }
 
     switch (state) {
       case 'unconfirmed':
         return this.createUser({ ...baseConfig, emailConfirmed: false })
-      
+
       case 'banned':
         const bannedUser = await this.createUser(baseConfig)
         // Ban the user
         await this.supabase.auth.admin.updateUserById(bannedUser.id, {
-          ban_duration: '24h'
+          ban_duration: '24h',
         })
         return bannedUser
-      
+
       case 'inactive':
         const inactiveUser = await this.createUser(baseConfig)
         // Set last sign in to long ago
         await this.supabase.auth.admin.updateUserById(inactiveUser.id, {
-          user_metadata: { last_active: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString() }
+          user_metadata: { last_active: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString() },
         })
         return inactiveUser
-      
+
       default:
         return this.createUser(baseConfig)
     }
@@ -240,7 +241,8 @@ export class TestUserFactory {
     for (const userId of this.createdUsers) {
       try {
         await this.supabase.auth.admin.deleteUser(userId)
-      } catch (error) {
+      }
+      catch (error) {
         console.warn(`Failed to delete user ${userId}:`, error)
       }
     }

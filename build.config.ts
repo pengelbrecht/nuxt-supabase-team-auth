@@ -2,11 +2,11 @@ export default {
   declaration: true,
   entries: [
     'src/module',
-    'src/cli'
+    'src/cli',
   ],
   externals: [
     '@nuxt/kit',
-    '@nuxt/schema', 
-    'nuxt'
-  ]
+    '@nuxt/schema',
+    'nuxt',
+  ],
 }

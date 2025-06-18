@@ -1,5 +1,8 @@
 <template>
-  <div class="flex items-center" :class="containerClass">
+  <div
+    class="flex items-center"
+    :class="containerClass"
+  >
     <UAvatar
       :alt="displayName || email || 'User'"
       :size="avatarSize"
@@ -7,15 +10,21 @@
     >
       {{ avatarFallback }}
     </UAvatar>
-    
+
     <!-- Spacer -->
-    <div style="width: 1rem; flex-shrink: 0;"></div>
-    
+    <div style="width: 1rem; flex-shrink: 0;" />
+
     <div class="flex flex-col justify-center flex-1">
-      <p v-if="displayName" class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <p
+        v-if="displayName"
+        class="text-sm font-semibold text-gray-900 dark:text-gray-100"
+      >
         {{ displayName }}
       </p>
-      <p class="text-xs text-gray-600 dark:text-gray-400" :class="{ 'font-semibold text-gray-900 dark:text-gray-100': !displayName }">
+      <p
+        class="text-xs text-gray-600 dark:text-gray-400"
+        :class="{ 'font-semibold text-gray-900 dark:text-gray-100': !displayName }"
+      >
         {{ email }}
       </p>
     </div>
@@ -40,7 +49,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   avatarSize: 'xl',
-  class: ''
+  class: '',
 })
 
 // Get auth state and avatar utility
@@ -58,7 +67,7 @@ const email = computed(() => {
 const avatarFallback = computed(() => {
   return getAvatarFallback({
     fullName: displayName.value,
-    email: email.value
+    email: email.value,
   })
 })
 

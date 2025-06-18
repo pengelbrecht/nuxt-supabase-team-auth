@@ -1,5 +1,5 @@
-import { navigateTo } from '#app'
 import { useTeamAuth } from '../composables/useTeamAuth'
+import { navigateTo } from '#app'
 
 /**
  * Middleware to require user authentication

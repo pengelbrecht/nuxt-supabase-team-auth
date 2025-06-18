@@ -10,10 +10,10 @@ export const useNuxtApp = vi.fn(() => ({
       onAuthStateChange: vi.fn(),
       setSession: vi.fn(),
       verifyOtp: vi.fn(),
-      updateUser: vi.fn()
+      updateUser: vi.fn(),
     },
     functions: {
-      invoke: vi.fn()
+      invoke: vi.fn(),
     },
     from: vi.fn(() => ({
       select: vi.fn().mockReturnThis(),
@@ -22,17 +22,17 @@ export const useNuxtApp = vi.fn(() => ({
       delete: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       neq: vi.fn().mockReturnThis(),
-      single: vi.fn()
-    }))
-  }
+      single: vi.fn(),
+    })),
+  },
 }))
 
 export const useRoute = vi.fn(() => ({
   query: {},
-  params: {}
+  params: {},
 }))
 
 export const useRouter = vi.fn(() => ({
   push: vi.fn(),
-  replace: vi.fn()
+  replace: vi.fn(),
 }))

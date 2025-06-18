@@ -1,8 +1,18 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+// Import mocked navigateTo and useTeamAuth
+import { useTeamAuth } from '../../src/runtime/composables/useTeamAuth'
+
+// Import actual middleware after mocking
+import authGlobal from '../../src/runtime/middleware/auth.global'
+import requireAuth from '../../src/runtime/middleware/require-auth'
+import requireTeam from '../../src/runtime/middleware/require-team'
+import { createRequireRoleMiddleware } from '../../src/runtime/middleware/require-role'
+import { navigateTo } from '#app'
+
 // Set up global mocks before any imports
 Object.assign(globalThis, {
-  defineNuxtRouteMiddleware: (fn: any) => fn
+  defineNuxtRouteMiddleware: (fn: any) => fn,
 })
 
 // Mock Nuxt composables
@@ -12,18 +22,8 @@ vi.mock('#app', () => ({
 
 // Mock useTeamAuth composable - declare at module level
 vi.mock('../../src/runtime/composables/useTeamAuth', () => ({
-  useTeamAuth: vi.fn()
+  useTeamAuth: vi.fn(),
 }))
-
-// Import mocked navigateTo and useTeamAuth
-import { navigateTo } from '#app'
-import { useTeamAuth } from '../../src/runtime/composables/useTeamAuth'
-
-// Import actual middleware after mocking
-import authGlobal from '../../src/runtime/middleware/auth.global'
-import requireAuth from '../../src/runtime/middleware/require-auth'
-import requireTeam from '../../src/runtime/middleware/require-team'
-import { createRequireRoleMiddleware } from '../../src/runtime/middleware/require-role'
 
 describe('Middleware Integration Tests', () => {
   let mockNavigateTo: any
@@ -32,14 +32,14 @@ describe('Middleware Integration Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockNavigateTo = vi.mocked(navigateTo)
-    
+
     // Default mock route
     mockRoute = {
       path: '/dashboard',
       query: {},
       params: {},
       search: '',
-      meta: {}
+      meta: {},
     }
 
     // Default auth state - unauthenticated
@@ -49,7 +49,7 @@ describe('Middleware Integration Tests', () => {
       currentRole: { value: null },
       isLoading: { value: false },
       isImpersonating: { value: false },
-      impersonationExpiresAt: { value: null }
+      impersonationExpiresAt: { value: null },
     })
 
     // Mock process.server to be false (client-side)
@@ -63,27 +63,27 @@ describe('Middleware Integration Tests', () => {
   describe('Global Auth Middleware', () => {
     it('should allow access to public routes without authentication', async () => {
       mockRoute.path = '/'
-      
+
       const result = await authGlobal(mockRoute)
-      
+
       expect(result).toBeUndefined() // No redirect
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
     it('should allow access to login page without authentication', async () => {
       mockRoute.path = '/login'
-      
+
       const result = await authGlobal(mockRoute)
-      
+
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
     it('should redirect unauthenticated users from protected routes', async () => {
       mockRoute.path = '/dashboard'
-      
+
       const result = await authGlobal(mockRoute)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/login?redirect=%2Fdashboard')
     })
 
@@ -94,11 +94,11 @@ describe('Middleware Integration Tests', () => {
         currentTeam: { value: { id: 'team-456', name: 'Test Team' } },
         currentRole: { value: 'member' },
         isLoading: { value: false },
-        isImpersonating: { value: false }
+        isImpersonating: { value: false },
       })
-      
+
       const result = await authGlobal(mockRoute)
-      
+
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
@@ -110,11 +110,11 @@ describe('Middleware Integration Tests', () => {
         currentTeam: { value: null },
         currentRole: { value: null },
         isLoading: { value: false },
-        isImpersonating: { value: false }
+        isImpersonating: { value: false },
       })
-      
+
       const result = await authGlobal(mockRoute)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/teams?message=select_team_first')
     })
 
@@ -124,11 +124,11 @@ describe('Middleware Integration Tests', () => {
         currentUser: { value: { id: 'user-123' } },
         currentRole: { value: 'super_admin' },
         isImpersonating: { value: true },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       const result = await authGlobal(mockRoute)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=admin_blocked_during_impersonation')
     })
 
@@ -139,11 +139,11 @@ describe('Middleware Integration Tests', () => {
         currentTeam: { value: { id: 'team-456' } },
         currentRole: { value: 'member' },
         isLoading: { value: false },
-        isImpersonating: { value: false }
+        isImpersonating: { value: false },
       })
-      
+
       const result = await authGlobal(mockRoute)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/teams?error=unauthorized_team_access')
     })
 
@@ -153,17 +153,17 @@ describe('Middleware Integration Tests', () => {
         currentUser: { value: { id: 'user-123' } },
         currentRole: { value: 'admin' },
         isLoading: { value: false },
-        isImpersonating: { value: false }
+        isImpersonating: { value: false },
       })
-      
+
       const result = await authGlobal(mockRoute)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=insufficient_permissions')
     })
 
     it('should handle loading state', async () => {
       mockRoute.path = '/dashboard'
-      
+
       // Start with loading state
       let isLoading = true
       vi.mocked(useTeamAuth).mockReturnValue({
@@ -171,7 +171,7 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: isLoading },
         currentTeam: { value: null },
         currentRole: { value: null },
-        isImpersonating: { value: false }
+        isImpersonating: { value: false },
       })
 
       // Simulate loading completion
@@ -182,12 +182,12 @@ describe('Middleware Integration Tests', () => {
           currentTeam: { value: { id: 'team-456' } },
           currentRole: { value: 'member' },
           isLoading: { value: false },
-          isImpersonating: { value: false }
+          isImpersonating: { value: false },
         })
       }, 50)
-      
+
       const result = await authGlobal(mockRoute)
-      
+
       // Should eventually allow access
       expect(result).toBeUndefined()
     })
@@ -197,11 +197,11 @@ describe('Middleware Integration Tests', () => {
     it('should allow authenticated users to proceed', async () => {
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: { id: 'user-123' } },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       const result = await requireAuth(mockRoute)
-      
+
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
@@ -210,11 +210,11 @@ describe('Middleware Integration Tests', () => {
       mockRoute.path = '/dashboard'
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: null },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       const result = await requireAuth(mockRoute)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/login?redirect=%2Fdashboard')
     })
 
@@ -222,14 +222,14 @@ describe('Middleware Integration Tests', () => {
       mockRoute.path = '/dashboard'
       mockRoute.query = { tab: 'settings', filter: 'active' }
       mockRoute.search = '?tab=settings&filter=active'
-      
+
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: null },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       const result = await requireAuth(mockRoute)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/login?redirect=%2Fdashboard%3Ftab%3Dsettings%26filter%3Dactive')
     })
   })
@@ -240,11 +240,11 @@ describe('Middleware Integration Tests', () => {
         currentUser: { value: { id: 'user-123' } },
         currentTeam: { value: { id: 'team-456' } },
         currentRole: { value: 'member' },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       const result = await requireTeam(mockRoute)
-      
+
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
@@ -254,11 +254,11 @@ describe('Middleware Integration Tests', () => {
         currentUser: { value: null },
         currentTeam: { value: null },
         currentRole: { value: null },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       const result = await requireTeam(mockRoute)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/login?redirect=%2Fdashboard')
     })
 
@@ -267,11 +267,11 @@ describe('Middleware Integration Tests', () => {
         currentUser: { value: { id: 'user-123' } },
         currentTeam: { value: null },
         currentRole: { value: null },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       const result = await requireTeam(mockRoute)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/teams?message=select_team_first')
     })
 
@@ -281,11 +281,11 @@ describe('Middleware Integration Tests', () => {
         currentUser: { value: { id: 'user-123' } },
         currentTeam: { value: { id: 'team-456' } },
         currentRole: { value: 'member' },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       const result = await requireTeam(mockRoute)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/teams?error=unauthorized_team_access')
     })
 
@@ -295,11 +295,11 @@ describe('Middleware Integration Tests', () => {
         currentUser: { value: { id: 'user-123' } },
         currentTeam: { value: { id: 'team-456' } },
         currentRole: { value: 'member' },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       const result = await requireTeam(mockRoute)
-      
+
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
@@ -308,110 +308,110 @@ describe('Middleware Integration Tests', () => {
   describe('Require Role Middleware', () => {
     it('should allow users with sufficient role level', async () => {
       const requireAdminMiddleware = createRequireRoleMiddleware('admin')
-      
+
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: { id: 'user-123' } },
         currentRole: { value: 'admin' },
         currentTeam: { value: { id: 'team-456' } },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       const result = await requireAdminMiddleware(mockRoute)
-      
+
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
     it('should allow higher roles (owner can access admin routes)', async () => {
       const requireAdminMiddleware = createRequireRoleMiddleware('admin')
-      
+
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: { id: 'user-123' } },
         currentRole: { value: 'owner' }, // Higher than admin
         currentTeam: { value: { id: 'team-456' } },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       const result = await requireAdminMiddleware(mockRoute)
-      
+
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
     it('should deny users with insufficient role level', async () => {
       const requireAdminMiddleware = createRequireRoleMiddleware('admin')
-      
+
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: { id: 'user-123' } },
         currentRole: { value: 'member' }, // Lower than admin
         currentTeam: { value: { id: 'team-456' } },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       const result = await requireAdminMiddleware(mockRoute)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=insufficient_permissions')
     })
 
     it('should redirect users without role to team selection', async () => {
       const requireAdminMiddleware = createRequireRoleMiddleware('admin')
-      
+
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: { id: 'user-123' } },
         currentRole: { value: null },
         currentTeam: { value: null },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       const result = await requireAdminMiddleware(mockRoute)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/teams?message=select_team_first')
     })
 
     it('should redirect unauthenticated users to login', async () => {
       const requireAdminMiddleware = createRequireRoleMiddleware('admin')
-      
+
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: null },
         currentRole: { value: null },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       const result = await requireAdminMiddleware(mockRoute)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/login?redirect=%2Fdashboard')
     })
 
     it('should enforce strict role matching when configured', async () => {
       const requireExactAdminMiddleware = createRequireRoleMiddleware('admin', { strict: true })
-      
+
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: { id: 'user-123' } },
         currentRole: { value: 'owner' }, // Higher than admin
         currentTeam: { value: { id: 'team-456' } },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       const result = await requireExactAdminMiddleware(mockRoute)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=insufficient_permissions')
     })
 
     it('should use custom redirect and error message', async () => {
       const customMiddleware = createRequireRoleMiddleware('owner', {
         redirectTo: '/team/settings',
-        errorMessage: 'owner_required'
+        errorMessage: 'owner_required',
       })
-      
+
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: { id: 'user-123' } },
         currentRole: { value: 'admin' },
         currentTeam: { value: { id: 'team-456' } },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       const result = await customMiddleware(mockRoute)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/team/settings?error=owner_required')
     })
   })
@@ -419,44 +419,44 @@ describe('Middleware Integration Tests', () => {
   describe('Error Handling and Edge Cases', () => {
     it('should handle invalid roles gracefully', async () => {
       const invalidRoleMiddleware = createRequireRoleMiddleware('invalid_role' as any)
-      
+
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: { id: 'user-123' } },
         currentRole: { value: 'admin' },
         currentTeam: { value: { id: 'team-456' } },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       const result = await invalidRoleMiddleware(mockRoute)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=invalid_role')
     })
 
     it('should handle server-side rendering gracefully', async () => {
       vi.stubGlobal('process', { server: true })
-      
+
       const result = await authGlobal(mockRoute)
-      
+
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
     it('should handle auth loading timeout', async () => {
       mockRoute.path = '/dashboard'
-      
+
       // Mock loading state that never resolves
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: null },
         isLoading: { value: true }, // Always loading
         currentTeam: { value: null },
         currentRole: { value: null },
-        isImpersonating: { value: false }
+        isImpersonating: { value: false },
       })
-      
+
       const startTime = Date.now()
       const result = await authGlobal(mockRoute)
       const endTime = Date.now()
-      
+
       // Should timeout after approximately 5 seconds (50 attempts * 100ms)
       expect(endTime - startTime).toBeGreaterThan(4000)
       expect(endTime - startTime).toBeLessThan(6000)
@@ -471,15 +471,15 @@ describe('Middleware Integration Tests', () => {
         currentTeam: { value: { id: 'team-456' } },
         currentRole: { value: 'admin' },
         isLoading: { value: false },
-        isImpersonating: { value: false }
+        isImpersonating: { value: false },
       })
-      
+
       // Run multiple middleware in sequence
       const authResult = await requireAuth(mockRoute)
       const teamResult = await requireTeam(mockRoute)
       const roleMiddleware = createRequireRoleMiddleware('admin')
       const roleResult = await roleMiddleware(mockRoute)
-      
+
       expect(authResult).toBeUndefined()
       expect(teamResult).toBeUndefined()
       expect(roleResult).toBeUndefined()
@@ -490,12 +490,12 @@ describe('Middleware Integration Tests', () => {
       // User is not authenticated
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: null },
-        isLoading: { value: false }
+        isLoading: { value: false },
       })
-      
+
       // Should fail at auth check
       const authResult = await requireAuth(mockRoute)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/login?redirect=%2Fdashboard')
       expect(mockNavigateTo).toHaveBeenCalledTimes(1)
     })

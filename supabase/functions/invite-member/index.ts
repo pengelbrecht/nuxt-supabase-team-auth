@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,10 +23,10 @@ serve(async (req) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -37,9 +37,9 @@ serve(async (req) => {
       {
         auth: {
           autoRefreshToken: false,
-          persistSession: false
-        }
-      }
+          persistSession: false,
+        },
+      },
     )
 
     const supabaseUser = createClient(
@@ -48,14 +48,14 @@ serve(async (req) => {
       {
         auth: {
           autoRefreshToken: false,
-          persistSession: false
+          persistSession: false,
         },
         global: {
           headers: {
-            Authorization: authHeader
-          }
-        }
-      }
+            Authorization: authHeader,
+          },
+        },
+      },
     )
 
     // Get current user
@@ -63,10 +63,10 @@ serve(async (req) => {
     if (userError || !user) {
       return new Response(
         JSON.stringify({ error: 'Invalid or expired token' }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -76,10 +76,10 @@ serve(async (req) => {
     if (!email || !team_id) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields: email, team_id' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -94,20 +94,20 @@ serve(async (req) => {
     if (membershipError || !membership) {
       return new Response(
         JSON.stringify({ error: 'User is not a member of this team' }),
-        { 
-          status: 403, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
     if (!['owner', 'admin'].includes(membership.role)) {
       return new Response(
         JSON.stringify({ error: 'ROLE_FORBIDDEN', message: 'Only owners and admins can invite members' }),
-        { 
-          status: 403, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -122,10 +122,10 @@ serve(async (req) => {
     if (existingMember) {
       return new Response(
         JSON.stringify({ error: 'User is already a member of this team' }),
-        { 
-          status: 409, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 409,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -139,10 +139,10 @@ serve(async (req) => {
     if (teamError || !team) {
       return new Response(
         JSON.stringify({ error: 'Team not found' }),
-        { 
-          status: 404, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -154,22 +154,22 @@ serve(async (req) => {
           team_id,
           team_name: team.name,
           invited_by: user.id,
-          invited_by_email: user.email
+          invited_by_email: user.email,
         },
-        redirectTo: `${Deno.env.get('SITE_URL') || 'http://localhost:3000'}/accept-invite?team_id=${team_id}`
-      }
+        redirectTo: `${Deno.env.get('SITE_URL') || 'http://localhost:3000'}/accept-invite?team_id=${team_id}`,
+      },
     )
 
     if (inviteError) {
       return new Response(
-        JSON.stringify({ 
-          error: 'Failed to send invitation', 
-          details: inviteError.message 
+        JSON.stringify({
+          error: 'Failed to send invitation',
+          details: inviteError.message,
         }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -179,7 +179,7 @@ serve(async (req) => {
       .insert({
         team_id,
         email,
-        invited_by: user.id
+        invited_by: user.id,
       })
 
     if (trackingError) {
@@ -189,32 +189,32 @@ serve(async (req) => {
 
     // Return success response
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
         message: 'Invitation sent successfully',
         invited_user: inviteData.user,
         team: {
           id: team_id,
-          name: team.name
-        }
+          name: team.name,
+        },
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     )
-
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Unexpected error in invite-member:', error)
-    
+
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     )
   }
 })

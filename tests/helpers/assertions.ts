@@ -1,5 +1,6 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
-import { TeamRole } from './database'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
+import type { TeamRole } from './database'
 
 /**
  * Database state assertion helpers for testing
@@ -9,14 +10,14 @@ export class DatabaseAssertions {
 
   constructor() {
     const supabaseUrl = process.env.SUPABASE_URL || 'http://localhost:54321'
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
-    
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+      || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
+
     this.supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
-        persistSession: false
-      }
+        persistSession: false,
+      },
     })
   }
 
@@ -31,7 +32,8 @@ export class DatabaseAssertions {
     try {
       const { data } = await this.supabase.auth.admin.getUserById(userId)
       return !data.user
-    } catch {
+    }
+    catch {
       return true // User doesn't exist
     }
   }
@@ -55,7 +57,7 @@ export class DatabaseAssertions {
       .select('id')
       .eq('id', teamId)
       .single()
-    
+
     if (error && error.code !== 'PGRST116') {
       throw new Error(`Failed to check team existence: ${error.message}`)
     }
@@ -68,7 +70,7 @@ export class DatabaseAssertions {
       .select('id')
       .eq('id', teamId)
       .single()
-    
+
     return error?.code === 'PGRST116' // No rows found
   }
 
@@ -78,7 +80,7 @@ export class DatabaseAssertions {
       .select('name')
       .eq('id', teamId)
       .single()
-    
+
     if (error) throw new Error(`Failed to get team: ${error.message}`)
     return data.name === expectedName
   }
@@ -89,7 +91,7 @@ export class DatabaseAssertions {
       .select('created_by')
       .eq('id', teamId)
       .single()
-    
+
     if (error) throw new Error(`Failed to get team: ${error.message}`)
     return data.created_by === expectedCreatorId
   }
@@ -102,7 +104,7 @@ export class DatabaseAssertions {
       .eq('user_id', userId)
       .eq('team_id', teamId)
       .single()
-    
+
     if (error && error.code !== 'PGRST116') {
       throw new Error(`Failed to check team membership: ${error.message}`)
     }
@@ -116,7 +118,7 @@ export class DatabaseAssertions {
       .eq('user_id', userId)
       .eq('team_id', teamId)
       .single()
-    
+
     return error?.code === 'PGRST116' // No rows found
   }
 
@@ -127,7 +129,7 @@ export class DatabaseAssertions {
       .eq('user_id', userId)
       .eq('team_id', teamId)
       .single()
-    
+
     if (error) throw new Error(`Failed to get user role: ${error.message}`)
     return data.role === expectedRole
   }
@@ -137,7 +139,7 @@ export class DatabaseAssertions {
       .from('team_members')
       .select('id')
       .eq('team_id', teamId)
-    
+
     if (error) throw new Error(`Failed to count team members: ${error.message}`)
     return data.length === expectedCount
   }
@@ -148,7 +150,7 @@ export class DatabaseAssertions {
       .select('id')
       .eq('team_id', teamId)
       .eq('role', role)
-    
+
     if (error) throw new Error(`Failed to count team role: ${error.message}`)
     return data.length === expectedCount
   }
@@ -160,7 +162,7 @@ export class DatabaseAssertions {
       .select('id')
       .eq('id', inviteId)
       .single()
-    
+
     if (error && error.code !== 'PGRST116') {
       throw new Error(`Failed to check invitation existence: ${error.message}`)
     }
@@ -173,7 +175,7 @@ export class DatabaseAssertions {
       .select('id')
       .eq('id', inviteId)
       .single()
-    
+
     return error?.code === 'PGRST116' // No rows found
   }
 
@@ -183,7 +185,7 @@ export class DatabaseAssertions {
       .select('status')
       .eq('id', inviteId)
       .single()
-    
+
     if (error) throw new Error(`Failed to get invitation status: ${error.message}`)
     return data.status === expectedStatus
   }
@@ -194,7 +196,7 @@ export class DatabaseAssertions {
       .select('email')
       .eq('id', inviteId)
       .single()
-    
+
     if (error) throw new Error(`Failed to get invitation email: ${error.message}`)
     return data.email === expectedEmail
   }
@@ -204,7 +206,7 @@ export class DatabaseAssertions {
       .from('invites')
       .select('id')
       .eq('team_id', teamId)
-    
+
     if (error) throw new Error(`Failed to count team invitations: ${error.message}`)
     return data.length === expectedCount
   }
@@ -215,7 +217,7 @@ export class DatabaseAssertions {
       .select('id')
       .eq('team_id', teamId)
       .eq('status', 'pending')
-    
+
     if (error) throw new Error(`Failed to count pending invitations: ${error.message}`)
     return data.length === expectedCount
   }
@@ -227,7 +229,7 @@ export class DatabaseAssertions {
       .select('id')
       .eq('id', sessionId)
       .single()
-    
+
     if (error && error.code !== 'PGRST116') {
       throw new Error(`Failed to check impersonation session: ${error.message}`)
     }
@@ -240,7 +242,7 @@ export class DatabaseAssertions {
       .select('id')
       .eq('admin_user_id', adminUserId)
       .eq('status', 'active')
-    
+
     if (error) throw new Error(`Failed to count active impersonation sessions: ${error.message}`)
     return data.length === expectedCount
   }
@@ -251,7 +253,7 @@ export class DatabaseAssertions {
       .select('ended_at, status')
       .eq('id', sessionId)
       .single()
-    
+
     if (error) throw new Error(`Failed to get impersonation session: ${error.message}`)
     return !!data.ended_at && data.status === 'ended'
   }
@@ -262,12 +264,12 @@ export class DatabaseAssertions {
       ownerCount,
       adminCount,
       memberCount,
-      totalMembers
+      totalMembers,
     ] = await Promise.all([
       this.assertTeamRoleCount(teamId, 'owner', expectedStructure.owners),
       this.assertTeamRoleCount(teamId, 'admin', expectedStructure.admins),
       this.assertTeamRoleCount(teamId, 'member', expectedStructure.members),
-      this.assertTeamMemberCount(teamId, expectedStructure.total)
+      this.assertTeamMemberCount(teamId, expectedStructure.total),
     ])
 
     return ownerCount && adminCount && memberCount && totalMembers
@@ -280,7 +282,7 @@ export class DatabaseAssertions {
       .eq('user_id', userId)
       .eq('team_id', teamId)
       .single()
-    
+
     if (error) {
       if (expectedPermissions.isMember === false && error.code === 'PGRST116') {
         return true // User is not a member, as expected
@@ -292,11 +294,11 @@ export class DatabaseAssertions {
     const actualPermissions = this.getRolePermissions(role)
 
     return (
-      actualPermissions.canInvite === expectedPermissions.canInvite &&
-      actualPermissions.canPromote === expectedPermissions.canPromote &&
-      actualPermissions.canRemove === expectedPermissions.canRemove &&
-      actualPermissions.canDelete === expectedPermissions.canDelete &&
-      actualPermissions.canTransferOwnership === expectedPermissions.canTransferOwnership
+      actualPermissions.canInvite === expectedPermissions.canInvite
+      && actualPermissions.canPromote === expectedPermissions.canPromote
+      && actualPermissions.canRemove === expectedPermissions.canRemove
+      && actualPermissions.canDelete === expectedPermissions.canDelete
+      && actualPermissions.canTransferOwnership === expectedPermissions.canTransferOwnership
     )
   }
 
@@ -331,7 +333,7 @@ export class DatabaseAssertions {
           canPromote: true,
           canRemove: true,
           canDelete: true,
-          canTransferOwnership: true
+          canTransferOwnership: true,
         }
       case 'admin':
         return {
@@ -340,7 +342,7 @@ export class DatabaseAssertions {
           canPromote: false,
           canRemove: true,
           canDelete: false,
-          canTransferOwnership: false
+          canTransferOwnership: false,
         }
       case 'member':
         return {
@@ -349,7 +351,7 @@ export class DatabaseAssertions {
           canPromote: false,
           canRemove: false,
           canDelete: false,
-          canTransferOwnership: false
+          canTransferOwnership: false,
         }
       default:
         return {
@@ -358,7 +360,7 @@ export class DatabaseAssertions {
           canPromote: false,
           canRemove: false,
           canDelete: false,
-          canTransferOwnership: false
+          canTransferOwnership: false,
         }
     }
   }
@@ -388,20 +390,20 @@ export function expectDatabaseState(assertions: DatabaseAssertions) {
     userNotExists: (userId: string) => expect(assertions.assertUserNotExists(userId)).resolves.toBe(true),
     teamExists: (teamId: string) => expect(assertions.assertTeamExists(teamId)).resolves.toBe(true),
     teamNotExists: (teamId: string) => expect(assertions.assertTeamNotExists(teamId)).resolves.toBe(true),
-    userIsTeamMember: (userId: string, teamId: string) => 
+    userIsTeamMember: (userId: string, teamId: string) =>
       expect(assertions.assertUserIsTeamMember(userId, teamId)).resolves.toBe(true),
-    userNotTeamMember: (userId: string, teamId: string) => 
+    userNotTeamMember: (userId: string, teamId: string) =>
       expect(assertions.assertUserNotTeamMember(userId, teamId)).resolves.toBe(true),
-    userHasRole: (userId: string, teamId: string, role: TeamRole) => 
+    userHasRole: (userId: string, teamId: string, role: TeamRole) =>
       expect(assertions.assertUserTeamRole(userId, teamId, role)).resolves.toBe(true),
-    teamMemberCount: (teamId: string, count: number) => 
+    teamMemberCount: (teamId: string, count: number) =>
       expect(assertions.assertTeamMemberCount(teamId, count)).resolves.toBe(true),
-    invitationExists: (inviteId: string) => 
+    invitationExists: (inviteId: string) =>
       expect(assertions.assertInvitationExists(inviteId)).resolves.toBe(true),
-    invitationNotExists: (inviteId: string) => 
+    invitationNotExists: (inviteId: string) =>
       expect(assertions.assertInvitationNotExists(inviteId)).resolves.toBe(true),
-    teamStructure: (teamId: string, structure: TeamStructure) => 
-      expect(assertions.assertTeamStructure(teamId, structure)).resolves.toBe(true)
+    teamStructure: (teamId: string, structure: TeamStructure) =>
+      expect(assertions.assertTeamStructure(teamId, structure)).resolves.toBe(true),
   }
 }
 

@@ -13,10 +13,10 @@ vi.mock('#app', () => ({
         onAuthStateChange: vi.fn(),
         setSession: vi.fn(),
         verifyOtp: vi.fn(),
-        updateUser: vi.fn()
+        updateUser: vi.fn(),
       },
       functions: {
-        invoke: vi.fn()
+        invoke: vi.fn(),
       },
       from: vi.fn(() => ({
         select: vi.fn().mockReturnThis(),
@@ -25,21 +25,21 @@ vi.mock('#app', () => ({
         delete: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         neq: vi.fn().mockReturnThis(),
-        single: vi.fn()
-      }))
-    }
-  })
+        single: vi.fn(),
+      })),
+    },
+  }),
 }))
 
 vi.mock('vue-router', () => ({
   useRoute: () => ({
     query: {},
-    params: {}
+    params: {},
   }),
   useRouter: () => ({
     push: vi.fn(),
-    replace: vi.fn()
-  })
+    replace: vi.fn(),
+  }),
 }))
 
 // Global test configuration
@@ -53,10 +53,10 @@ config.global.mocks = {
       onAuthStateChange: vi.fn(),
       setSession: vi.fn(),
       verifyOtp: vi.fn(),
-      updateUser: vi.fn()
+      updateUser: vi.fn(),
     },
     functions: {
-      invoke: vi.fn()
+      invoke: vi.fn(),
     },
     from: vi.fn(() => ({
       select: vi.fn().mockReturnThis(),
@@ -65,9 +65,9 @@ config.global.mocks = {
       delete: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       neq: vi.fn().mockReturnThis(),
-      single: vi.fn()
-    }))
-  }
+      single: vi.fn(),
+    })),
+  },
 }
 
 // Global storage mocks
@@ -75,37 +75,37 @@ const localStorageMock = {
   getItem: vi.fn(),
   setItem: vi.fn(),
   removeItem: vi.fn(),
-  clear: vi.fn()
+  clear: vi.fn(),
 }
 
 const sessionStorageMock = {
   getItem: vi.fn(),
   setItem: vi.fn(),
   removeItem: vi.fn(),
-  clear: vi.fn()
+  clear: vi.fn(),
 }
 
 // Mock localStorage and sessionStorage
 Object.defineProperty(global, 'localStorage', {
   value: localStorageMock,
-  writable: true
+  writable: true,
 })
 
 Object.defineProperty(global, 'sessionStorage', {
   value: sessionStorageMock,
-  writable: true
+  writable: true,
 })
 
 // Also set on window for components
 if (typeof window !== 'undefined') {
   Object.defineProperty(window, 'localStorage', {
     value: localStorageMock,
-    writable: true
+    writable: true,
   })
 
   Object.defineProperty(window, 'sessionStorage', {
     value: sessionStorageMock,
-    writable: true
+    writable: true,
   })
 }
 

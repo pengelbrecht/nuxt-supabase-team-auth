@@ -13,15 +13,15 @@ vi.mock('#app', () => ({
   useRoute: () => ({
     path: '/protected',
     query: {},
-    params: {}
+    params: {},
   }),
   useNuxtApp: () => ({
     $teamAuthClient: {
       auth: {
-        getSession: vi.fn()
-      }
-    }
-  })
+        getSession: vi.fn(),
+      },
+    },
+  }),
 }))
 
 // Mock our useTeamAuth composable
@@ -31,8 +31,8 @@ vi.mock('../../src/runtime/composables/useTeamAuth', () => ({
     currentTeam: { value: null },
     currentRole: { value: null },
     isLoading: { value: false },
-    isImpersonating: { value: false }
-  }))
+    isImpersonating: { value: false },
+  })),
 }))
 
 describe('Authentication Middleware', () => {
@@ -43,7 +43,7 @@ describe('Authentication Middleware', () => {
     vi.clearAllMocks()
     mockContext = createMockNuxtContext()
     mockNavigateTo = vi.fn()
-    
+
     // Reset mock implementations
     mockAuthMiddleware.mockClear()
     mockRequireAuth.mockClear()
@@ -57,7 +57,7 @@ describe('Authentication Middleware', () => {
       mockContext.route.path = '/'
       mockContext.auth = {
         currentUser: { value: null },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
 
       // Should not redirect or throw error
@@ -69,7 +69,7 @@ describe('Authentication Middleware', () => {
       mockContext.route.path = '/dashboard'
       mockContext.auth = {
         currentUser: { value: { id: 'user-123', email: 'test@example.com' } },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
 
       await expect(mockAuthMiddleware(mockContext)).resolves.not.toThrow()
@@ -80,7 +80,7 @@ describe('Authentication Middleware', () => {
       mockContext.route.path = '/dashboard'
       mockContext.auth = {
         currentUser: { value: null },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
 
       mockAuthMiddleware.mockImplementation(() => {
@@ -94,7 +94,7 @@ describe('Authentication Middleware', () => {
       mockContext.route.path = '/dashboard'
       mockContext.auth = {
         currentUser: { value: null },
-        isLoading: { value: true }
+        isLoading: { value: true },
       }
 
       // Should wait for loading to complete
@@ -113,7 +113,7 @@ describe('Authentication Middleware', () => {
     it('should allow authenticated users to proceed', async () => {
       mockContext.auth = {
         currentUser: { value: { id: 'user-123' } },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
 
       await expect(mockRequireAuth(mockContext)).resolves.not.toThrow()
@@ -122,7 +122,7 @@ describe('Authentication Middleware', () => {
     it('should redirect unauthenticated users to login', async () => {
       mockContext.auth = {
         currentUser: { value: null },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
 
       mockRequireAuth.mockImplementation(() => {
@@ -137,7 +137,7 @@ describe('Authentication Middleware', () => {
       mockContext.route.path = '/dashboard/settings'
       mockContext.auth = {
         currentUser: { value: null },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
 
       mockRequireAuth.mockImplementation((context) => {
@@ -154,7 +154,7 @@ describe('Authentication Middleware', () => {
       mockContext.auth = {
         currentUser: { value: { id: 'user-123' } },
         currentRole: { value: 'admin' },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
 
       const middleware = mockRequireRole.mockImplementation((context, requiredRole) => {
@@ -171,7 +171,7 @@ describe('Authentication Middleware', () => {
       mockContext.auth = {
         currentUser: { value: { id: 'user-123' } },
         currentRole: { value: 'member' },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
 
       mockRequireRole.mockImplementation((context, requiredRole) => {
@@ -190,7 +190,7 @@ describe('Authentication Middleware', () => {
         { userRole: 'admin', requiredRole: 'member', shouldAllow: true },
         { userRole: 'admin', requiredRole: 'owner', shouldAllow: false },
         { userRole: 'member', requiredRole: 'admin', shouldAllow: false },
-        { userRole: 'member', requiredRole: 'owner', shouldAllow: false }
+        { userRole: 'member', requiredRole: 'owner', shouldAllow: false },
       ]
 
       const roleHierarchy = { owner: 3, admin: 2, member: 1 }
@@ -198,7 +198,7 @@ describe('Authentication Middleware', () => {
       mockRequireRole.mockImplementation((context, requiredRole) => {
         const userRoleLevel = roleHierarchy[context.auth.currentRole.value as keyof typeof roleHierarchy]
         const requiredRoleLevel = roleHierarchy[requiredRole as keyof typeof roleHierarchy]
-        
+
         if (userRoleLevel < requiredRoleLevel) {
           throw new Error('Insufficient permissions')
         }
@@ -209,7 +209,8 @@ describe('Authentication Middleware', () => {
 
         if (testCase.shouldAllow) {
           await expect(mockRequireRole(mockContext, testCase.requiredRole)).resolves.not.toThrow()
-        } else {
+        }
+        else {
           await expect(mockRequireRole(mockContext, testCase.requiredRole)).rejects.toThrow('Insufficient permissions')
         }
       }
@@ -220,7 +221,7 @@ describe('Authentication Middleware', () => {
         currentUser: { value: { id: 'user-123' } },
         currentRole: { value: null },
         currentTeam: { value: null },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
 
       mockRequireRole.mockImplementation((context) => {
@@ -240,7 +241,7 @@ describe('Authentication Middleware', () => {
         currentUser: { value: { id: 'user-123' } },
         currentTeam: { value: { id: 'team-456' } },
         currentRole: { value: 'member' },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
 
       await expect(mockRequireTeam(mockContext)).resolves.not.toThrow()
@@ -251,7 +252,7 @@ describe('Authentication Middleware', () => {
         currentUser: { value: { id: 'user-123' } },
         currentTeam: { value: null },
         currentRole: { value: null },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
 
       mockRequireTeam.mockImplementation((context) => {
@@ -269,18 +270,18 @@ describe('Authentication Middleware', () => {
         currentUser: { value: { id: 'user-123' } },
         currentTeam: { value: { id: 'team-456' } },
         currentRole: { value: 'member' },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
 
       // Mock API call to verify team membership
       const mockVerifyTeamMembership = vi.fn().mockResolvedValue(true)
-      
+
       mockRequireTeam.mockImplementation(async (context) => {
         const isValidMember = await mockVerifyTeamMembership(
           context.auth.currentUser.value.id,
-          context.auth.currentTeam.value.id
+          context.auth.currentTeam.value.id,
         )
-        
+
         if (!isValidMember) {
           throw new Error('Not a team member')
         }
@@ -297,7 +298,7 @@ describe('Authentication Middleware', () => {
         currentUser: { value: { id: 'user-123' } },
         currentRole: { value: 'super_admin' },
         isImpersonating: { value: false },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
       mockContext.route.path = '/admin/impersonate'
 
@@ -310,13 +311,13 @@ describe('Authentication Middleware', () => {
         currentUser: { value: { id: 'user-123' } },
         currentRole: { value: 'admin' },
         isImpersonating: { value: false },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
       mockContext.route.path = '/admin/impersonate'
 
       mockAuthMiddleware.mockImplementation((context) => {
-        if (context.route.path.includes('/admin/impersonate') && 
-            context.auth.currentRole.value !== 'super_admin') {
+        if (context.route.path.includes('/admin/impersonate')
+          && context.auth.currentRole.value !== 'super_admin') {
           throw new Error('Insufficient permissions for impersonation')
         }
       })
@@ -329,13 +330,13 @@ describe('Authentication Middleware', () => {
         currentUser: { value: { id: 'user-123' } },
         currentRole: { value: 'super_admin' },
         isImpersonating: { value: true },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
       mockContext.route.path = '/admin/settings'
 
       mockAuthMiddleware.mockImplementation((context) => {
-        if (context.auth.isImpersonating.value && 
-            context.route.path.startsWith('/admin/')) {
+        if (context.auth.isImpersonating.value
+          && context.route.path.startsWith('/admin/')) {
           throw new Error('Admin routes blocked during impersonation')
         }
       })
@@ -351,7 +352,7 @@ describe('Authentication Middleware', () => {
         currentUser: { value: { id: 'user-123' } },
         currentTeam: { value: { id: 'team-456' } },
         currentRole: { value: 'admin' },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
 
       const combinedMiddleware = vi.fn().mockImplementation(async (context) => {
@@ -359,12 +360,12 @@ describe('Authentication Middleware', () => {
         if (!context.auth.currentUser.value) {
           throw new Error('Not authenticated')
         }
-        
+
         // Check team
         if (!context.auth.currentTeam.value) {
           throw new Error('No team')
         }
-        
+
         // Check role
         if (context.auth.currentRole.value !== 'admin') {
           throw new Error('Insufficient role')
@@ -379,7 +380,7 @@ describe('Authentication Middleware', () => {
         currentUser: { value: null }, // No auth
         currentTeam: { value: null },
         currentRole: { value: null },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
 
       const combinedMiddleware = vi.fn().mockImplementation((context) => {
@@ -400,7 +401,7 @@ describe('Authentication Middleware', () => {
     it('should handle network errors gracefully', async () => {
       mockContext.auth = {
         currentUser: { value: { id: 'user-123' } },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
 
       const middleware = vi.fn().mockImplementation(() => {
@@ -416,13 +417,13 @@ describe('Authentication Middleware', () => {
       mockContext.auth = {
         currentUser: { value: { id: 'user-123' } },
         currentTeam: { value: { id: 'team-456' } },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
 
       const middleware = vi.fn().mockImplementation((context) => {
         const routeTeamId = context.route.params.teamId
         const currentTeamId = context.auth.currentTeam.value?.id
-        
+
         if (routeTeamId !== currentTeamId) {
           throw new Error('Team mismatch')
         }
@@ -435,7 +436,7 @@ describe('Authentication Middleware', () => {
       // Initially authenticated
       mockContext.auth = {
         currentUser: { value: { id: 'user-123' } },
-        isLoading: { value: false }
+        isLoading: { value: false },
       }
 
       const middleware = vi.fn().mockImplementation((context) => {

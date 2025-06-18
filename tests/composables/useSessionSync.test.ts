@@ -9,7 +9,7 @@ const localStorageMock = (() => {
     getItem: vi.fn((key: string) => store[key] || null),
     setItem: vi.fn((key: string, value: string) => { store[key] = value }),
     removeItem: vi.fn((key: string) => { delete store[key] }),
-    clear: vi.fn(() => { store = {} })
+    clear: vi.fn(() => { store = {} }),
   }
 })()
 
@@ -19,7 +19,7 @@ const sessionStorageMock = (() => {
     getItem: vi.fn((key: string) => store[key] || null),
     setItem: vi.fn((key: string, value: string) => { store[key] = value }),
     removeItem: vi.fn((key: string) => { delete store[key] }),
-    clear: vi.fn(() => { store = {} })
+    clear: vi.fn(() => { store = {} }),
   }
 })()
 
@@ -29,13 +29,13 @@ Object.defineProperty(window, 'sessionStorage', { value: sessionStorageMock })
 // Mock window location
 Object.defineProperty(window, 'location', {
   value: { href: 'http://localhost:3000/dashboard' },
-  writable: true
+  writable: true,
 })
 
 describe('useSessionSync', () => {
   let sessionSync: ReturnType<typeof useSessionSync>
   let mockCurrentUser: any
-  let mockCurrentTeam: any 
+  let mockCurrentTeam: any
   let mockCurrentRole: any
   let mockIsImpersonating: any
   let mockImpersonationExpiresAt: any
@@ -44,9 +44,9 @@ describe('useSessionSync', () => {
     vi.clearAllMocks()
     localStorageMock.clear()
     sessionStorageMock.clear()
-    
+
     sessionSync = useSessionSync()
-    
+
     // Create mock reactive refs
     mockCurrentUser = ref({ id: 'user-123', email: 'test@example.com' })
     mockCurrentTeam = ref({ id: 'team-456', name: 'Test Team' })
@@ -70,12 +70,12 @@ describe('useSessionSync', () => {
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
-        mockImpersonationExpiresAt
+        mockImpersonationExpiresAt,
       )
 
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'team_auth_active_tabs',
-        expect.stringContaining(sessionSync.tabId)
+        expect.stringContaining(sessionSync.tabId),
       )
 
       cleanup()
@@ -83,14 +83,14 @@ describe('useSessionSync', () => {
 
     it('should set up watchers for state changes', async () => {
       const onStateUpdate = vi.fn()
-      
+
       const cleanup = sessionSync.initializeSessionSync(
         mockCurrentUser,
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
         mockImpersonationExpiresAt,
-        onStateUpdate
+        onStateUpdate,
       )
 
       // Change team to trigger watcher
@@ -98,10 +98,10 @@ describe('useSessionSync', () => {
 
       // Allow Vue's reactivity system to process
       await new Promise(resolve => setTimeout(resolve, 10))
-      
+
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'team_auth_session_sync',
-        expect.stringContaining('team_changed')
+        expect.stringContaining('team_changed'),
       )
 
       cleanup()
@@ -115,17 +115,17 @@ describe('useSessionSync', () => {
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
-        mockImpersonationExpiresAt
+        mockImpersonationExpiresAt,
       )
 
       // Trigger team change
       mockCurrentTeam.value = { id: 'team-new', name: 'Updated Team' }
 
       await new Promise(resolve => setTimeout(resolve, 10))
-      
+
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'team_auth_session_sync',
-        expect.stringContaining('"event":"team_changed"')
+        expect.stringContaining('"event":"team_changed"'),
       )
 
       cleanup()
@@ -137,17 +137,17 @@ describe('useSessionSync', () => {
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
-        mockImpersonationExpiresAt
+        mockImpersonationExpiresAt,
       )
 
       // Trigger role change
       mockCurrentRole.value = 'owner'
 
       await new Promise(resolve => setTimeout(resolve, 10))
-      
+
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'team_auth_session_sync',
-        expect.stringContaining('"event":"role_changed"')
+        expect.stringContaining('"event":"role_changed"'),
       )
 
       cleanup()
@@ -159,7 +159,7 @@ describe('useSessionSync', () => {
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
-        mockImpersonationExpiresAt
+        mockImpersonationExpiresAt,
       )
 
       // Start impersonation
@@ -167,10 +167,10 @@ describe('useSessionSync', () => {
       mockImpersonationExpiresAt.value = new Date(Date.now() + 30 * 60 * 1000)
 
       await new Promise(resolve => setTimeout(resolve, 10))
-      
+
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'team_auth_session_sync',
-        expect.stringContaining('"event":"impersonation_started"')
+        expect.stringContaining('"event":"impersonation_started"'),
       )
 
       // Stop impersonation
@@ -178,10 +178,10 @@ describe('useSessionSync', () => {
       mockImpersonationExpiresAt.value = null
 
       await new Promise(resolve => setTimeout(resolve, 10))
-      
+
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'team_auth_session_sync',
-        expect.stringContaining('"event":"impersonation_stopped"')
+        expect.stringContaining('"event":"impersonation_stopped"'),
       )
 
       cleanup()
@@ -189,14 +189,14 @@ describe('useSessionSync', () => {
 
     it('should handle storage events from other tabs', () => {
       const onStateUpdate = vi.fn()
-      
+
       const cleanup = sessionSync.initializeSessionSync(
         mockCurrentUser,
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
         mockImpersonationExpiresAt,
-        onStateUpdate
+        onStateUpdate,
       )
 
       // Simulate storage event from another tab
@@ -211,11 +211,11 @@ describe('useSessionSync', () => {
             isImpersonating: false,
             impersonationExpiresAt: null,
             lastUpdated: new Date().toISOString(),
-            tabId: 'different-tab-id'
+            tabId: 'different-tab-id',
           },
           timestamp: Date.now(),
-          sourceTab: 'different-tab-id'
-        })
+          sourceTab: 'different-tab-id',
+        }),
       })
 
       window.dispatchEvent(storageEvent)
@@ -236,7 +236,7 @@ describe('useSessionSync', () => {
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
-        mockImpersonationExpiresAt
+        mockImpersonationExpiresAt,
       )
 
       expect(health.isHealthy).toBe(true)
@@ -252,7 +252,7 @@ describe('useSessionSync', () => {
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
-        mockImpersonationExpiresAt
+        mockImpersonationExpiresAt,
       )
 
       expect(health.isHealthy).toBe(false)
@@ -267,7 +267,7 @@ describe('useSessionSync', () => {
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
-        mockImpersonationExpiresAt
+        mockImpersonationExpiresAt,
       )
 
       expect(health.isHealthy).toBe(false)
@@ -283,7 +283,7 @@ describe('useSessionSync', () => {
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
-        mockImpersonationExpiresAt
+        mockImpersonationExpiresAt,
       )
 
       expect(health.isHealthy).toBe(false)
@@ -299,7 +299,7 @@ describe('useSessionSync', () => {
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
-        mockImpersonationExpiresAt
+        mockImpersonationExpiresAt,
       )
 
       expect(health.isHealthy).toBe(false)
@@ -314,7 +314,7 @@ describe('useSessionSync', () => {
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
-        mockImpersonationExpiresAt
+        mockImpersonationExpiresAt,
       )
 
       const activeTabs = sessionSync.getActiveTabs()
@@ -322,9 +322,9 @@ describe('useSessionSync', () => {
         expect.arrayContaining([
           expect.objectContaining({
             tabId: sessionSync.tabId,
-            url: 'http://localhost:3000/dashboard'
-          })
-        ])
+            url: 'http://localhost:3000/dashboard',
+          }),
+        ]),
       )
 
       cleanup()
@@ -335,16 +335,16 @@ describe('useSessionSync', () => {
       const oldTabData = [{
         tabId: 'old-tab',
         timestamp: Date.now() - 10 * 60 * 1000, // 10 minutes ago
-        url: 'http://localhost:3000/old'
+        url: 'http://localhost:3000/old',
       }]
-      
+
       localStorageMock.setItem('team_auth_active_tabs', JSON.stringify(oldTabData))
 
       const activeTabs = sessionSync.getActiveTabs()
       expect(activeTabs).not.toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ tabId: 'old-tab' })
-        ])
+          expect.objectContaining({ tabId: 'old-tab' }),
+        ]),
       )
     })
 
@@ -366,7 +366,7 @@ describe('useSessionSync', () => {
         mockCurrentRole,
         mockIsImpersonating,
         mockImpersonationExpiresAt,
-        onStateUpdate
+        onStateUpdate,
       )
 
       // Simulate another tab starting impersonation
@@ -381,11 +381,11 @@ describe('useSessionSync', () => {
             isImpersonating: true,
             impersonationExpiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
             lastUpdated: new Date().toISOString(),
-            tabId: 'other-tab-id'
+            tabId: 'other-tab-id',
           },
           timestamp: Date.now(),
-          sourceTab: 'other-tab-id'
-        })
+          sourceTab: 'other-tab-id',
+        }),
       })
 
       window.dispatchEvent(storageEvent)
@@ -393,7 +393,7 @@ describe('useSessionSync', () => {
       // Should detect conflict and create lock
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'team_auth_impersonation_lock',
-        expect.stringContaining('resolving_conflict')
+        expect.stringContaining('resolving_conflict'),
       )
 
       cleanup()
@@ -407,12 +407,12 @@ describe('useSessionSync', () => {
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
-        mockImpersonationExpiresAt
+        mockImpersonationExpiresAt,
       )
 
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'team_auth_session_sync',
-        expect.stringContaining('"event":"session_recovery"')
+        expect.stringContaining('"event":"session_recovery"'),
       )
     })
 
@@ -428,7 +428,7 @@ describe('useSessionSync', () => {
         mockCurrentRole,
         mockIsImpersonating,
         mockImpersonationExpiresAt,
-        onStateUpdate
+        onStateUpdate,
       )
 
       // Simulate recovery event from healthy tab
@@ -443,11 +443,11 @@ describe('useSessionSync', () => {
             isImpersonating: false,
             impersonationExpiresAt: null,
             lastUpdated: new Date().toISOString(),
-            tabId: 'healthy-tab-id'
+            tabId: 'healthy-tab-id',
           },
           timestamp: Date.now(),
-          sourceTab: 'healthy-tab-id'
-        })
+          sourceTab: 'healthy-tab-id',
+        }),
       })
 
       window.dispatchEvent(storageEvent)
@@ -457,9 +457,9 @@ describe('useSessionSync', () => {
       expect(mockCurrentRole.value).toBe('admin')
       expect(onStateUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
-          currentTeam: { id: 'team-recovered', name: 'Recovered Team' }
+          currentTeam: { id: 'team-recovered', name: 'Recovered Team' },
         }),
-        'session_recovery'
+        'session_recovery',
       )
 
       cleanup()
@@ -473,7 +473,7 @@ describe('useSessionSync', () => {
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
-        mockImpersonationExpiresAt
+        mockImpersonationExpiresAt,
       )
 
       // Clear mocks to check cleanup calls
@@ -484,20 +484,20 @@ describe('useSessionSync', () => {
       // Should unregister tab
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'team_auth_active_tabs',
-        expect.not.stringContaining(sessionSync.tabId)
+        expect.not.stringContaining(sessionSync.tabId),
       )
     })
 
     it('should ignore storage events after cleanup', () => {
       const onStateUpdate = vi.fn()
-      
+
       const cleanup = sessionSync.initializeSessionSync(
         mockCurrentUser,
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
         mockImpersonationExpiresAt,
-        onStateUpdate
+        onStateUpdate,
       )
 
       cleanup()
@@ -509,8 +509,8 @@ describe('useSessionSync', () => {
           event: 'team_changed',
           state: { /* ... */ },
           timestamp: Date.now(),
-          sourceTab: 'other-tab'
-        })
+          sourceTab: 'other-tab',
+        }),
       })
 
       window.dispatchEvent(storageEvent)
@@ -523,20 +523,20 @@ describe('useSessionSync', () => {
   describe('Edge Cases', () => {
     it('should handle malformed storage data gracefully', () => {
       const onStateUpdate = vi.fn()
-      
+
       const cleanup = sessionSync.initializeSessionSync(
         mockCurrentUser,
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
         mockImpersonationExpiresAt,
-        onStateUpdate
+        onStateUpdate,
       )
 
       // Simulate malformed storage event
       const storageEvent = new StorageEvent('storage', {
         key: 'team_auth_session_sync',
-        newValue: 'invalid-json'
+        newValue: 'invalid-json',
       })
 
       expect(() => {
@@ -550,14 +550,14 @@ describe('useSessionSync', () => {
 
     it('should ignore events from same tab', () => {
       const onStateUpdate = vi.fn()
-      
+
       const cleanup = sessionSync.initializeSessionSync(
         mockCurrentUser,
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
         mockImpersonationExpiresAt,
-        onStateUpdate
+        onStateUpdate,
       )
 
       // Simulate storage event from same tab
@@ -567,8 +567,8 @@ describe('useSessionSync', () => {
           event: 'team_changed',
           state: { /* ... */ },
           timestamp: Date.now(),
-          sourceTab: sessionSync.tabId // Same tab
-        })
+          sourceTab: sessionSync.tabId, // Same tab
+        }),
       })
 
       window.dispatchEvent(storageEvent)
@@ -581,14 +581,14 @@ describe('useSessionSync', () => {
 
     it('should ignore old events', () => {
       const onStateUpdate = vi.fn()
-      
+
       const cleanup = sessionSync.initializeSessionSync(
         mockCurrentUser,
         mockCurrentTeam,
         mockCurrentRole,
         mockIsImpersonating,
         mockImpersonationExpiresAt,
-        onStateUpdate
+        onStateUpdate,
       )
 
       // Simulate old storage event
@@ -598,8 +598,8 @@ describe('useSessionSync', () => {
           event: 'team_changed',
           state: { /* ... */ },
           timestamp: Date.now() - 10000, // 10 seconds old
-          sourceTab: 'other-tab'
-        })
+          sourceTab: 'other-tab',
+        }),
       })
 
       window.dispatchEvent(storageEvent)

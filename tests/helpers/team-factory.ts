@@ -1,5 +1,6 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
-import { TestUser, TestTeam, TeamRole } from './database'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
+import type { TestUser, TestTeam, TeamRole } from './database'
 import { userFactory } from './user-factory'
 
 /**
@@ -11,14 +12,14 @@ export class TestTeamFactory {
 
   constructor() {
     const supabaseUrl = process.env.SUPABASE_URL || 'http://localhost:54321'
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
-    
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+      || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
+
     this.supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
-        persistSession: false
-      }
+        persistSession: false,
+      },
     })
   }
 
@@ -30,7 +31,7 @@ export class TestTeamFactory {
       .from('teams')
       .insert({
         name,
-        created_by: createdBy
+        created_by: createdBy,
       })
       .select()
       .single()
@@ -46,7 +47,7 @@ export class TestTeamFactory {
       id: data.id,
       name: data.name,
       created_by: data.created_by,
-      created_at: data.created_at
+      created_at: data.created_at,
     }
   }
 
@@ -61,9 +62,10 @@ export class TestTeamFactory {
     let owner: TestUser
     if (config.owner) {
       owner = config.owner
-    } else {
+    }
+    else {
       owner = await userFactory.createUser({
-        emailPrefix: 'team-owner'
+        emailPrefix: 'team-owner',
       })
     }
 
@@ -74,13 +76,13 @@ export class TestTeamFactory {
     await this.addMember(team.id, owner.id, 'owner')
 
     const members: TeamMemberRecord[] = [
-      { user: owner, role: 'owner' }
+      { user: owner, role: 'owner' },
     ]
 
     // Create and add admins
     for (let i = 0; i < (config.adminCount || 0); i++) {
       const admin = await userFactory.createUser({
-        emailPrefix: `team-admin-${i}`
+        emailPrefix: `team-admin-${i}`,
       })
       await this.addMember(team.id, admin.id, 'admin')
       members.push({ user: admin, role: 'admin' })
@@ -89,7 +91,7 @@ export class TestTeamFactory {
     // Create and add members
     for (let i = 0; i < (config.memberCount || 0); i++) {
       const member = await userFactory.createUser({
-        emailPrefix: `team-member-${i}`
+        emailPrefix: `team-member-${i}`,
       })
       await this.addMember(team.id, member.id, 'member')
       members.push({ user: member, role: 'member' })
@@ -100,7 +102,7 @@ export class TestTeamFactory {
       members,
       owner,
       admins: members.filter(m => m.role === 'admin').map(m => m.user),
-      regularMembers: members.filter(m => m.role === 'member').map(m => m.user)
+      regularMembers: members.filter(m => m.role === 'member').map(m => m.user),
     }
   }
 
@@ -126,7 +128,7 @@ export class TestTeamFactory {
     await this.addMember(team.id, seniorAdmin.id, 'admin')
     await this.addMember(team.id, juniorAdmin.id, 'admin')
     await this.addMember(team.id, leadMember.id, 'member')
-    
+
     for (const member of regularMembers) {
       await this.addMember(team.id, member.id, 'member')
     }
@@ -136,12 +138,12 @@ export class TestTeamFactory {
       owner,
       admins: {
         senior: seniorAdmin,
-        junior: juniorAdmin
+        junior: juniorAdmin,
       },
       members: {
         lead: leadMember,
-        regular: regularMembers
-      }
+        regular: regularMembers,
+      },
     }
   }
 
@@ -152,7 +154,7 @@ export class TestTeamFactory {
     const teamWithMembers = await this.createTeamWithMembers({
       name: config.teamName,
       adminCount: 1,
-      memberCount: 1
+      memberCount: 1,
     })
 
     const invitations: InvitationRecord[] = []
@@ -163,7 +165,7 @@ export class TestTeamFactory {
       const invitation = await this.createInvitation(
         teamWithMembers.team.id,
         email,
-        'member'
+        'member',
       )
       invitations.push({ ...invitation, status: 'pending' })
     }
@@ -175,14 +177,14 @@ export class TestTeamFactory {
         teamWithMembers.team.id,
         email,
         'member',
-        true // expired
+        true, // expired
       )
       invitations.push({ ...invitation, status: 'expired' })
     }
 
     return {
       ...teamWithMembers,
-      invitations
+      invitations,
     }
   }
 
@@ -197,7 +199,7 @@ export class TestTeamFactory {
         name: `Multi Team ${i + 1} ${Date.now()}`,
         adminCount: 1,
         memberCount: 2,
-        ...config
+        ...config,
       })
       teams.push(team)
     }
@@ -214,7 +216,7 @@ export class TestTeamFactory {
       .insert({
         team_id: teamId,
         user_id: userId,
-        role
+        role,
       })
 
     if (error) {
@@ -259,7 +261,7 @@ export class TestTeamFactory {
     teamId: string,
     email: string,
     role: TeamRole,
-    expired: boolean = false
+    expired: boolean = false,
   ): Promise<InvitationRecord> {
     const expiresAt = expired
       ? new Date(Date.now() - 24 * 60 * 60 * 1000) // 24 hours ago
@@ -272,7 +274,7 @@ export class TestTeamFactory {
         email,
         role,
         expires_at: expiresAt.toISOString(),
-        status: expired ? 'expired' : 'pending'
+        status: expired ? 'expired' : 'pending',
       })
       .select()
       .single()
@@ -287,7 +289,7 @@ export class TestTeamFactory {
       email: data.email,
       role: data.role,
       status: data.status,
-      expires_at: data.expires_at
+      expires_at: data.expires_at,
     }
   }
 
@@ -303,7 +305,7 @@ export class TestTeamFactory {
       this.supabase
         .from('invites')
         .select('status')
-        .eq('team_id', teamId)
+        .eq('team_id', teamId),
     ])
 
     const members = membersResult.data || []
@@ -315,7 +317,7 @@ export class TestTeamFactory {
       admins: members.filter(m => m.role === 'admin').length,
       regularMembers: members.filter(m => m.role === 'member').length,
       pendingInvites: invites.filter(i => i.status === 'pending').length,
-      expiredInvites: invites.filter(i => i.status === 'expired').length
+      expiredInvites: invites.filter(i => i.status === 'expired').length,
     }
   }
 
@@ -331,7 +333,8 @@ export class TestTeamFactory {
         await this.supabase.from('invites').delete().eq('team_id', teamId)
         // Delete team
         await this.supabase.from('teams').delete().eq('id', teamId)
-      } catch (error) {
+      }
+      catch (error) {
         console.warn(`Failed to delete team ${teamId}:`, error)
       }
     }

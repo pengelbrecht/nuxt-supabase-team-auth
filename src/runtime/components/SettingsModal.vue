@@ -1,6 +1,6 @@
 <template>
-  <UModal 
-    v-model:open="isOpen" 
+  <UModal
+    v-model:open="isOpen"
     :title="modalTitle"
     :description="modalDescription"
     :dismissible="!isLoading"
@@ -9,7 +9,7 @@
     <template #body>
       <!-- Profile Settings -->
       <div v-if="activeTab === 'profile'">
-        <ProfileForm 
+        <ProfileForm
           @saved="handleProfileSaved"
           @error="handleError"
         />
@@ -17,7 +17,7 @@
 
       <!-- Team Settings -->
       <div v-else-if="activeTab === 'team'">
-        <TeamForm 
+        <TeamForm
           @saved="handleSettingsSaved"
           @error="handleError"
         />
@@ -40,14 +40,14 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  tab: 'profile'
+  tab: 'profile',
 })
 
 // Emits
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
-  saved: [data: any]
-  error: [error: string]
+  'saved': [data: any]
+  'error': [error: string]
 }>()
 
 // Local state
@@ -57,7 +57,7 @@ const activeTab = ref(props.tab)
 // Computed properties
 const isOpen = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value)
+  set: value => emit('update:modelValue', value),
 })
 
 const modalTitle = computed(() => {
@@ -118,7 +118,7 @@ const setLoading = (loading: boolean) => {
 // Expose methods for parent components
 defineExpose({
   setLoading,
-  closeModal
+  closeModal,
 })
 </script>
 
@@ -164,4 +164,3 @@ defineExpose({
   }
 }
 </style>
-

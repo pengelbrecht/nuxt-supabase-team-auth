@@ -1,5 +1,6 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
-import { TeamRole } from './database'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
+import type { TeamRole } from './database'
 
 /**
  * Invitation and role management testing utilities
@@ -9,14 +10,14 @@ export class InvitationHelpers {
 
   constructor() {
     const supabaseUrl = process.env.SUPABASE_URL || 'http://localhost:54321'
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
-    
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+      || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
+
     this.supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
-        persistSession: false
-      }
+        persistSession: false,
+      },
     })
   }
 
@@ -24,7 +25,7 @@ export class InvitationHelpers {
    * Create a test invitation with specific properties
    */
   async createInvitation(config: InvitationConfig): Promise<TestInvitation> {
-    const expiresAt = config.expiresInHours 
+    const expiresAt = config.expiresInHours
       ? new Date(Date.now() + config.expiresInHours * 60 * 60 * 1000)
       : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Default 7 days
 
@@ -37,7 +38,7 @@ export class InvitationHelpers {
         invited_by: config.invitedBy,
         expires_at: expiresAt.toISOString(),
         status: config.status || 'pending',
-        message: config.customMessage
+        message: config.customMessage,
       })
       .select()
       .single()
@@ -55,7 +56,7 @@ export class InvitationHelpers {
       status: data.status,
       expires_at: data.expires_at,
       message: data.message,
-      created_at: data.created_at
+      created_at: data.created_at,
     }
   }
 
@@ -63,9 +64,9 @@ export class InvitationHelpers {
    * Create multiple invitations for batch testing
    */
   async createBatchInvitations(
-    teamId: string, 
-    invitedBy: string, 
-    configs: BatchInvitationConfig[]
+    teamId: string,
+    invitedBy: string,
+    configs: BatchInvitationConfig[],
   ): Promise<TestInvitation[]> {
     const invitations: TestInvitation[] = []
 
@@ -77,7 +78,7 @@ export class InvitationHelpers {
         role: config.role,
         expiresInHours: config.expiresInHours,
         status: config.status,
-        customMessage: config.customMessage
+        customMessage: config.customMessage,
       })
       invitations.push(invitation)
     }
@@ -89,8 +90,8 @@ export class InvitationHelpers {
    * Create invitations with different expiration states
    */
   async createInvitationsWithExpirationStates(
-    teamId: string, 
-    invitedBy: string
+    teamId: string,
+    invitedBy: string,
   ): Promise<ExpirationTestSet> {
     const timestamp = Date.now()
 
@@ -100,14 +101,14 @@ export class InvitationHelpers {
         invitedBy,
         email: `valid-${timestamp}@example.com`,
         role: 'member',
-        expiresInHours: 24 // 1 day
+        expiresInHours: 24, // 1 day
       }),
       this.createInvitation({
         teamId,
         invitedBy,
         email: `expiring-${timestamp}@example.com`,
         role: 'member',
-        expiresInHours: 1 // 1 hour
+        expiresInHours: 1, // 1 hour
       }),
       this.createInvitation({
         teamId,
@@ -115,15 +116,15 @@ export class InvitationHelpers {
         email: `expired-${timestamp}@example.com`,
         role: 'member',
         expiresInHours: -24, // Already expired
-        status: 'expired'
+        status: 'expired',
       }),
       this.createInvitation({
         teamId,
         invitedBy,
         email: `longterm-${timestamp}@example.com`,
         role: 'admin',
-        expiresInHours: 7 * 24 // 7 days
-      })
+        expiresInHours: 7 * 24, // 7 days
+      }),
     ])
 
     return { valid, expiringSoon, expired, longTerm }
@@ -138,7 +139,7 @@ export class InvitationHelpers {
       .update({
         status: 'accepted',
         accepted_at: new Date().toISOString(),
-        accepted_by: acceptingUserId
+        accepted_by: acceptingUserId,
       })
       .eq('id', invitationId)
 
@@ -156,7 +157,7 @@ export class InvitationHelpers {
       .update({
         status: 'declined',
         declined_at: new Date().toISOString(),
-        declined_by: decliningUserId
+        declined_by: decliningUserId,
       })
       .eq('id', invitationId)
 
@@ -174,7 +175,7 @@ export class InvitationHelpers {
       .update({
         status: 'revoked',
         revoked_at: new Date().toISOString(),
-        revoked_by: revokingUserId
+        revoked_by: revokingUserId,
       })
       .eq('id', invitationId)
 
@@ -191,7 +192,7 @@ export class InvitationHelpers {
       .from('invites')
       .update({
         status: 'expired',
-        expires_at: new Date(Date.now() - 1000).toISOString() // 1 second ago
+        expires_at: new Date(Date.now() - 1000).toISOString(), // 1 second ago
       })
       .in('id', invitationIds)
 
@@ -224,11 +225,11 @@ export class InvitationHelpers {
         owner: 0,
         admin: 0,
         member: 0,
-        super_admin: 0
-      }
+        super_admin: 0,
+      },
     }
 
-    data.forEach(invite => {
+    data.forEach((invite) => {
       stats[invite.status as keyof InvitationStats]++
       stats.byRole[invite.role as TeamRole]++
     })
@@ -244,37 +245,40 @@ export class InvitationHelpers {
       teamId: config.teamId,
       invitedBy: config.invitedBy,
       email: config.email,
-      role: config.role
+      role: config.role,
     })
 
     const result: WorkflowResult = {
       invitation,
-      steps: [`Invitation created for ${config.email}`]
+      steps: [`Invitation created for ${config.email}`],
     }
 
     // Simulate acceptance or decline based on config
     if (config.shouldAccept && config.acceptingUserId) {
       await this.acceptInvitation(invitation.id, config.acceptingUserId)
       result.steps.push('Invitation accepted')
-      
+
       // Add user to team
       const { error } = await this.supabase
         .from('team_members')
         .insert({
           team_id: config.teamId,
           user_id: config.acceptingUserId,
-          role: config.role
+          role: config.role,
         })
 
       if (error) {
         result.steps.push(`Failed to add to team: ${error.message}`)
-      } else {
+      }
+      else {
         result.steps.push('User added to team successfully')
       }
-    } else if (config.shouldDecline) {
+    }
+    else if (config.shouldDecline) {
       await this.declineInvitation(invitation.id)
       result.steps.push('Invitation declined')
-    } else if (config.shouldRevoke && config.revokingUserId) {
+    }
+    else if (config.shouldRevoke && config.revokingUserId) {
       await this.revokeInvitation(invitation.id, config.revokingUserId)
       result.steps.push('Invitation revoked')
     }
@@ -287,10 +291,11 @@ export class InvitationHelpers {
    */
   async cleanupInvitations(teamId?: string): Promise<void> {
     let query = this.supabase.from('invites').delete()
-    
+
     if (teamId) {
       query = query.eq('team_id', teamId)
-    } else {
+    }
+    else {
       // Only clean up test invitations (with test emails)
       query = query.like('email', '%test%')
     }
@@ -326,7 +331,7 @@ export class InvitationHelpers {
       status: invite.status,
       expires_at: invite.expires_at,
       message: invite.message,
-      created_at: invite.created_at
+      created_at: invite.created_at,
     }))
   }
 }
@@ -339,14 +344,14 @@ export class RoleHelpers {
 
   constructor() {
     const supabaseUrl = process.env.SUPABASE_URL || 'http://localhost:54321'
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
-    
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+      || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
+
     this.supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
-        persistSession: false
-      }
+        persistSession: false,
+      },
     })
   }
 
@@ -382,7 +387,7 @@ export class RoleHelpers {
       teamId,
       oldRole,
       newRole,
-      changedAt: new Date().toISOString()
+      changedAt: new Date().toISOString(),
     }
   }
 
@@ -403,7 +408,7 @@ export class RoleHelpers {
       owners: data.filter(m => m.role === 'owner'),
       admins: data.filter(m => m.role === 'admin'),
       members: data.filter(m => m.role === 'member'),
-      superAdmins: data.filter(m => m.role === 'super_admin')
+      superAdmins: data.filter(m => m.role === 'super_admin'),
     }
 
     const issues: string[] = []
@@ -423,7 +428,7 @@ export class RoleHelpers {
       teamId,
       roleGroups,
       issues,
-      isValid: issues.length === 0
+      isValid: issues.length === 0,
     }
   }
 
@@ -441,7 +446,7 @@ export class RoleHelpers {
         canDeleteTeam: true,
         canModifyTeamSettings: true,
         canViewAllMembers: true,
-        canStartImpersonation: false
+        canStartImpersonation: false,
       },
       admin: {
         canInviteMembers: true,
@@ -452,7 +457,7 @@ export class RoleHelpers {
         canDeleteTeam: false,
         canModifyTeamSettings: true,
         canViewAllMembers: true,
-        canStartImpersonation: false
+        canStartImpersonation: false,
       },
       member: {
         canInviteMembers: false,
@@ -463,7 +468,7 @@ export class RoleHelpers {
         canDeleteTeam: false,
         canModifyTeamSettings: false,
         canViewAllMembers: true,
-        canStartImpersonation: false
+        canStartImpersonation: false,
       },
       super_admin: {
         canInviteMembers: true,
@@ -474,8 +479,8 @@ export class RoleHelpers {
         canDeleteTeam: false,
         canModifyTeamSettings: false,
         canViewAllMembers: true,
-        canStartImpersonation: true
-      }
+        canStartImpersonation: true,
+      },
     }
 
     return permissions[role]
@@ -485,9 +490,9 @@ export class RoleHelpers {
    * Test if a user can perform an action based on their role
    */
   async canUserPerformAction(
-    userId: string, 
-    teamId: string, 
-    action: keyof RolePermissions
+    userId: string,
+    teamId: string,
+    action: keyof RolePermissions,
   ): Promise<boolean> {
     const { data, error } = await this.supabase
       .from('team_members')
@@ -581,10 +586,10 @@ export interface RoleChangeResult {
 export interface RoleHierarchyTest {
   teamId: string
   roleGroups: {
-    owners: Array<{ user_id: string; role: string }>
-    admins: Array<{ user_id: string; role: string }>
-    members: Array<{ user_id: string; role: string }>
-    superAdmins: Array<{ user_id: string; role: string }>
+    owners: Array<{ user_id: string, role: string }>
+    admins: Array<{ user_id: string, role: string }>
+    members: Array<{ user_id: string, role: string }>
+    superAdmins: Array<{ user_id: string, role: string }>
   }
   issues: string[]
   isValid: boolean

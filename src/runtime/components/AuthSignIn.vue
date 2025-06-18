@@ -6,7 +6,10 @@
           <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
             {{ title }}
           </h2>
-          <p v-if="subtitle" class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+          <p
+            v-if="subtitle"
+            class="text-sm text-gray-600 dark:text-gray-400 mt-2"
+          >
             {{ subtitle }}
           </p>
         </div>
@@ -14,7 +17,10 @@
     </template>
 
     <!-- Social Login Buttons -->
-    <div v-if="showSocialLogin" class="space-y-3 mb-4">
+    <div
+      v-if="showSocialLogin"
+      class="space-y-3 mb-4"
+    >
       <slot name="social-buttons">
         <UButton
           v-if="googleAuth"
@@ -24,15 +30,18 @@
           block
           :disabled="isLoading"
           :loading="isGoogleLoading"
-          @click="handleGoogleSignIn"
           class="justify-center"
+          @click="handleGoogleSignIn"
         >
           <template #leading>
-            <Icon name="logos:google-icon" class="w-5 h-5" />
+            <Icon
+              name="logos:google-icon"
+              class="w-5 h-5"
+            />
           </template>
           Continue with Google
         </UButton>
-        
+
         <UButton
           v-if="githubAuth"
           type="button"
@@ -41,30 +50,42 @@
           block
           :disabled="isLoading"
           :loading="isGithubLoading"
-          @click="handleGithubSignIn"
           class="justify-center"
+          @click="handleGithubSignIn"
         >
           <template #leading>
-            <Icon name="logos:github-icon" class="w-5 h-5" />
+            <Icon
+              name="logos:github-icon"
+              class="w-5 h-5"
+            />
           </template>
           Continue with GitHub
         </UButton>
       </slot>
     </div>
-      
+
     <!-- Divider -->
-    <div v-if="showSocialLogin" class="flex items-center my-8">
-      <div class="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
+    <div
+      v-if="showSocialLogin"
+      class="flex items-center my-8"
+    >
+      <div class="flex-1 border-t border-gray-300 dark:border-gray-600" />
       <div class="font-medium text-gray-500 dark:text-gray-400 flex mx-3 whitespace-nowrap">
         <span class="text-sm">Or continue with email</span>
       </div>
-      <div class="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
+      <div class="flex-1 border-t border-gray-300 dark:border-gray-600" />
     </div>
 
-    <UForm v-if="isFormReady" :schema="authSchema" :state="form" @submit="handleSignIn" class="space-y-4">
+    <UForm
+      v-if="isFormReady"
+      :schema="authSchema"
+      :state="form"
+      class="space-y-4"
+      @submit="handleSignIn"
+    >
       <!-- Email Field -->
       <UFormField
-        label="Email address" 
+        label="Email address"
         name="email"
         required
       >
@@ -80,8 +101,8 @@
       </UFormField>
 
       <!-- Password Field -->
-      <UFormField 
-        label="Password" 
+      <UFormField
+        label="Password"
         name="password"
         required
       >
@@ -117,8 +138,8 @@
           label="Remember me"
           :disabled="isLoading"
         />
-        <div v-else></div>
-        
+        <div v-else />
+
         <slot name="forgot-password">
           <UButton
             type="button"
@@ -154,8 +175,8 @@
             variant="ghost"
             size="sm"
             :disabled="isLoading"
-            @click="$emit('switch-to-signup')"
             class="font-medium text-primary-600 hover:text-primary-500"
+            @click="$emit('switch-to-signup')"
           >
             Sign up
           </UButton>
@@ -207,7 +228,7 @@ const props = withDefaults(defineProps<AuthSignInProps>(), {
   showSocialLogin: true,
   googleAuth: true,
   githubAuth: false,
-  showRememberMe: true
+  showRememberMe: true,
 })
 
 const emit = defineEmits<{
@@ -223,7 +244,7 @@ const emit = defineEmits<{
 const form = reactive<SignInForm>({
   email: '',
   password: '',
-  rememberMe: false
+  rememberMe: false,
 })
 
 // Add a computed to ensure form is available
@@ -233,7 +254,7 @@ const isFormReady = computed(() => form && typeof form === 'object')
 const authSchema = v.object({
   email: v.pipe(v.string(), v.email('Please enter a valid email address')),
   password: v.pipe(v.string(), v.minLength(6, 'Password must be at least 6 characters')),
-  rememberMe: v.optional(v.boolean())
+  rememberMe: v.optional(v.boolean()),
 })
 
 // Composables - declared after form to avoid issues
@@ -249,7 +270,8 @@ const isFormValid = computed(() => {
   try {
     v.parse(authSchema, form)
     return true
-  } catch {
+  }
+  catch {
     return false
   }
 })
@@ -258,18 +280,18 @@ const isFormValid = computed(() => {
 const handleSignIn = async (event: FormSubmitEvent<any>) => {
   try {
     await signIn(event.data.email, event.data.password)
-    
-    emit('success', { 
+
+    emit('success', {
       email: event.data.email,
-      rememberMe: event.data.rememberMe 
+      rememberMe: event.data.rememberMe,
     })
-    
+
     // Clear form on success
     form.email = ''
     form.password = ''
     form.rememberMe = false
-    
-  } catch (error: any) {
+  }
+  catch (error: any) {
     const errorMessage = error.message || 'Failed to sign in'
     emit('error', errorMessage)
   }
@@ -279,31 +301,32 @@ const handleSignIn = async (event: FormSubmitEvent<any>) => {
 const handleGoogleSignIn = async () => {
   try {
     isGoogleLoading.value = true
-    
+
     // Get Supabase client
     const nuxtApp = useNuxtApp()
-    
+
     if (!nuxtApp?.$teamAuthClient?.auth?.signInWithOAuth) {
       throw new Error('Supabase client not available for OAuth')
     }
-    
+
     const { data, error } = await nuxtApp.$teamAuthClient.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
-      }
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
     })
-    
+
     if (error) {
       throw error
     }
-    
+
     emit('social-success', 'google', data)
-    
-  } catch (error: any) {
+  }
+  catch (error: any) {
     const errorMessage = error.message || 'Failed to sign in with Google'
     emit('social-error', 'google', errorMessage)
-  } finally {
+  }
+  finally {
     isGoogleLoading.value = false
   }
 }
@@ -311,31 +334,32 @@ const handleGoogleSignIn = async () => {
 const handleGithubSignIn = async () => {
   try {
     isGithubLoading.value = true
-    
+
     // Get Supabase client
     const nuxtApp = useNuxtApp()
-    
+
     if (!nuxtApp?.$teamAuthClient?.auth?.signInWithOAuth) {
       throw new Error('Supabase client not available for OAuth')
     }
-    
+
     const { data, error } = await nuxtApp.$teamAuthClient.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
-      }
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
     })
-    
+
     if (error) {
       throw error
     }
-    
+
     emit('social-success', 'github', data)
-    
-  } catch (error: any) {
+  }
+  catch (error: any) {
     const errorMessage = error.message || 'Failed to sign in with GitHub'
     emit('social-error', 'github', errorMessage)
-  } finally {
+  }
+  finally {
     isGithubLoading.value = false
   }
 }

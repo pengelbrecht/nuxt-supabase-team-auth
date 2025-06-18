@@ -1,5 +1,5 @@
-import { navigateTo } from '#app'
 import { useTeamAuth } from '../composables/useTeamAuth'
+import { navigateTo } from '#app'
 
 /**
  * Middleware to redirect authenticated users away from auth pages
@@ -21,7 +21,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (currentUser.value) {
     // Check if there's a redirect URL in query params
     const redirectTo = to.query.redirect as string
-    
+
     if (redirectTo) {
       // Validate redirect URL for security
       try {
@@ -30,7 +30,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
         if (url.origin === window.location.origin) {
           return navigateTo(redirectTo)
         }
-      } catch {
+      }
+      catch {
         // Invalid URL, fall through to default redirect
       }
     }
@@ -39,7 +40,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
     if (currentTeam.value) {
       // User has a team, redirect to dashboard
       return navigateTo('/dashboard')
-    } else {
+    }
+    else {
       // User needs to select/create a team
       return navigateTo('/teams')
     }
@@ -53,7 +55,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
  */
 export function createRedirectAuthenticated(
   redirectTo: string | ((user: any, team: any) => string),
-  condition?: (user: any, team: any, route: any) => boolean
+  condition?: (user: any, team: any, route: any) => boolean,
 ) {
   return defineNuxtRouteMiddleware(async (to) => {
     const { currentUser, currentTeam, isLoading } = useTeamAuth()
@@ -75,7 +77,7 @@ export function createRedirectAuthenticated(
       }
 
       // Determine redirect URL
-      const url = typeof redirectTo === 'function' 
+      const url = typeof redirectTo === 'function'
         ? redirectTo(currentUser.value, currentTeam.value)
         : redirectTo
 
@@ -90,5 +92,5 @@ export function createRedirectAuthenticated(
 export const redirectToDashboard = createRedirectAuthenticated('/dashboard')
 export const redirectToTeams = createRedirectAuthenticated('/teams')
 export const redirectBasedOnTeam = createRedirectAuthenticated(
-  (user, team) => team ? '/dashboard' : '/teams'
+  (user, team) => team ? '/dashboard' : '/teams',
 )

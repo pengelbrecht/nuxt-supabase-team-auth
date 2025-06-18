@@ -6,33 +6,33 @@ import TeamAuthConfirmation from '../../src/runtime/components/TeamAuthConfirmat
 // Mock route and router
 const mockRoute = {
   query: {},
-  params: {}
+  params: {},
 }
 
 const mockRouter = {
-  push: vi.fn()
+  push: vi.fn(),
 }
 
 // Mock vue-router composables
 vi.mock('vue-router', () => ({
   useRoute: () => mockRoute,
-  useRouter: () => mockRouter
+  useRouter: () => mockRouter,
 }))
 
 // Mock Nuxt app
 const mockNuxtApp = {
   $teamAuthClient: {
     auth: {
-      verifyOtp: vi.fn()
+      verifyOtp: vi.fn(),
     },
     functions: {
-      invoke: vi.fn()
-    }
-  }
+      invoke: vi.fn(),
+    },
+  },
 }
 
 vi.mock('#app', () => ({
-  useNuxtApp: () => mockNuxtApp
+  useNuxtApp: () => mockNuxtApp,
 }))
 
 describe('TeamAuthConfirmation', () => {
@@ -40,11 +40,11 @@ describe('TeamAuthConfirmation', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
+
     // Reset mock values
     mockRoute.query = {}
     mockRoute.params = {}
-    
+
     // Reset mock functions
     mockNuxtApp.$teamAuthClient.auth.verifyOtp.mockReset()
     mockNuxtApp.$teamAuthClient.functions.invoke.mockReset()
@@ -53,53 +53,53 @@ describe('TeamAuthConfirmation', () => {
     // Mock window.location.hash
     Object.defineProperty(window, 'location', {
       value: { hash: '' },
-      writable: true
+      writable: true,
     })
   })
 
   describe('Email Confirmation Flow', () => {
     it('should show loading state initially', async () => {
       mockRoute.query = { token: 'test-token', type: 'email' }
-      
+
       const wrapper = mount(TeamAuthConfirmation)
-      
+
       expect(wrapper.text()).toContain('Processing confirmation')
       expect(wrapper.find('.loading-spinner')).toBeTruthy()
     })
 
     it('should successfully confirm email', async () => {
       mockRoute.query = { token: 'test-token', type: 'email' }
-      
+
       mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
-        error: null
+        error: null,
       })
 
       const wrapper = mount(TeamAuthConfirmation)
-      
+
       await nextTick()
       await nextTick() // Wait for async confirmation
-      
+
       expect(mockSupabaseClient.auth.verifyOtp).toHaveBeenCalledWith({
         token_hash: 'test-token',
-        type: 'email'
+        type: 'email',
       })
-      
+
       expect(wrapper.text()).toContain('Email Confirmed!')
       expect(wrapper.text()).toContain('Your email has been confirmed')
     })
 
     it('should handle email confirmation error', async () => {
       mockRoute.query = { token: 'invalid-token', type: 'email' }
-      
+
       mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
-        error: { message: 'Invalid token' }
+        error: { message: 'Invalid token' },
       })
 
       const wrapper = mount(TeamAuthConfirmation)
-      
+
       await nextTick()
       await nextTick()
-      
+
       expect(wrapper.text()).toContain('Email Confirmation Failed')
       expect(wrapper.text()).toContain('Invalid token')
       expect(wrapper.find('button').text()).toContain('Try Again')
@@ -108,65 +108,65 @@ describe('TeamAuthConfirmation', () => {
 
   describe('Invitation Acceptance Flow', () => {
     it('should successfully accept invitation', async () => {
-      mockRoute.query = { 
-        team_id: 'team-123', 
+      mockRoute.query = {
+        team_id: 'team-123',
         email: 'user@example.com',
-        type: 'invite'
+        type: 'invite',
       }
-      
+
       mockSupabaseClient.functions.invoke.mockResolvedValue({
         data: { success: true },
-        error: null
+        error: null,
       })
 
       const wrapper = mount(TeamAuthConfirmation)
-      
+
       await nextTick()
       await nextTick()
-      
+
       expect(mockSupabaseClient.functions.invoke).toHaveBeenCalledWith('accept-invite', {
         body: {
           team_id: 'team-123',
-          email: 'user@example.com'
-        }
+          email: 'user@example.com',
+        },
       })
-      
+
       expect(wrapper.text()).toContain('Invitation Accepted!')
       expect(wrapper.text()).toContain('You have successfully joined the team')
     })
 
     it('should handle invitation acceptance error', async () => {
-      mockRoute.query = { 
-        team_id: 'team-123', 
+      mockRoute.query = {
+        team_id: 'team-123',
         email: 'user@example.com',
-        type: 'invite'
+        type: 'invite',
       }
-      
+
       mockSupabaseClient.functions.invoke.mockResolvedValue({
         data: null,
-        error: { message: 'Invitation expired' }
+        error: { message: 'Invitation expired' },
       })
 
       const wrapper = mount(TeamAuthConfirmation)
-      
+
       await nextTick()
       await nextTick()
-      
+
       expect(wrapper.text()).toContain('Invitation Acceptance Failed')
       expect(wrapper.text()).toContain('Invitation expired')
     })
 
     it('should handle missing team_id for invitation', async () => {
-      mockRoute.query = { 
+      mockRoute.query = {
         email: 'user@example.com',
-        type: 'invite'
+        type: 'invite',
       }
 
       const wrapper = mount(TeamAuthConfirmation)
-      
+
       await nextTick()
       await nextTick()
-      
+
       expect(wrapper.text()).toContain('Invitation Acceptance Failed')
       expect(wrapper.text()).toContain('Missing team information')
     })
@@ -176,38 +176,38 @@ describe('TeamAuthConfirmation', () => {
     it('should extract parameters from hash when query params are missing', async () => {
       mockRoute.query = {}
       window.location.hash = '#token=hash-token&type=email'
-      
+
       mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
-        error: null
+        error: null,
       })
 
       const wrapper = mount(TeamAuthConfirmation)
-      
+
       await nextTick()
       await nextTick()
-      
+
       expect(mockSupabaseClient.auth.verifyOtp).toHaveBeenCalledWith({
         token_hash: 'hash-token',
-        type: 'email'
+        type: 'email',
       })
     })
 
     it('should prioritize query params over hash params', async () => {
       mockRoute.query = { token: 'query-token', type: 'email' }
       window.location.hash = '#token=hash-token&type=signup'
-      
+
       mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
-        error: null
+        error: null,
       })
 
       const wrapper = mount(TeamAuthConfirmation)
-      
+
       await nextTick()
       await nextTick()
-      
+
       expect(mockSupabaseClient.auth.verifyOtp).toHaveBeenCalledWith({
         token_hash: 'query-token',
-        type: 'email'
+        type: 'email',
       })
     })
   })
@@ -218,10 +218,10 @@ describe('TeamAuthConfirmation', () => {
       window.location.hash = ''
 
       const wrapper = mount(TeamAuthConfirmation)
-      
+
       await nextTick()
       await nextTick()
-      
+
       expect(wrapper.text()).toContain('Invalid Confirmation Link')
       expect(wrapper.text()).toContain('appears to be invalid or has expired')
     })
@@ -230,10 +230,10 @@ describe('TeamAuthConfirmation', () => {
       mockRoute.query = { token: 'test-token', type: 'unknown' }
 
       const wrapper = mount(TeamAuthConfirmation)
-      
+
       await nextTick()
       await nextTick()
-      
+
       expect(wrapper.text()).toContain('Unable to determine confirmation type')
     })
   })
@@ -241,23 +241,23 @@ describe('TeamAuthConfirmation', () => {
   describe('Retry Functionality', () => {
     it('should retry confirmation on button click', async () => {
       mockRoute.query = { token: 'test-token', type: 'email' }
-      
+
       mockSupabaseClient.auth.verifyOtp
         .mockResolvedValueOnce({ error: { message: 'Network error' } })
         .mockResolvedValueOnce({ error: null })
 
       const wrapper = mount(TeamAuthConfirmation)
-      
+
       await nextTick()
       await nextTick()
-      
+
       // Should show error first
       expect(wrapper.text()).toContain('Network error')
-      
+
       // Click retry button
       await wrapper.find('button').trigger('click')
       await nextTick()
-      
+
       // Should show success after retry
       expect(wrapper.text()).toContain('Email Confirmed!')
     })
@@ -265,46 +265,46 @@ describe('TeamAuthConfirmation', () => {
 
   describe('Redirect Functionality', () => {
     it('should redirect after successful confirmation', async () => {
-      mockRoute.query = { 
-        token: 'test-token', 
+      mockRoute.query = {
+        token: 'test-token',
         type: 'email',
-        redirect_to: '/dashboard'
+        redirect_to: '/dashboard',
       }
-      
+
       mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
-        error: null
+        error: null,
       })
 
       const wrapper = mount(TeamAuthConfirmation, {
-        props: { redirectUrl: '/default' }
+        props: { redirectUrl: '/default' },
       })
-      
+
       await nextTick()
       await nextTick()
-      
+
       // Click continue button
       await wrapper.find('button').trigger('click')
-      
+
       expect(mockRouter.push).toHaveBeenCalledWith('/dashboard')
     })
 
     it('should use default redirect URL when none provided', async () => {
       mockRoute.query = { token: 'test-token', type: 'email' }
-      
+
       mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
-        error: null
+        error: null,
       })
 
       const wrapper = mount(TeamAuthConfirmation, {
-        props: { redirectUrl: '/default-page' }
+        props: { redirectUrl: '/default-page' },
       })
-      
+
       await nextTick()
       await nextTick()
-      
+
       // Click continue button
       await wrapper.find('button').trigger('click')
-      
+
       expect(mockRouter.push).toHaveBeenCalledWith('/default-page')
     })
   })
@@ -312,17 +312,17 @@ describe('TeamAuthConfirmation', () => {
   describe('Debug Mode', () => {
     it('should log parameters in debug mode', async () => {
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-      
+
       mockRoute.query = { token: 'test-token', type: 'email' }
 
       mount(TeamAuthConfirmation, {
-        props: { debug: true }
+        props: { debug: true },
       })
-      
+
       await nextTick()
-      
+
       expect(consoleSpy).toHaveBeenCalledWith('Confirmation parameters:', expect.any(Object))
-      
+
       consoleSpy.mockRestore()
     })
   })

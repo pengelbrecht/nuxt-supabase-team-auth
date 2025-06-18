@@ -5,27 +5,51 @@
       <template v-if="isLoading">
         <div class="text-center space-y-4">
           <div class="flex justify-center">
-            <svg class="animate-spin h-8 w-8 text-primary-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <svg
+              class="animate-spin h-8 w-8 text-primary-500"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
             </svg>
           </div>
-          <p class="text-gray-600">{{ loadingMessage }}</p>
+          <p class="text-gray-600">
+            {{ loadingMessage }}
+          </p>
         </div>
       </template>
 
       <!-- Success State -->
       <template v-else-if="isSuccess">
         <div class="text-center space-y-4">
-          <div class="text-4xl">✅</div>
-          <h2 class="text-xl font-semibold text-gray-900">{{ successTitle }}</h2>
-          <p class="text-gray-600">{{ successMessage }}</p>
-          <UButton 
-            v-if="redirectUrl" 
-            @click="handleRedirect" 
+          <div class="text-4xl">
+            ✅
+          </div>
+          <h2 class="text-xl font-semibold text-gray-900">
+            {{ successTitle }}
+          </h2>
+          <p class="text-gray-600">
+            {{ successMessage }}
+          </p>
+          <UButton
+            v-if="redirectUrl"
             color="primary"
             size="lg"
             class="w-full"
+            @click="handleRedirect"
           >
             Continue
           </UButton>
@@ -35,14 +59,20 @@
       <!-- Error State -->
       <template v-else-if="error">
         <div class="text-center space-y-4">
-          <div class="text-4xl">❌</div>
-          <h2 class="text-xl font-semibold text-gray-900">{{ errorTitle }}</h2>
-          <p class="text-gray-600">{{ error }}</p>
-          <UButton 
-            @click="retryConfirmation" 
+          <div class="text-4xl">
+            ❌
+          </div>
+          <h2 class="text-xl font-semibold text-gray-900">
+            {{ errorTitle }}
+          </h2>
+          <p class="text-gray-600">
+            {{ error }}
+          </p>
+          <UButton
             color="red"
             size="lg"
             class="w-full"
+            @click="retryConfirmation"
           >
             Try Again
           </UButton>
@@ -52,11 +82,19 @@
       <!-- Invalid/Missing Parameters -->
       <template v-else>
         <div class="text-center space-y-4">
-          <div class="text-4xl">⚠️</div>
-          <h2 class="text-xl font-semibold text-gray-900">Invalid Confirmation Link</h2>
+          <div class="text-4xl">
+            ⚠️
+          </div>
+          <h2 class="text-xl font-semibold text-gray-900">
+            Invalid Confirmation Link
+          </h2>
           <div class="space-y-2">
-            <p class="text-gray-600">This confirmation link appears to be invalid or has expired.</p>
-            <p class="text-gray-600">Please check your email for a fresh link or contact support.</p>
+            <p class="text-gray-600">
+              This confirmation link appears to be invalid or has expired.
+            </p>
+            <p class="text-gray-600">
+              Please check your email for a fresh link or contact support.
+            </p>
           </div>
         </div>
       </template>
@@ -77,7 +115,7 @@ interface ConfirmationProps {
 
 const props = withDefaults(defineProps<ConfirmationProps>(), {
   redirectUrl: '/',
-  debug: false
+  debug: false,
 })
 
 const route = useRoute()
@@ -128,7 +166,7 @@ const errorTitle = computed(() => {
 const extractParameters = () => {
   const queryParams = route.query
   const hashParams = new URLSearchParams(window.location.hash.substring(1))
-  
+
   // Priority: query params first, then hash params (fallback for email clients)
   const getParam = (key: string) => {
     return queryParams[key] || hashParams.get(key)
@@ -139,7 +177,7 @@ const extractParameters = () => {
     type: getParam('type'),
     email: getParam('email'),
     team_id: getParam('team_id'),
-    redirect_to: getParam('redirect_to')
+    redirect_to: getParam('redirect_to'),
   }
 }
 
@@ -147,7 +185,8 @@ const extractParameters = () => {
 const determineConfirmationType = (params: any) => {
   if (params.type === 'invite' || params.team_id) {
     return 'invite'
-  } else if (params.type === 'signup' || params.type === 'email') {
+  }
+  else if (params.type === 'signup' || params.type === 'email') {
     return 'email'
   }
   return null
@@ -156,12 +195,12 @@ const determineConfirmationType = (params: any) => {
 // Handle email confirmation
 const handleEmailConfirmation = async (params: any) => {
   loadingMessage.value = 'Confirming your email address...'
-  
+
   try {
     // Use Supabase auth to verify the token
     const { useTeamAuth } = await import('../composables/useTeamAuth')
     const { $teamAuthClient } = useNuxtApp()
-    
+
     if (!params.token) {
       throw new Error('Missing confirmation token')
     }
@@ -169,7 +208,7 @@ const handleEmailConfirmation = async (params: any) => {
     // Verify OTP token for email confirmation
     const { error: verifyError } = await $teamAuthClient.auth.verifyOtp({
       token_hash: params.token,
-      type: 'email'
+      type: 'email',
     })
 
     if (verifyError) {
@@ -178,8 +217,8 @@ const handleEmailConfirmation = async (params: any) => {
 
     confirmationType.value = 'email'
     isSuccess.value = true
-    
-  } catch (err: any) {
+  }
+  catch (err: any) {
     error.value = err.message || 'Failed to confirm email address'
   }
 }
@@ -187,7 +226,7 @@ const handleEmailConfirmation = async (params: any) => {
 // Handle invitation acceptance
 const handleInviteAcceptance = async (params: any) => {
   loadingMessage.value = 'Accepting team invitation...'
-  
+
   try {
     if (!params.team_id) {
       throw new Error('Missing team information')
@@ -195,12 +234,12 @@ const handleInviteAcceptance = async (params: any) => {
 
     // Call accept-invite Edge Function
     const { $teamAuthClient } = useNuxtApp()
-    
+
     const { data, error: inviteError } = await $teamAuthClient.functions.invoke('accept-invite', {
       body: {
         team_id: params.team_id,
-        email: params.email
-      }
+        email: params.email,
+      },
     })
 
     if (inviteError) {
@@ -213,8 +252,8 @@ const handleInviteAcceptance = async (params: any) => {
 
     confirmationType.value = 'invite'
     isSuccess.value = true
-    
-  } catch (err: any) {
+  }
+  catch (err: any) {
     error.value = err.message || 'Failed to accept team invitation'
   }
 }
@@ -223,13 +262,13 @@ const handleInviteAcceptance = async (params: any) => {
 const processConfirmation = async () => {
   try {
     const params = extractParameters()
-    
+
     if (props.debug) {
       console.log('Confirmation parameters:', params)
     }
 
     const type = determineConfirmationType(params)
-    
+
     if (!type) {
       error.value = 'Unable to determine confirmation type'
       return
@@ -237,13 +276,15 @@ const processConfirmation = async () => {
 
     if (type === 'email') {
       await handleEmailConfirmation(params)
-    } else if (type === 'invite') {
+    }
+    else if (type === 'invite') {
       await handleInviteAcceptance(params)
     }
-    
-  } catch (err: any) {
+  }
+  catch (err: any) {
     error.value = err.message || 'An unexpected error occurred'
-  } finally {
+  }
+  finally {
     isLoading.value = false
   }
 }
@@ -267,4 +308,3 @@ onMounted(() => {
   processConfirmation()
 })
 </script>
-

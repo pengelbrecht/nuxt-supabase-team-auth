@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,10 +22,10 @@ serve(async (req) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -36,9 +36,9 @@ serve(async (req) => {
       {
         auth: {
           autoRefreshToken: false,
-          persistSession: false
-        }
-      }
+          persistSession: false,
+        },
+      },
     )
 
     const supabaseUser = createClient(
@@ -47,14 +47,14 @@ serve(async (req) => {
       {
         auth: {
           autoRefreshToken: false,
-          persistSession: false
+          persistSession: false,
         },
         global: {
           headers: {
-            Authorization: authHeader
-          }
-        }
-      }
+            Authorization: authHeader,
+          },
+        },
+      },
     )
 
     // Get current user
@@ -62,10 +62,10 @@ serve(async (req) => {
     if (userError || !user) {
       return new Response(
         JSON.stringify({ error: 'Invalid or expired token' }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -75,10 +75,10 @@ serve(async (req) => {
     if (!new_owner_id) {
       return new Response(
         JSON.stringify({ error: 'Missing new_owner_id' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -95,14 +95,14 @@ serve(async (req) => {
 
     if (ownershipError || !currentOwnership) {
       return new Response(
-        JSON.stringify({ 
-          error: 'ROLE_FORBIDDEN', 
-          message: 'Only team owners can transfer ownership' 
+        JSON.stringify({
+          error: 'ROLE_FORBIDDEN',
+          message: 'Only team owners can transfer ownership',
         }),
-        { 
-          status: 403, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -118,28 +118,28 @@ serve(async (req) => {
 
     if (membershipError || !newOwnerMembership) {
       return new Response(
-        JSON.stringify({ 
-          error: 'USER_NOT_MEMBER', 
-          message: 'New owner must be a member of the team' 
+        JSON.stringify({
+          error: 'USER_NOT_MEMBER',
+          message: 'New owner must be a member of the team',
         }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
     // Prevent transferring to self
     if (new_owner_id === user.id) {
       return new Response(
-        JSON.stringify({ 
-          error: 'SELF_TRANSFER', 
-          message: 'Cannot transfer ownership to yourself' 
+        JSON.stringify({
+          error: 'SELF_TRANSFER',
+          message: 'Cannot transfer ownership to yourself',
         }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -153,14 +153,14 @@ serve(async (req) => {
 
     if (promoteError) {
       return new Response(
-        JSON.stringify({ 
-          error: 'Failed to promote new owner', 
-          details: promoteError.message 
+        JSON.stringify({
+          error: 'Failed to promote new owner',
+          details: promoteError.message,
         }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -178,16 +178,16 @@ serve(async (req) => {
         .update({ role: newOwnerMembership.role })
         .eq('team_id', teamId)
         .eq('user_id', new_owner_id)
-      
+
       return new Response(
-        JSON.stringify({ 
-          error: 'Failed to demote previous owner', 
-          details: demoteError.message 
+        JSON.stringify({
+          error: 'Failed to demote previous owner',
+          details: demoteError.message,
         }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       )
     }
 
@@ -203,40 +203,40 @@ serve(async (req) => {
 
     // Return success response
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
         team: {
           id: teamId,
-          name: team?.name
+          name: team?.name,
         },
         previous_owner: {
           id: user.id,
           email: user.email,
-          new_role: 'admin'
+          new_role: 'admin',
         },
         new_owner: {
           id: new_owner_id,
           email: newOwnerUser.user?.email,
-          role: 'owner'
-        }
+          role: 'owner',
+        },
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     )
-
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Unexpected error in transfer-ownership:', error)
-    
+
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
       }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     )
   }
 })

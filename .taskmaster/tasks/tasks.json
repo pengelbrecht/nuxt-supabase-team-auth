@@ -331,7 +331,7 @@
           "description": "Build the <TeamMembersTable> and <TeamSettingsModal> components for team administration.",
           "dependencies": [],
           "details": "For <TeamMembersTable>: Implement UTable with columns for user details, role (using UBadge with appropriate colors), and actions. Include pagination, sorting, and filtering capabilities. Add row actions for role changes and member removal. For <TeamSettingsModal>: Create a modal using UModal with tabs for general settings, billing, and permissions. Use UFormField and UInput for form fields. Implement save/cancel actions with UButton. Ensure proper focus trapping within the modal and restore focus on close.",
-          "status": "in-progress",
+          "status": "done",
           "testStrategy": "Test table sorting, filtering, and pagination. Verify role changes and member removal flows. Test modal opening/closing, tab switching, and form submission. Verify focus management and keyboard navigation within the modal.",
           "subtasks": [
             {

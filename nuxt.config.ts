@@ -1,10 +1,10 @@
 export default defineNuxtConfig({
   modules: [
-    './src/module'
+    './src/module',
   ],
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
   teamAuth: {
-    debug: true
-  }
+    debug: true,
+  },
 })

@@ -15,13 +15,13 @@ let mockAuthState = {
   currentRole: { value: null },
   isLoading: { value: false },
   isImpersonating: { value: false },
-  impersonationExpiresAt: { value: null }
+  impersonationExpiresAt: { value: null },
 }
 
 // Extract middleware logic functions to test them directly
 async function globalAuthMiddlewareLogic(route: any, authState: any, navigateTo: any) {
   // Skip middleware on server-side rendering for performance
-  if (process.server) return
+  if (import.meta.server) return
 
   const { currentUser, currentTeam, currentRole, isLoading, isImpersonating } = authState
 
@@ -42,7 +42,7 @@ async function globalAuthMiddlewareLogic(route: any, authState: any, navigateTo:
     '/teams',
     '/admin',
     '/profile',
-    '/settings'
+    '/settings',
   ]
 
   // Define public routes that don't require authentication
@@ -56,14 +56,14 @@ async function globalAuthMiddlewareLogic(route: any, authState: any, navigateTo:
     '/about',
     '/contact',
     '/privacy',
-    '/terms'
+    '/terms',
   ]
 
   const currentPath = route.path
 
   // Check if current route is public
-  const isPublicRoute = publicRoutes.some(routePath => 
-    currentPath === routePath || currentPath.startsWith(routePath + '/')
+  const isPublicRoute = publicRoutes.some(routePath =>
+    currentPath === routePath || currentPath.startsWith(routePath + '/'),
   )
 
   // Allow access to public routes
@@ -72,8 +72,8 @@ async function globalAuthMiddlewareLogic(route: any, authState: any, navigateTo:
   }
 
   // Check if current route is protected
-  const isProtectedRoute = protectedRoutes.some(routePath => 
-    currentPath.startsWith(routePath)
+  const isProtectedRoute = protectedRoutes.some(routePath =>
+    currentPath.startsWith(routePath),
   )
 
   // Require authentication for protected routes
@@ -100,7 +100,7 @@ async function globalAuthMiddlewareLogic(route: any, authState: any, navigateTo:
   // Handle team-specific routes
   if (currentPath.startsWith('/teams/') && currentPath !== '/teams') {
     const teamIdFromRoute = currentPath.split('/teams/')[1]?.split('/')[0]
-    
+
     if (teamIdFromRoute && currentTeam.value?.id !== teamIdFromRoute) {
       return navigateTo('/teams?error=unauthorized_team_access')
     }
@@ -109,7 +109,7 @@ async function globalAuthMiddlewareLogic(route: any, authState: any, navigateTo:
   // Handle routes that require team membership
   const teamRequiredRoutes = ['/team/', '/dashboard']
   const requiresTeam = teamRequiredRoutes.some(routePath => currentPath.startsWith(routePath))
-  
+
   if (requiresTeam && currentUser.value && !currentTeam.value) {
     return navigateTo('/teams?message=select_team_first')
   }
@@ -199,7 +199,8 @@ function createRequireRoleLogic(requiredRole: string, options: any = {}) {
       if (currentRole.value !== requiredRole) {
         return navigateTo(`${redirectTo}?error=${errorMessage}`)
       }
-    } else {
+    }
+    else {
       // Hierarchy check (higher roles can access lower role routes)
       if (userRoleLevel < requiredRoleLevel) {
         return navigateTo(`${redirectTo}?error=${errorMessage}`)
@@ -213,14 +214,14 @@ describe('Middleware Logic Integration Tests', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
+
     // Default mock route
     mockRoute = {
       path: '/dashboard',
       query: {},
       params: {},
       search: '',
-      meta: {}
+      meta: {},
     }
 
     // Reset auth state
@@ -230,7 +231,7 @@ describe('Middleware Logic Integration Tests', () => {
       currentRole: { value: null },
       isLoading: { value: false },
       isImpersonating: { value: false },
-      impersonationExpiresAt: { value: null }
+      impersonationExpiresAt: { value: null },
     }
 
     // Mock process.server to be false (client-side)
@@ -244,27 +245,27 @@ describe('Middleware Logic Integration Tests', () => {
   describe('Global Auth Middleware Logic', () => {
     it('should allow access to public routes without authentication', async () => {
       mockRoute.path = '/'
-      
+
       const result = await globalAuthMiddlewareLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(result).toBeUndefined() // No redirect
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
     it('should allow access to login page without authentication', async () => {
       mockRoute.path = '/login'
-      
+
       const result = await globalAuthMiddlewareLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
     it('should redirect unauthenticated users from protected routes', async () => {
       mockRoute.path = '/dashboard'
-      
+
       await globalAuthMiddlewareLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/login?redirect=%2Fdashboard')
     })
 
@@ -273,9 +274,9 @@ describe('Middleware Logic Integration Tests', () => {
       mockAuthState.currentUser.value = { id: 'user-123', email: 'test@example.com' }
       mockAuthState.currentTeam.value = { id: 'team-456', name: 'Test Team' }
       mockAuthState.currentRole.value = 'member'
-      
+
       const result = await globalAuthMiddlewareLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
@@ -283,9 +284,9 @@ describe('Middleware Logic Integration Tests', () => {
     it('should redirect users without team to team selection', async () => {
       mockRoute.path = '/dashboard'
       mockAuthState.currentUser.value = { id: 'user-123' }
-      
+
       await globalAuthMiddlewareLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/teams?message=select_team_first')
     })
 
@@ -294,9 +295,9 @@ describe('Middleware Logic Integration Tests', () => {
       mockAuthState.currentUser.value = { id: 'user-123' }
       mockAuthState.currentRole.value = 'super_admin'
       mockAuthState.isImpersonating.value = true
-      
+
       await globalAuthMiddlewareLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=admin_blocked_during_impersonation')
     })
 
@@ -305,9 +306,9 @@ describe('Middleware Logic Integration Tests', () => {
       mockAuthState.currentUser.value = { id: 'user-123' }
       mockAuthState.currentTeam.value = { id: 'team-456' }
       mockAuthState.currentRole.value = 'member'
-      
+
       await globalAuthMiddlewareLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/teams?error=unauthorized_team_access')
     })
 
@@ -315,9 +316,9 @@ describe('Middleware Logic Integration Tests', () => {
       mockRoute.path = '/admin/impersonate'
       mockAuthState.currentUser.value = { id: 'user-123' }
       mockAuthState.currentRole.value = 'admin'
-      
+
       await globalAuthMiddlewareLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=insufficient_permissions')
     })
   })
@@ -325,18 +326,18 @@ describe('Middleware Logic Integration Tests', () => {
   describe('Require Auth Logic', () => {
     it('should allow authenticated users to proceed', async () => {
       mockAuthState.currentUser.value = { id: 'user-123' }
-      
+
       const result = await requireAuthLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
     it('should redirect unauthenticated users to login', async () => {
       mockRoute.path = '/dashboard'
-      
+
       await requireAuthLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/login?redirect=%2Fdashboard')
     })
 
@@ -344,9 +345,9 @@ describe('Middleware Logic Integration Tests', () => {
       mockRoute.path = '/dashboard'
       mockRoute.query = { tab: 'settings', filter: 'active' }
       mockRoute.search = '?tab=settings&filter=active'
-      
+
       await requireAuthLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/login?redirect=%2Fdashboard%3Ftab%3Dsettings%26filter%3Dactive')
     })
   })
@@ -356,24 +357,24 @@ describe('Middleware Logic Integration Tests', () => {
       mockAuthState.currentUser.value = { id: 'user-123' }
       mockAuthState.currentTeam.value = { id: 'team-456' }
       mockAuthState.currentRole.value = 'member'
-      
+
       const result = await requireTeamLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
     it('should redirect unauthenticated users to login', async () => {
       await requireTeamLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/login?redirect=%2Fdashboard')
     })
 
     it('should redirect users without team to team selection', async () => {
       mockAuthState.currentUser.value = { id: 'user-123' }
-      
+
       await requireTeamLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/teams?message=select_team_first')
     })
 
@@ -382,9 +383,9 @@ describe('Middleware Logic Integration Tests', () => {
       mockAuthState.currentUser.value = { id: 'user-123' }
       mockAuthState.currentTeam.value = { id: 'team-456' }
       mockAuthState.currentRole.value = 'member'
-      
+
       await requireTeamLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/teams?error=unauthorized_team_access')
     })
 
@@ -393,9 +394,9 @@ describe('Middleware Logic Integration Tests', () => {
       mockAuthState.currentUser.value = { id: 'user-123' }
       mockAuthState.currentTeam.value = { id: 'team-456' }
       mockAuthState.currentRole.value = 'member'
-      
+
       const result = await requireTeamLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
@@ -404,86 +405,86 @@ describe('Middleware Logic Integration Tests', () => {
   describe('Require Role Logic', () => {
     it('should allow users with sufficient role level', async () => {
       const requireAdminLogic = createRequireRoleLogic('admin')
-      
+
       mockAuthState.currentUser.value = { id: 'user-123' }
       mockAuthState.currentRole.value = 'admin'
       mockAuthState.currentTeam.value = { id: 'team-456' }
-      
+
       const result = await requireAdminLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
     it('should allow higher roles (owner can access admin routes)', async () => {
       const requireAdminLogic = createRequireRoleLogic('admin')
-      
+
       mockAuthState.currentUser.value = { id: 'user-123' }
       mockAuthState.currentRole.value = 'owner' // Higher than admin
       mockAuthState.currentTeam.value = { id: 'team-456' }
-      
+
       const result = await requireAdminLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
     it('should deny users with insufficient role level', async () => {
       const requireAdminLogic = createRequireRoleLogic('admin')
-      
+
       mockAuthState.currentUser.value = { id: 'user-123' }
       mockAuthState.currentRole.value = 'member' // Lower than admin
       mockAuthState.currentTeam.value = { id: 'team-456' }
-      
+
       await requireAdminLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=insufficient_permissions')
     })
 
     it('should redirect users without role to team selection', async () => {
       const requireAdminLogic = createRequireRoleLogic('admin')
-      
+
       mockAuthState.currentUser.value = { id: 'user-123' }
       mockAuthState.currentRole.value = null
       mockAuthState.currentTeam.value = null
-      
+
       await requireAdminLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/teams?message=select_team_first')
     })
 
     it('should redirect unauthenticated users to login', async () => {
       const requireAdminLogic = createRequireRoleLogic('admin')
-      
+
       await requireAdminLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/login?redirect=%2Fdashboard')
     })
 
     it('should enforce strict role matching when configured', async () => {
       const requireExactAdminLogic = createRequireRoleLogic('admin', { strict: true })
-      
+
       mockAuthState.currentUser.value = { id: 'user-123' }
       mockAuthState.currentRole.value = 'owner' // Higher than admin
       mockAuthState.currentTeam.value = { id: 'team-456' }
-      
+
       await requireExactAdminLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=insufficient_permissions')
     })
 
     it('should use custom redirect and error message', async () => {
       const customLogic = createRequireRoleLogic('owner', {
         redirectTo: '/team/settings',
-        errorMessage: 'owner_required'
+        errorMessage: 'owner_required',
       })
-      
+
       mockAuthState.currentUser.value = { id: 'user-123' }
       mockAuthState.currentRole.value = 'admin'
       mockAuthState.currentTeam.value = { id: 'team-456' }
-      
+
       await customLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/team/settings?error=owner_required')
     })
   })
@@ -494,13 +495,13 @@ describe('Middleware Logic Integration Tests', () => {
       mockAuthState.currentUser.value = { id: 'user-123' }
       mockAuthState.currentTeam.value = { id: 'team-456' }
       mockAuthState.currentRole.value = 'admin'
-      
+
       // Run multiple middleware in sequence
       const authResult = await requireAuthLogic(mockRoute, mockAuthState, mockNavigateTo)
       const teamResult = await requireTeamLogic(mockRoute, mockAuthState, mockNavigateTo)
       const roleLogic = createRequireRoleLogic('admin')
       const roleResult = await roleLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(authResult).toBeUndefined()
       expect(teamResult).toBeUndefined()
       expect(roleResult).toBeUndefined()
@@ -510,10 +511,10 @@ describe('Middleware Logic Integration Tests', () => {
     it('should fail fast when first requirement is not met', async () => {
       // User is not authenticated
       mockAuthState.currentUser.value = null
-      
+
       // Should fail at auth check
       await requireAuthLogic(mockRoute, mockAuthState, mockNavigateTo)
-      
+
       expect(mockNavigateTo).toHaveBeenCalledWith('/login?redirect=%2Fdashboard')
       expect(mockNavigateTo).toHaveBeenCalledTimes(1)
     })

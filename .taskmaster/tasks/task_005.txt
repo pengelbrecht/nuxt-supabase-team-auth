@@ -58,7 +58,7 @@ For <UserButton>: Use UAvatar to display user profile image with fallback to ini
 Both components are production-ready and follow all PRD requirements (FR-5, FR-6). Ready to proceed with Team Management Components (subtask 5.3).
 </info added on 2025-06-16T09:39:52.163Z>
 
-## 3. Develop Team Management Components [in-progress]
+## 3. Develop Team Management Components [done]
 ### Dependencies: None
 ### Description: Build the <TeamMembersTable> and <TeamSettingsModal> components for team administration.
 ### Details:

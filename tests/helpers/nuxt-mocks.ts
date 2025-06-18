@@ -11,28 +11,28 @@ export function createMockNuxtContext(overrides: any = {}) {
       params: {},
       query: {},
       hash: '',
-      meta: {}
+      meta: {},
     },
     router: {
       push: vi.fn(),
       replace: vi.fn(),
       go: vi.fn(),
       back: vi.fn(),
-      forward: vi.fn()
+      forward: vi.fn(),
     },
     app: {
       $teamAuthClient: {
         auth: {
           getSession: vi.fn(),
           onAuthStateChange: vi.fn(),
-          signOut: vi.fn()
+          signOut: vi.fn(),
         },
         from: vi.fn(() => ({
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
-          single: vi.fn()
-        }))
-      }
+          single: vi.fn(),
+        })),
+      },
     },
     auth: {
       currentUser: { value: null },
@@ -40,12 +40,12 @@ export function createMockNuxtContext(overrides: any = {}) {
       currentRole: { value: null },
       isLoading: { value: false },
       isImpersonating: { value: false },
-      impersonationExpiresAt: { value: null }
+      impersonationExpiresAt: { value: null },
     },
     ssrContext: null,
     payload: {},
     isHydrating: false,
-    ...overrides
+    ...overrides,
   }
 
   return defaultContext
@@ -67,7 +67,7 @@ export function createMockRoute(routeData: any = {}) {
     query: {},
     hash: '',
     meta: {},
-    ...routeData
+    ...routeData,
   }
 }
 
@@ -82,8 +82,8 @@ export function createMockRouter() {
     back: vi.fn(),
     forward: vi.fn(),
     currentRoute: {
-      value: createMockRoute()
-    }
+      value: createMockRoute(),
+    },
   }
 }
 
@@ -98,7 +98,7 @@ export function createMockNuxtApp(overrides: any = {}) {
         onAuthStateChange: vi.fn(),
         signOut: vi.fn(),
         signInWithPassword: vi.fn(),
-        signUp: vi.fn()
+        signUp: vi.fn(),
       },
       from: vi.fn(() => ({
         select: vi.fn().mockReturnThis(),
@@ -107,13 +107,13 @@ export function createMockNuxtApp(overrides: any = {}) {
         delete: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         neq: vi.fn().mockReturnThis(),
-        single: vi.fn()
+        single: vi.fn(),
       })),
       functions: {
-        invoke: vi.fn()
-      }
+        invoke: vi.fn(),
+      },
     },
-    ...overrides
+    ...overrides,
   }
 }
 
@@ -136,7 +136,7 @@ export function createMockTeamAuth(overrides: any = {}) {
     transferOwnership: vi.fn(),
     startImpersonation: vi.fn(),
     stopImpersonation: vi.fn(),
-    ...overrides
+    ...overrides,
   }
 }
 
@@ -148,11 +148,11 @@ export function setupMiddlewareMocks() {
     navigateTo: mockNavigateTo,
     useRoute: () => createMockRoute(),
     useRouter: () => createMockRouter(),
-    useNuxtApp: () => createMockNuxtApp()
+    useNuxtApp: () => createMockNuxtApp(),
   }))
 
   vi.mock('../../src/runtime/composables/useTeamAuth', () => ({
-    useTeamAuth: () => createMockTeamAuth()
+    useTeamAuth: () => createMockTeamAuth(),
   }))
 
   return {
@@ -160,7 +160,7 @@ export function setupMiddlewareMocks() {
     route: createMockRoute(),
     router: createMockRouter(),
     nuxtApp: createMockNuxtApp(),
-    teamAuth: createMockTeamAuth()
+    teamAuth: createMockTeamAuth(),
   }
 }
 

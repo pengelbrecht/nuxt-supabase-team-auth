@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
+import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync } from 'node:fs'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { execSync } from 'node:child_process'
 import { program } from 'commander'
-import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync } from 'fs'
-import { join, dirname } from 'path'
-import { fileURLToPath } from 'url'
-import { execSync } from 'child_process'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -24,7 +24,7 @@ program
   .action(async (options) => {
     try {
       console.log('🚀 Initializing team-auth module...')
-      
+
       // Check if we're in a Supabase project
       if (!existsSync('supabase/config.toml')) {
         console.error('❌ No Supabase project found. Run `supabase init` first.')
@@ -74,7 +74,7 @@ program
       try {
         execSync('supabase status', { stdio: 'pipe' })
         console.log('✅ Supabase project is linked')
-        
+
         // Optionally run db push for local development
         const shouldPush = process.env.SUPABASE_DB_PUSH !== 'false'
         if (shouldPush) {
@@ -82,7 +82,8 @@ program
           execSync('supabase db push', { stdio: 'inherit' })
           console.log('✅ Migrations applied')
         }
-      } catch (error) {
+      }
+      catch (error) {
         console.warn('⚠️  Supabase CLI not available or project not linked')
         console.log('   Run `supabase db push` manually after linking your project')
       }
@@ -94,8 +95,8 @@ program
       console.log('1. Configure your environment variables (.env)')
       console.log('2. Run `npm run dev` to start development')
       console.log('3. Check out the documentation for usage examples')
-      
-    } catch (error) {
+    }
+    catch (error) {
       console.error('❌ Initialization failed:', error)
       process.exit(1)
     }
@@ -107,12 +108,13 @@ program
   .action(async () => {
     try {
       console.log('🔄 Applying team-auth migrations...')
-      
+
       // Check for new migrations and apply them
       // This would check version compatibility and apply only new migrations
-      
+
       console.log('✅ Migrations applied successfully')
-    } catch (error) {
+    }
+    catch (error) {
       console.error('❌ Migration failed:', error)
       process.exit(1)
     }
