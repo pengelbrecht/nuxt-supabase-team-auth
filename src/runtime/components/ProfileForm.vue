@@ -257,19 +257,12 @@ const hasChanges = computed(() => {
 // Initialize form with current user data
 const initializeForm = () => {
   if (currentUser.value) {
-    console.log('ProfileForm: Initializing form with:', {
-      currentProfile: currentProfile.value,
-      currentUser: currentUser.value
-    })
-    
     // Use profile data if available, fallback to user_metadata, then empty string
     form.full_name = currentProfile.value?.full_name || currentUser.value.user_metadata?.name || ''
     form.email = currentUser.value.email || ''
     form.avatar_url = ''
     form.password = ''
     form.confirmPassword = ''
-
-    console.log('ProfileForm: Form after init:', { ...form })
 
     // Store original values
     originalForm.value = { ...form }

@@ -115,9 +115,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
     // Load user profile
     try {
-      console.log('Loading profile for user:', user.id)
       currentProfile.value = await getProfile()
-      console.log('Profile loaded:', currentProfile.value)
     }
     catch (error) {
       console.warn('Failed to fetch profile information:', error)
@@ -490,18 +488,13 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         }
 
         // Update reactive state - force reactivity by reassigning the ref
-        console.log('Updating profile state:', profileUpdates)
         if (currentProfile.value) {
-          const updatedProfile = { ...currentProfile.value, ...profileUpdates }
-          console.log('Profile before update:', currentProfile.value)
-          console.log('Profile after update:', updatedProfile)
-          currentProfile.value = updatedProfile
+          currentProfile.value = { ...currentProfile.value, ...profileUpdates }
           // Force reactivity trigger as backup
           triggerRef(currentProfile)
         }
         else {
           // Load the full profile if we don't have it yet
-          console.log('Loading full profile because currentProfile is null')
           currentProfile.value = await getProfile()
         }
       }

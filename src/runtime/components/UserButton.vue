@@ -103,8 +103,6 @@ const openTeamSettings = () => {
 }
 
 const handleSettingsSaved = (data: any) => {
-  console.log('UserButton: Settings saved:', data)
-  console.log('UserButton: currentProfile after save:', currentProfile.value)
   // Profile updates automatically via reactive state in composable
 }
 
@@ -199,7 +197,6 @@ const dropdownItems = computed(() => {
     label: 'Sign Out',
     icon: 'i-lucide-log-out',
     onSelect: () => {
-      console.log('Sign Out clicked')
       signOut()
     },
   })
