@@ -6,25 +6,20 @@
     :overlay="true"
   >
     <template #body>
-      <div class="max-h-[70vh] overflow-y-auto">
-        <!-- Profile Settings -->
-        <div v-if="activeTab === 'profile'">
-          <ProfileForm 
-            @saved="handleProfileSaved"
-            @error="handleError"
-          />
-        </div>
+      <!-- Profile Settings -->
+      <div v-if="activeTab === 'profile'">
+        <ProfileForm 
+          @saved="handleProfileSaved"
+          @error="handleError"
+        />
+      </div>
 
-        <!-- Team Settings (placeholder) -->
-        <div v-else-if="activeTab === 'team'" class="p-8 text-center">
-          <UIcon name="i-lucide-users" class="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-            Team Settings
-          </h3>
-          <p class="text-gray-600 dark:text-gray-400">
-            Team management features coming soon.
-          </p>
-        </div>
+      <!-- Team Settings -->
+      <div v-else-if="activeTab === 'team'">
+        <TeamForm 
+          @saved="handleSettingsSaved"
+          @error="handleError"
+        />
       </div>
     </template>
   </UModal>
@@ -33,6 +28,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import ProfileForm from './ProfileForm.vue'
+import TeamForm from './TeamForm.vue'
 
 // Props
 interface Props {
@@ -87,6 +83,12 @@ const closeModal = () => {
 }
 
 const handleProfileSaved = (data: any) => {
+  emit('saved', data)
+  // Optionally close modal after save
+  // closeModal()
+}
+
+const handleSettingsSaved = (data: any) => {
   emit('saved', data)
   // Optionally close modal after save
   // closeModal()
