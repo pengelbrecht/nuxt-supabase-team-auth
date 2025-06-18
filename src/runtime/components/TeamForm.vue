@@ -1,18 +1,5 @@
 <template>
   <SettingsTabContainer>
-    <!-- Success/Error Messages -->
-    <div
-      v-if="message"
-      class="mb-6"
-    >
-      <UAlert
-        :color="message.type === 'success' ? 'green' : 'red'"
-        :title="message.type === 'success' ? 'Success' : 'Error'"
-        :description="message.text"
-        @close="message = null"
-      />
-    </div>
-
     <!-- Tabs -->
     <UTabs
       v-model="activeTab"
@@ -20,24 +7,53 @@
       variant="link"
     >
       <template #company>
-        <UForm
-          :schema="teamSchema"
-          :state="form"
-          class="space-y-6"
-          @submit="handleSubmit"
-        >
-          <UCard
-            variant="subtle"
-            class="mb-6"
-          >
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Basic Information
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Team and company details for your organization.
-              </p>
-            </template>
+        <UCard class="w-full">
+          <template #header>
+            <!-- Save Button at Top -->
+            <div class="flex justify-between items-center">
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                Company Settings
+              </h2>
+              <div class="flex items-center gap-3">
+                <span
+                  v-if="hasChanges"
+                  class="text-sm text-amber-600 dark:text-amber-400 font-medium"
+                >
+                  You have unsaved changes
+                </span>
+                <UButton
+                  type="button"
+                  :loading="isTeamLoading"
+                  :disabled="!hasChanges"
+                  size="md"
+                  class="min-w-[120px]"
+                  @click="handleSubmit"
+                >
+                  Save Changes
+                </UButton>
+              </div>
+            </div>
+          </template>
+
+          <div class="space-y-8">
+            <UForm
+              :schema="teamSchema"
+              :state="form"
+              class="space-y-6"
+              @submit="handleSubmit"
+            >
+              <UCard
+                variant="subtle"
+                class="mb-6"
+              >
+                <template #header>
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    Basic Information
+                  </h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Team and company details for your organization.
+                  </p>
+                </template>
 
             <UFormField
               label="Team Name"
@@ -173,31 +189,16 @@
             </UFormField>
           </UCard>
 
-          <!-- Save Button -->
-          <div class="flex justify-end gap-3">
-            <span
-              v-if="hasChanges"
-              class="text-sm text-amber-600 dark:text-amber-400 font-medium self-center"
-            >
-              You have unsaved changes
-            </span>
-            <UButton
-              type="submit"
-              :loading="isTeamLoading"
-              :disabled="!hasChanges"
-              size="md"
-              class="min-w-[120px]"
-            >
-              Save Changes
-            </UButton>
+            </UForm>
           </div>
-        </UForm>
+        </UCard>
       </template>
 
       <template #members>
         <UCard
           variant="subtle"
           class="mb-6"
+          :ui="{ body: 'p-0 sm:p-0' }"
         >
           <template #header>
             <div class="flex items-center justify-between">
@@ -222,34 +223,36 @@
           </template>
 
           <!-- Team Members List -->
-          <div
+          <ul 
             v-if="teamMembers.length > 0"
-            class="space-y-4"
+            role="list" 
+            class="divide-y divide-default"
           >
-            <div
-              v-for="(member, index) in teamMembers"
+            <li
+              v-for="member in teamMembers"
               :key="member.id"
-              class="flex items-center justify-between py-4"
-              :class="{ 'border-b border-gray-200 dark:border-gray-700': index < teamMembers.length - 1 }"
+              class="flex items-center justify-between gap-3 px-4 sm:px-6"
+              style="padding-top: 1rem; padding-bottom: 1rem;"
             >
               <!-- Member Info -->
-              <div class="flex items-center gap-4">
+              <div class="flex items-center gap-3 min-w-0">
                 <UAvatar size="md">
                   {{ getMemberInitials(member) }}
                 </UAvatar>
-                <div>
-                  <p class="font-medium text-gray-900 dark:text-gray-100">
+                
+                <div class="text-sm min-w-0">
+                  <p class="text-highlighted font-medium truncate">
                     {{ member.profile?.full_name || 'Unknown User' }}
                     <span
                       v-if="member.user_id === currentUser?.id"
-                      class="text-sm text-gray-500 dark:text-gray-400 font-normal"
-                    >(me)</span>
+                      class="text-muted font-normal"
+                    > (me)</span>
                   </p>
                   <p
-                    v-if="member.user?.email"
-                    class="text-sm text-gray-600 dark:text-gray-400"
+                    v-if="member.profile?.email"
+                    class="text-muted truncate"
                   >
-                    {{ member.user.email }}
+                    {{ member.profile.email }}
                   </p>
                 </div>
               </div>
@@ -259,33 +262,33 @@
                 <USelect
                   v-if="canChangeRole(member)"
                   :model-value="member.role"
-                  :options="roleOptions"
-                  size="sm"
-                  class="w-32"
+                  :items="getAvailableRoleOptions(member)"
+                  color="neutral"
+                  :ui="{ value: 'capitalize', item: 'capitalize' }"
                   @update:model-value="(newRole: string) => handleRoleChange(member, newRole)"
                 />
                 <UBadge
                   v-else
-                  :color="getRoleColor(member.role)"
+                  :color="['super_admin', 'owner'].includes(member.role) ? 'secondary' : getRoleColor(member.role)"
                   variant="soft"
-                  size="sm"
+                  :size="['super_admin', 'owner'].includes(member.role) ? 'lg' : 'sm'"
                 >
                   {{ formatRole(member.role) }}
                 </UBadge>
 
                 <UDropdownMenu
-                  v-if="canManageMember(member)"
                   :items="getMemberActions(member)"
+                  :content="{ align: 'end' }"
                 >
                   <UButton
+                    icon="i-lucide-ellipsis-vertical"
+                    color="neutral"
                     variant="ghost"
-                    size="sm"
-                    icon="i-lucide-more-horizontal"
                   />
                 </UDropdownMenu>
               </div>
-            </div>
-          </div>
+            </li>
+          </ul>
 
           <!-- Empty State -->
           <div
@@ -338,7 +341,7 @@
         <UFormField label="Role">
           <USelect
             v-model="inviteRole"
-            :options="roleOptions"
+            :items="getInviteRoleOptions"
             :disabled="isInviteLoading"
             size="md"
           />
@@ -363,6 +366,28 @@
       </div>
     </template>
   </UModal>
+
+  <!-- Confirmation Modal for Member Deletion -->
+  <ConfirmationModal
+    v-model:open="showConfirmModal"
+    title="Remove Team Member"
+    :message="`Are you sure you want to remove ${memberToDelete?.profile?.full_name || memberToDelete?.profile?.email || 'this member'} from the team? This action cannot be undone.`"
+    cancel-text="Cancel"
+    confirm-text="Remove Member"
+    confirm-color="red"
+    :loading="isDeletingMember"
+    @confirm="confirmDeleteMember"
+    @cancel="cancelDeleteMember"
+  />
+
+  <!-- Edit User Modal -->
+  <EditUserModal
+    v-if="showEditUserModal"
+    v-model:open="showEditUserModal"
+    :user-id="editingUserId"
+    @saved="handleUserSaved"
+    @close="handleEditUserModalClose"
+  />
 </template>
 
 <script setup lang="ts">
@@ -370,6 +395,8 @@ import { ref, reactive, computed, watch, onMounted } from 'vue'
 import * as v from 'valibot'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import SettingsTabContainer from './SettingsTabContainer.vue'
+import ConfirmationModal from './ConfirmationModal.vue'
+import EditUserModal from './EditUserModal.vue'
 
 // Form validation schema - expanded for company info
 const teamSchema = v.object({
@@ -398,24 +425,23 @@ const emit = defineEmits<{
   error: [error: string]
 }>()
 
-// Get auth state and supabase client
-const { currentUser, currentTeam, currentRole, renameTeam, deleteTeam, inviteMember, getAvatarFallback } = useTeamAuth()
-
-// Get supabase client
-const supabase = (() => {
-  if (typeof window !== 'undefined') {
-    return window.__NUXT_TEAM_AUTH_CLIENT__
-  }
-  return null
-})()
+// Get auth state and composable functions
+const { currentUser, currentTeam, currentRole, teamMembers, renameTeam, updateTeam, deleteTeam, inviteMember, getAvatarFallback, getTeamMembers, updateMemberRole, removeMember } = useTeamAuth()
 
 // Component state
 const isTeamLoading = ref(false)
 const isInviteLoading = ref(false)
-const message = ref<{ type: 'success' | 'error', text: string } | null>(null)
+const isDeletingMember = ref(false)
 const showInviteModal = ref(false)
-const teamMembers = ref<any[]>([])
+const showConfirmModal = ref(false)
+const memberToDelete = ref<any>(null)
 const activeTab = ref('company') // Track active tab
+const showEditUserModal = ref(false)
+const editingUserId = ref<string | null>(null)
+
+
+// Toast notifications
+const toast = useToast()
 
 // Form state - expanded for company info
 const form = reactive({
@@ -471,7 +497,7 @@ const hasChanges = computed(() => {
 })
 
 const canInviteMembers = computed(() => {
-  return ['admin', 'owner'].includes(currentRole.value || '')
+  return ['admin', 'owner', 'super_admin'].includes(currentRole.value || '')
 })
 
 const roleOptions = computed(() => {
@@ -480,18 +506,85 @@ const roleOptions = computed(() => {
     { label: 'Admin', value: 'admin' },
   ]
 
-  // Only owners can assign owner role to others
-  // Superadmin is never available in dropdown (system-level role)
-  if (currentRole.value === 'owner') {
+  // Only owners and super admins can assign owner role to others
+  // Super admin role is never available in dropdown (system-level role)
+  if (['owner', 'super_admin'].includes(currentRole.value || '')) {
     options.push({ label: 'Owner', value: 'owner' })
   }
 
   return options
 })
 
+// Get available role options for a specific member based on current user's role and RLS restrictions
+const getAvailableRoleOptions = (member: any) => {
+  if (!canChangeRole(member)) {
+    return []
+  }
+
+  const baseOptions = [
+    { label: 'Member', value: 'member' },
+    { label: 'Admin', value: 'admin' },
+  ]
+
+  // Super admins can assign any role except super_admin
+  if (currentRole.value === 'super_admin') {
+    return [
+      ...baseOptions,
+      { label: 'Owner', value: 'owner' }
+    ]
+  }
+
+  // Owners can assign any role except super_admin (RLS line 66)
+  if (currentRole.value === 'owner') {
+    return [
+      ...baseOptions,
+      { label: 'Owner', value: 'owner' }
+    ]
+  }
+
+  // Admins can only assign 'member' or 'admin' roles (RLS line 62)
+  // AND can only modify users who are currently 'member' (RLS line 63)
+  if (currentRole.value === 'admin' && member.role === 'member') {
+    return baseOptions // member, admin only
+  }
+
+  return []
+}
+
+// Get available role options for inviting new members (RLS INSERT restrictions)
+const getInviteRoleOptions = computed(() => {
+  // Super admins can invite with any role except super_admin
+  if (currentRole.value === 'super_admin') {
+    return [
+      { label: 'Member', value: 'member' },
+      { label: 'Admin', value: 'admin' },
+      { label: 'Owner', value: 'owner' }
+    ]
+  }
+
+  // Owners can invite members or admins (RLS line 40)
+  if (currentRole.value === 'owner') {
+    return [
+      { label: 'Member', value: 'member' },
+      { label: 'Admin', value: 'admin' }
+    ]
+  }
+
+  // Admins can invite members or admins (consistent with their UPDATE permissions)
+  if (currentRole.value === 'admin') {
+    return [
+      { label: 'Member', value: 'member' },
+      { label: 'Admin', value: 'admin' }
+    ]
+  }
+
+  return []
+})
+
 // Helper functions
 const formatRole = (role: string | null | undefined) => {
   if (!role) return 'Unknown'
+  if (role === 'super_admin') return 'Super Admin'
   return role.charAt(0).toUpperCase() + role.slice(1)
 }
 
@@ -513,56 +606,74 @@ const getMemberInitials = (member: any) => {
 }
 
 const canManageMember = (member: any) => {
-  // Owner can manage everyone except themselves
-  // Admin can manage members but not other admins or owners
-  if (currentRole.value === 'owner' && member.user_id !== currentUser.value?.id) {
-    return true
+  // Cannot manage yourself (RLS restriction: user_id != auth.uid())
+  if (member.user_id === currentUser.value?.id) {
+    return false
   }
-  if (currentRole.value === 'admin' && member.role === 'member') {
-    return true
+
+  // Super admins can manage anyone except super_admins
+  if (currentRole.value === 'super_admin') {
+    return member.role !== 'super_admin'
   }
+
+  // Owners can manage anyone except super_admins and themselves (RLS line 87)
+  if (currentRole.value === 'owner') {
+    return member.role !== 'super_admin'
+  }
+
+  // Admins can only manage users with 'member' role (RLS line 85)
+  if (currentRole.value === 'admin') {
+    return member.role === 'member'
+  }
+
+  // Members cannot manage anyone
   return false
 }
 
 const canChangeRole = (member: any) => {
-  // Never allow role changes for superadmin users (system-level role)
-  if (member.role === 'super_admin') {
+  // Users cannot change their own role (RLS restriction: user_id != auth.uid())
+  if (member.user_id === currentUser.value?.id) {
     return false
   }
 
-  // For demo purposes, always show the role selector but disable for certain cases
-  // Owner can change anyone's role except superadmins
-  // Admin can only change member roles, not other admins or owners
+  // Super admins can modify anyone except super admins
+  if (currentRole.value === 'super_admin') {
+    return member.role !== 'super_admin'
+  }
+
+  // Owners can modify anyone except super admins and themselves
   if (currentRole.value === 'owner') {
-    return true // Show for everyone, but we'll handle restrictions in the change handler
+    return member.role !== 'super_admin'
   }
-  if (currentRole.value === 'admin' && member.role === 'member') {
-    return true
+
+  // Admins can ONLY modify users who are currently 'member' (RLS line 63)
+  if (currentRole.value === 'admin') {
+    return member.role === 'member'
   }
-  if (currentRole.value === 'admin' && member.user_id === currentUser.value?.id) {
-    return true // Show for self but will be disabled
-  }
+
+  // Members cannot change any roles
   return false
 }
 
 const getMemberActions = (member: any) => {
   const actions = []
+  const isCurrentUser = member.user_id === currentUser.value?.id
+  const canDelete = canManageMember(member)
 
   // Edit member action
   actions.push({
-    label: 'Edit Member',
+    label: 'Edit User',
     icon: 'i-lucide-edit',
     onSelect: () => handleEditMember(member),
   })
 
-  // Remove member action (only if user can manage this member)
-  if (canManageMember(member)) {
-    actions.push({
-      label: 'Remove from Team',
-      icon: 'i-lucide-trash-2',
-      onSelect: () => handleRemoveMember(member),
-    })
-  }
+  // Delete user action (always show, but disable for current user)
+  actions.push({
+    label: 'Delete User',
+    icon: 'i-lucide-trash-2',
+    disabled: isCurrentUser || !canDelete,
+    onSelect: () => handleRemoveMember(member),
+  })
 
   return actions
 }
@@ -579,7 +690,7 @@ const initializeForm = () => {
   }
 }
 
-// Load team members (placeholder - would need API endpoint)
+// Load team members using composable
 const loadTeamMembers = async () => {
   try {
     if (!currentTeam.value) {
@@ -587,37 +698,7 @@ const loadTeamMembers = async () => {
       return
     }
 
-    // Get team members with their profiles including email
-    const { data: members, error } = await supabase
-      .from('team_members')
-      .select(`
-        user_id,
-        role,
-        joined_at,
-        profiles!inner (
-          id,
-          full_name,
-          email
-        )
-      `)
-      .eq('team_id', currentTeam.value.id)
-
-    if (error) {
-      console.error('Error loading team members:', error)
-      return
-    }
-
-    // Map team members with email from profiles table
-    teamMembers.value = (members || []).map(member => ({
-      id: member.user_id,
-      user_id: member.user_id,
-      role: member.role,
-      joined_at: member.joined_at,
-      user: {
-        email: member.profiles.email,
-      },
-      profile: member.profiles,
-    }))
+    await getTeamMembers()
   }
   catch (error) {
     console.error('Failed to load team members:', error)
@@ -628,24 +709,25 @@ const loadTeamMembers = async () => {
 const handleSubmit = async () => {
   try {
     isTeamLoading.value = true
-    message.value = null
 
-    // For now, only handle team name changes
-    // TODO: Implement full team update with company info
-    if (form.name !== originalForm.value.name) {
-      await renameTeam(form.name)
-    }
+    // Update all team fields
+    await updateTeam(form)
 
     originalForm.value = { ...form }
-    message.value = { type: 'success', text: 'Team updated successfully!' }
+    toast.add({
+      title: 'Team Updated',
+      description: 'Team settings have been saved successfully.',
+      color: 'green',
+    })
     emit('saved', form)
   }
   catch (error: any) {
     console.error('Team update error:', error)
-    message.value = {
-      type: 'error',
-      text: error.message || 'Failed to update team. Please try again.',
-    }
+    toast.add({
+      title: 'Update Failed',
+      description: error.message || 'Failed to update team. Please try again.',
+      color: 'red',
+    })
     emit('error', error.message)
   }
   finally {
@@ -657,11 +739,15 @@ const handleSubmit = async () => {
 const handleInviteMember = async () => {
   try {
     isInviteLoading.value = true
-    message.value = null
 
     await inviteMember(inviteEmail.value, inviteRole.value)
 
-    message.value = { type: 'success', text: `Invitation sent to ${inviteEmail.value}` }
+    toast.add({
+      title: 'Invitation Sent',
+      description: `Invitation sent to ${inviteEmail.value}`,
+      color: 'green'
+    })
+    
     inviteEmail.value = ''
     inviteRole.value = 'member'
     showInviteModal.value = false
@@ -671,10 +757,11 @@ const handleInviteMember = async () => {
   }
   catch (error: any) {
     console.error('Invite member error:', error)
-    message.value = {
-      type: 'error',
-      text: error.message || 'Failed to send invitation. Please try again.',
-    }
+    toast.add({
+      title: 'Invitation Failed',
+      description: error.message || 'Failed to send invitation. Please try again.',
+      color: 'red'
+    })
   }
   finally {
     isInviteLoading.value = false
@@ -687,75 +774,115 @@ const handleRoleChange = async (member: any, newRole: string) => {
 
   // Check if user can actually change this role
   if (!canChangeRole(member)) {
-    message.value = {
-      type: 'error',
-      text: 'You do not have permission to change this member\'s role.',
-    }
+    toast.add({
+      title: 'Permission Denied',
+      description: 'You do not have permission to change this member\'s role.',
+      color: 'red'
+    })
     return
   }
 
-  // Prevent users from changing their own role to owner (business logic)
-  if (member.user_id === currentUser.value?.id && newRole === 'owner') {
-    message.value = {
-      type: 'error',
-      text: 'You cannot change your own role to owner.',
-    }
+  // Defensive check: prevent users from changing their own role (should be prevented by UI)
+  if (member.user_id === currentUser.value?.id) {
+    toast.add({
+      title: 'Invalid Action',
+      description: 'You cannot change your own role.',
+      color: 'red'
+    })
     return
   }
 
   try {
-    console.log(`Changing ${member.user?.email} from ${member.role} to ${newRole}`)
+    console.log(`Changing ${member.profile?.email || member.user?.email} from ${member.role} to ${newRole}`)
 
-    // Update role in database
-    const { error } = await supabase
-      .from('team_members')
-      .update({ role: newRole })
-      .eq('team_id', currentTeam.value?.id)
-      .eq('user_id', member.user_id)
+    // Update role in database using composable
+    await updateMemberRole(member.user_id, newRole)
 
-    if (error) {
-      throw error
-    }
-
-    // Update local state
-    const memberIndex = teamMembers.value.findIndex(m => m.user_id === member.user_id)
-    if (memberIndex !== -1) {
-      teamMembers.value[memberIndex].role = newRole
-    }
-
-    message.value = {
-      type: 'success',
-      text: `Successfully updated ${member.profile?.full_name || member.user?.email}'s role to ${formatRole(newRole)}`,
-    }
-
-    // Update local state for immediate UI feedback
-    const oldRole = member.role
-    member.role = newRole
-
-    message.value = {
-      type: 'success',
-      text: `Successfully updated ${member.user?.email} to ${formatRole(newRole)}`,
-    }
+    // Show success toast
+    toast.add({
+      title: 'Role Updated',
+      description: `${member.profile?.full_name || member.profile?.email} is now ${formatRole(newRole).toLowerCase()}`,
+      color: 'green'
+    })
   }
   catch (error: any) {
     console.error('Role change error:', error)
-    message.value = {
-      type: 'error',
-      text: error.message || 'Failed to update member role. Please try again.',
-    }
+    toast.add({
+      title: 'Update Failed',
+      description: error.message || 'Failed to update member role. Please try again.',
+      color: 'red'
+    })
   }
 }
 
-// Handle member editing (placeholder)
+// Handle member editing
 const handleEditMember = async (member: any) => {
-  console.log('Edit member:', member)
-  // TODO: Implement member editing functionality (e.g., open edit modal)
+  editingUserId.value = member.user_id
+  showEditUserModal.value = true
 }
 
-// Handle member removal (placeholder)
+// Handle edit user modal close
+const handleEditUserModalClose = () => {
+  showEditUserModal.value = false
+  editingUserId.value = null
+}
+
+// Handle user saved from edit modal
+const handleUserSaved = (profile: any) => {
+  // Find the member to get their name for the toast
+  const member = teamMembers.value.find(m => m.user_id === editingUserId.value)
+  const memberName = member?.profile?.full_name || member?.profile?.email || 'User'
+  
+  toast.add({
+    title: 'User Updated',
+    description: `${memberName}'s profile has been updated successfully.`,
+    color: 'green',
+  })
+  
+  // The modal will close automatically
+  // The reactive state is already updated by the composable
+}
+
+// Handle member removal - show confirmation modal
 const handleRemoveMember = async (member: any) => {
-  console.log('Remove member:', member)
-  // TODO: Implement member removal functionality
+  memberToDelete.value = member
+  showConfirmModal.value = true
+}
+
+// Confirm member deletion
+const confirmDeleteMember = async () => {
+  if (!memberToDelete.value) return
+
+  try {
+    isDeletingMember.value = true
+    
+    await removeMember(memberToDelete.value.user_id)
+    
+    toast.add({
+      title: 'Member Removed',
+      description: `${memberToDelete.value.profile?.full_name || memberToDelete.value.profile?.email} has been removed from the team.`,
+      color: 'green',
+    })
+  }
+  catch (error: any) {
+    console.error('Remove member error:', error)
+    toast.add({
+      title: 'Remove Failed',
+      description: error.message || 'Failed to remove member. Please try again.',
+      color: 'red',
+    })
+  }
+  finally {
+    isDeletingMember.value = false
+    showConfirmModal.value = false
+    memberToDelete.value = null
+  }
+}
+
+// Cancel member deletion
+const cancelDeleteMember = () => {
+  showConfirmModal.value = false
+  memberToDelete.value = null
 }
 
 // Watch for team changes

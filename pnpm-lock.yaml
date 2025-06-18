@@ -27,6 +27,9 @@ importers:
       '@iconify-json/logos':
         specifier: ^1.2.4
         version: 1.2.4
+      '@iconify-json/lucide':
+        specifier: ^1.2.50
+        version: 1.2.50
       '@nuxt/devtools':
         specifier: ^1.5.0
         version: 1.7.0(rollup@4.43.0)(vite@5.4.19(@types/node@22.15.31)(lightningcss@1.30.1)(terser@5.42.0))(vue@3.5.16(typescript@5.8.3))
@@ -997,6 +1000,9 @@ packages:
 
   '@iconify-json/logos@1.2.4':
     resolution: {integrity: sha512-XC4If5D/hbaZvUkTV8iaZuGlQCyG6CNOlaAaJaGa13V5QMYwYjgtKk3vPP8wz3wtTVNVEVk3LRx1fOJz+YnSMw==}
+
+  '@iconify-json/lucide@1.2.50':
+    resolution: {integrity: sha512-ur4i4oDPK7o7EgBdln1HDvnX4vDQP28lZvFDF8zI4ynymIihEMuTeK7/NPRLqV/LiX1D8xIRh+P/8OxWVjXafg==}
 
   '@iconify/collections@1.0.558':
     resolution: {integrity: sha512-4ACVK6+8PksNTe3tVa1FJ2vcy/m9hx9dsjq8aVblWD2wAbGNqr2tVmxnm6EnKX0PON9BrrGy+U3GrqzJUSkJuw==}
@@ -6830,6 +6836,10 @@ snapshots:
   '@humanwhocodes/retry@0.4.3': {}
 
   '@iconify-json/logos@1.2.4':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/lucide@1.2.50':
     dependencies:
       '@iconify/types': 2.0.0
 

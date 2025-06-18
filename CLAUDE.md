@@ -32,6 +32,7 @@
 - `supabase db reset` - reset database and apply migrations
 - `pnpm run dev` - start dev server
 - **Use `psql` not supabase cli for terminal/bash sql commands**
+- **Don't use `db push` to run local migrations as a remote might be linked and have them applied unintentionally. Instead use `supabase db reset`**
 
 ## Database Schema (Stable)
 ```sql
@@ -167,3 +168,43 @@ Use this battle-tested hierarchy based on ProfileForm implementation:
 3. **No wrapper divs** - Direct form fields in card content
 4. **Independent actions** - Separate buttons for different operations
 5. **Inline spacers** - Use `<div style="width: 1rem; flex-shrink: 0;"></div>` for precise spacing
+
+## UModal Patterns (Critical for Nested Modals)
+
+### Correct UModal Slot Usage
+UModal components MUST use the proper slot structure for content to render inside the modal:
+
+```vue
+<UModal v-model:open="modalOpen" :ui="{ width: 'sm:max-w-2xl' }">
+  <template #header>
+    <div class="flex justify-between items-center">
+      <div>
+        <h2>Modal Title</h2>
+        <p>Optional subtitle</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <UButton>Save Changes</UButton>
+        <UButton variant="ghost" icon="i-heroicons-x-mark-20-solid" @click="close" />
+      </div>
+    </div>
+  </template>
+
+  <template #body>
+    <div class="p-6">
+      <!-- Modal content goes here -->
+    </div>
+  </template>
+</UModal>
+```
+
+### Critical UModal Rules
+1. **Use #body slot** - Content MUST be in `<template #body>` or it will render outside the modal
+2. **No UCard inside UModal** - UModal handles its own structure, don't wrap in UCard
+3. **Nested modals work** - Use `v-model:open` syntax for proper nesting (SettingsModal > TeamForm > EditUserModal)
+4. **Header slot for actions** - Put Save/Close buttons in `#header` slot for consistent layout
+
+### Common UModal Mistakes
+- ❌ Putting content directly inside UModal without #body slot
+- ❌ Wrapping UModal content in UCard
+- ❌ Using `v-model` instead of `v-model:open`
+- ❌ Not using template slots for header/body

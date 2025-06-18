@@ -15,6 +15,7 @@ const globalState = {
   currentProfile: ref<Profile | null>(null),
   currentTeam: ref<Team | null>(null),
   currentRole: ref<string | null>(null),
+  teamMembers: ref<TeamMember[]>([]),
   isLoading: ref(true),
   isImpersonating: ref(false),
   impersonationExpiresAt: ref<Date | null>(null),
@@ -26,6 +27,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   const currentProfile = globalState.currentProfile
   const currentTeam = globalState.currentTeam
   const currentRole = globalState.currentRole
+  const teamMembers = globalState.teamMembers
   const isLoading = globalState.isLoading
   const isImpersonating = globalState.isImpersonating
   const impersonationExpiresAt = globalState.impersonationExpiresAt
@@ -43,7 +45,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
   const supabase = getSupabaseClient()
 
-  // State initialization
+  // State initialization with session validation
   const initializeState = async () => {
     try {
       isLoading.value = true
@@ -52,7 +54,16 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       const { data: { session } } = await supabase.auth.getSession()
 
       if (session?.user) {
-        await updateStateFromSession(session)
+        // Validate session by trying to fetch user's team data
+        try {
+          await updateStateFromSession(session)
+        }
+        catch (error: any) {
+          // If session is invalid (e.g., user doesn't exist in database after reset)
+          console.warn('Session validation failed, clearing invalid session:', error.message)
+          await supabase.auth.signOut()
+          resetState()
+        }
       }
       else {
         resetState()
@@ -87,7 +98,15 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           teams (
             id,
             name,
-            created_at
+            created_at,
+            company_name,
+            company_address_line1,
+            company_address_line2,
+            company_city,
+            company_state,
+            company_postal_code,
+            company_country,
+            company_vat_number
           )
         `)
         .eq('user_id', user.id)
@@ -98,6 +117,14 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           id: teamMember.teams.id,
           name: teamMember.teams.name,
           created_at: teamMember.teams.created_at,
+          company_name: teamMember.teams.company_name,
+          company_address_line1: teamMember.teams.company_address_line1,
+          company_address_line2: teamMember.teams.company_address_line2,
+          company_city: teamMember.teams.company_city,
+          company_state: teamMember.teams.company_state,
+          company_postal_code: teamMember.teams.company_postal_code,
+          company_country: teamMember.teams.company_country,
+          company_vat_number: teamMember.teams.company_vat_number,
         }
         currentRole.value = teamMember.role
       }
@@ -539,6 +566,39 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     }
   }
 
+  const updateTeam = async (updates: Partial<Team>): Promise<void> => {
+    try {
+      if (!currentTeam.value) {
+        throw { code: 'NO_TEAM', message: 'No team selected' }
+      }
+
+      if (currentRole.value !== 'owner') {
+        throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only owners can update team settings' }
+      }
+
+      // Remove fields that shouldn't be updated
+      const { id, created_at, ...updateableFields } = updates
+
+      const { error } = await supabase
+        .from('teams')
+        .update(updateableFields)
+        .eq('id', currentTeam.value.id)
+
+      if (error) {
+        throw { code: 'UPDATE_FAILED', message: error.message }
+      }
+
+      // Update local state
+      if (currentTeam.value) {
+        currentTeam.value = { ...currentTeam.value, ...updateableFields }
+      }
+    }
+    catch (error: any) {
+      console.error('Update team failed:', error)
+      throw error
+    }
+  }
+
   const deleteTeam = async (): Promise<void> => {
     try {
       if (!currentTeam.value) {
@@ -973,8 +1033,17 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       const { data: { session } } = await supabase.auth.getSession()
 
       if (session?.user) {
-        // Update state from session (this will override restored state if different)
-        await updateStateFromSession(session)
+        // Validate session by trying to fetch user's team data
+        try {
+          await updateStateFromSession(session)
+        }
+        catch (error: any) {
+          // If session is invalid (e.g., user doesn't exist in database after reset)
+          console.warn('Session validation failed, clearing invalid session:', error.message)
+          await supabase.auth.signOut()
+          resetState()
+          return // Exit early since signOut will trigger the auth listener
+        }
 
         // If we have an impersonation session stored but current session doesn't indicate impersonation,
         // there might be a session mismatch - clear impersonation data
@@ -1057,6 +1126,177 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     }
 
     return 'U'
+  }
+
+  // Get team members with their profiles and update reactive state
+  const getTeamMembers = async () => {
+    if (!currentTeam.value) {
+      throw new Error('No current team available')
+    }
+
+    // Check if we have a valid session before making the query
+    const { data: session } = await supabase.auth.getSession()
+    if (!session.session) {
+      throw new Error('No active session - please log in')
+    }
+
+    const { data: members, error } = await supabase
+      .from('team_members')
+      .select(`
+        user_id,
+        role,
+        joined_at,
+        profiles!inner (
+          id,
+          full_name,
+          email
+        )
+      `)
+      .eq('team_id', currentTeam.value.id)
+
+    if (error) {
+      throw new Error(`Failed to load team members: ${error.message}`)
+    }
+
+    // Map team members with email from profiles table
+    const mappedMembers = (members || []).map(member => ({
+      id: member.user_id,
+      user_id: member.user_id,
+      role: member.role,
+      joined_at: member.joined_at,
+      user: {
+        email: member.profiles.email,
+      },
+      profile: member.profiles,
+    }))
+
+    // Update reactive state
+    teamMembers.value = mappedMembers
+    return mappedMembers
+  }
+
+  // Update team member role
+  const updateMemberRole = async (userId: string, newRole: string) => {
+    if (!currentTeam.value) {
+      throw new Error('No current team available')
+    }
+
+    const { error } = await supabase
+      .from('team_members')
+      .update({ role: newRole })
+      .eq('team_id', currentTeam.value.id)
+      .eq('user_id', userId)
+
+    if (error) {
+      throw new Error(`Failed to update member role: ${error.message}`)
+    }
+
+    // Update reactive state immediately
+    const memberIndex = teamMembers.value.findIndex(m => m.user_id === userId)
+    if (memberIndex !== -1) {
+      teamMembers.value[memberIndex].role = newRole
+    }
+  }
+
+  const removeMember = async (userId: string) => {
+    if (!currentTeam.value) {
+      throw new Error('No current team available')
+    }
+
+    const { error } = await supabase
+      .from('team_members')
+      .delete()
+      .eq('team_id', currentTeam.value.id)
+      .eq('user_id', userId)
+
+    if (error) {
+      throw new Error(`Failed to remove member: ${error.message}`)
+    }
+
+    // Update reactive state immediately - remove member from list
+    teamMembers.value = teamMembers.value.filter(m => m.user_id !== userId)
+  }
+
+  // Get another user's profile (admin/owner only)
+  const getTeamMemberProfile = async (userId: string): Promise<Profile | null> => {
+    try {
+      // Check if user has admin/owner permissions
+      if (!['admin', 'owner', 'super_admin'].includes(currentRole.value || '')) {
+        throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only admins and owners can view team member profiles' }
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // Profile doesn't exist
+          return null
+        }
+        throw { code: 'FETCH_FAILED', message: error.message }
+      }
+
+      return data
+    }
+    catch (error: any) {
+      console.error('Get team member profile failed:', error)
+      throw error
+    }
+  }
+
+  // Update another user's profile (admin/owner only)
+  const updateTeamMemberProfile = async (userId: string, updates: Partial<Profile>): Promise<void> => {
+    try {
+      // Check if user has admin/owner permissions
+      if (!['admin', 'owner', 'super_admin'].includes(currentRole.value || '')) {
+        throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only admins and owners can update team member profiles' }
+      }
+
+      // Don't allow editing own profile through this method
+      if (userId === currentUser.value?.id) {
+        throw { code: 'INVALID_OPERATION', message: 'Use updateProfile to edit your own profile' }
+      }
+
+      // Filter to only allow safe fields
+      const allowedFields = ['full_name', 'phone', 'bio', 'timezone', 'language']
+      const safeUpdates: any = {}
+      
+      for (const key of allowedFields) {
+        if (key in updates) {
+          safeUpdates[key] = updates[key as keyof Profile]
+        }
+      }
+
+      if (Object.keys(safeUpdates).length === 0) {
+        throw { code: 'NO_UPDATES', message: 'No allowed fields to update' }
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(safeUpdates)
+        .eq('id', userId)
+
+      if (error) {
+        throw { code: 'UPDATE_FAILED', message: error.message }
+      }
+
+      // Update team members reactive state if this user is in the list
+      const memberIndex = teamMembers.value.findIndex(m => m.user_id === userId)
+      if (memberIndex !== -1 && teamMembers.value[memberIndex].profile) {
+        // Update the profile data in team members
+        teamMembers.value[memberIndex].profile = {
+          ...teamMembers.value[memberIndex].profile,
+          ...safeUpdates,
+        }
+      }
+    }
+    catch (error: any) {
+      console.error('Update team member profile failed:', error)
+      throw error
+    }
   }
 
   // Enhanced auth listener that handles persistence
@@ -1152,6 +1392,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     currentProfile,
     currentTeam,
     currentRole,
+    teamMembers,
     isLoading,
     isImpersonating,
     impersonationExpiresAt,
@@ -1169,10 +1410,16 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     getProfile,
     updateProfile,
     renameTeam,
+    updateTeam,
     deleteTeam,
     startImpersonation,
     stopImpersonation,
     getAvatarFallback,
+    getTeamMembers,
+    updateMemberRole,
+    removeMember,
+    getTeamMemberProfile,
+    updateTeamMemberProfile,
 
     // Session management utilities
     sessionHealth: () => sessionSync.performSessionHealthCheck(currentUser, currentTeam, currentRole, isImpersonating, impersonationExpiresAt),

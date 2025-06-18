@@ -454,6 +454,54 @@ describe('RLS Policies', () => {
       await testClient.auth.signOut()
     })
 
+    it('Admin can invite new admin (consistent with promotion permissions)', async () => {
+      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: { persistSession: false }
+      })
+      
+      await testClient.auth.signInWithPassword({
+        email: 'admin@a.test',
+        password: 'password123'
+      })
+
+      // Count team members before insert
+      const { data: beforeCount } = await testClient
+        .from('team_members')
+        .select('*', { count: 'exact' })
+        .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+
+      // Try to add Beta team owner as admin to Alpha team (should succeed with new RLS policy)
+      // Using owner@b.test user who exists but isn't in Alpha team
+      const { data, error } = await testClient
+        .from('team_members')
+        .insert({
+          team_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+          user_id: '77777777-7777-7777-7777-777777777777', // owner@b.test from seed data
+          role: 'admin'
+        })
+
+      console.log('Admin inviting new admin:', { data, error })
+      
+      expect(error).toBeNull() // Should succeed now
+
+      // Count team members after insert
+      const { data: afterCount } = await testClient
+        .from('team_members')
+        .select('*', { count: 'exact' })
+        .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+
+      expect(afterCount?.length).toBe((beforeCount?.length || 0) + 1)
+
+      // Clean up - remove the test admin
+      await testClient
+        .from('team_members')
+        .delete()
+        .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+        .eq('user_id', '77777777-7777-7777-7777-777777777777')
+      
+      await testClient.auth.signOut()
+    })
+
     it('Admin can delete members but not owners/admins', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
         auth: { persistSession: false }
@@ -842,6 +890,127 @@ describe('RLS Policies', () => {
       
       expect(error).toBeNull()
       expect(profiles).toHaveLength(7) // All users
+      
+      await testClient.auth.signOut()
+    })
+  })
+
+  describe('Multiple Owners Policy', () => {
+    it('Should allow multiple owners per team', async () => {
+      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: { persistSession: false }
+      })
+      
+      await testClient.auth.signInWithPassword({
+        email: 'owner@a.test',
+        password: 'password123'
+      })
+
+      // Count current owners (may vary depending on test order)
+      const { data: beforeOwners } = await testClient
+        .from('team_members')
+        .select('*')
+        .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+        .eq('role', 'owner')
+
+      const initialOwnerCount = beforeOwners?.length || 0
+      console.log('Initial owner count:', initialOwnerCount)
+
+      // Promote admin to owner (should succeed now)
+      const { data, error } = await testClient
+        .from('team_members')
+        .update({ role: 'owner' })
+        .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+        .eq('user_id', '33333333-3333-3333-3333-333333333333') // admin@a.test
+
+      console.log('Multiple owners test:', { data, error })
+      
+      expect(error).toBeNull() // Should succeed now
+
+      // Verify we now have one more owner
+      const { data: afterOwners } = await testClient
+        .from('team_members')
+        .select('*')
+        .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+        .eq('role', 'owner')
+
+      expect(afterOwners).toHaveLength(initialOwnerCount + 1) // Should have 1 more owner
+
+      // Clean up - restore admin role (only if we have more than 1 owner to preserve constraint)
+      if (afterOwners && afterOwners.length > 1) {
+        await testClient
+          .from('team_members')
+          .update({ role: 'admin' })
+          .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+          .eq('user_id', '33333333-3333-3333-3333-333333333333')
+      }
+      
+      await testClient.auth.signOut()
+    })
+
+    it('Should prevent team from having zero owners (database constraint)', async () => {
+      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: { persistSession: false }
+      })
+      
+      // Use super admin who can modify anyone (bypasses RLS self-modification restriction)
+      await testClient.auth.signInWithPassword({
+        email: 'super@a.test',
+        password: 'password123'
+      })
+
+      // Promote admin to owner first (so we have 2 owners)
+      const { error: promoteError } = await testClient
+        .from('team_members')
+        .update({ role: 'owner' })
+        .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+        .eq('user_id', '33333333-3333-3333-3333-333333333333') // admin@a.test
+
+      expect(promoteError).toBeNull() // Super admin can promote anyone
+
+      // Now try to demote one owner to admin (should succeed - still have 1 owner left)
+      const { data: firstUpdate, error: firstError } = await testClient
+        .from('team_members')
+        .update({ role: 'admin' })
+        .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+        .eq('user_id', '22222222-2222-2222-2222-222222222222') // owner@a.test
+
+      expect(firstError).toBeNull() // Should succeed (still 1 owner left)
+
+      // Now try to demote the last owner (should fail due to our trigger)
+      const { data, error } = await testClient
+        .from('team_members')
+        .update({ role: 'admin' })
+        .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+        .eq('user_id', '33333333-3333-3333-3333-333333333333') // admin@a.test (now the only owner)
+
+      console.log('Zero owners prevention test:', { data, error })
+
+      // This should fail with our new constraint
+      expect(error).not.toBeNull()
+      expect(error?.message).toContain('Cannot remove the last owner from team')
+
+      // Verify we still have exactly 1 owner
+      const { data: owners } = await testClient
+        .from('team_members')
+        .select('*')
+        .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+        .eq('role', 'owner')
+
+      expect(owners).toHaveLength(1) // Should still have 1 owner
+
+      // Clean up - restore original roles
+      await testClient
+        .from('team_members')
+        .update({ role: 'owner' })
+        .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+        .eq('user_id', '22222222-2222-2222-2222-222222222222') // restore owner@a.test
+
+      await testClient
+        .from('team_members')
+        .update({ role: 'admin' })
+        .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+        .eq('user_id', '33333333-3333-3333-3333-333333333333') // restore admin@a.test
       
       await testClient.auth.signOut()
     })

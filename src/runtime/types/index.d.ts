@@ -30,6 +30,14 @@ export interface Team {
   address?: string
   vat_number?: string
   created_at: string
+  company_name?: string
+  company_address_line1?: string
+  company_address_line2?: string
+  company_city?: string
+  company_state?: string
+  company_postal_code?: string
+  company_country?: string
+  company_vat_number?: string
 }
 
 export interface TeamMember {
@@ -90,10 +98,16 @@ export interface TeamAuthMethods {
   getProfile: () => Promise<Profile | null>
   updateProfile: (updates: Partial<Profile>) => Promise<void>
   renameTeam: (name: string) => Promise<void>
+  updateTeam: (updates: Partial<Team>) => Promise<void>
   deleteTeam: () => Promise<void>
   startImpersonation: (targetUserId: string, reason: string) => Promise<void>
   stopImpersonation: () => Promise<void>
   getAvatarFallback: (overrides?: { fullName?: string | null, email?: string | null }) => string
+  getTeamMembers: () => Promise<void>
+  updateMemberRole: (userId: string, role: string) => Promise<void>
+  removeMember: (userId: string) => Promise<void>
+  getTeamMemberProfile: (userId: string) => Promise<Profile | null>
+  updateTeamMemberProfile: (userId: string, updates: Partial<Profile>) => Promise<void>
 
   // Session management utilities
   sessionHealth: () => SessionHealthResult
