@@ -1,18 +1,21 @@
 <template>
-  <div v-if="isSignedIn">
-    <slot />
-  </div>
+  <ClientOnly>
+    <SignedInInner>
+      <slot />
+    </SignedInInner>
+    <template #fallback>
+      <slot name="fallback" />
+    </template>
+  </ClientOnly>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useTeamAuth } from '../composables/useTeamAuth'
+import SignedInInner from './SignedInInner.vue'
 
-// Get auth state
-const { currentUser, isLoading } = useTeamAuth()
-
-// Show content when signed in and not loading
-const isSignedIn = computed(() => !isLoading.value && !!currentUser.value)
+defineSlots<{
+  default(): any
+  fallback?(): any
+}>()
 </script>
 
 <script lang="ts">

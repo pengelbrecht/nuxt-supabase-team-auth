@@ -198,8 +198,10 @@ const dropdownItems = computed(() => {
   items.push({
     label: 'Sign Out',
     icon: 'i-lucide-log-out',
-    onSelect: () => {
-      signOut()
+    onSelect: async () => {
+      await signOut()
+      // Redirect to home page after sign out
+      await navigateTo('/')
     },
   })
 

@@ -1,18 +1,21 @@
 <template>
-  <div v-if="isSignedOut">
-    <slot />
-  </div>
+  <ClientOnly>
+    <SignedOutInner>
+      <slot />
+    </SignedOutInner>
+    <template #fallback>
+      <slot name="fallback" />
+    </template>
+  </ClientOnly>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useTeamAuth } from '../composables/useTeamAuth'
+import SignedOutInner from './SignedOutInner.vue'
 
-// Get auth state
-const { currentUser, isLoading } = useTeamAuth()
-
-// Show content when signed out and not loading
-const isSignedOut = computed(() => !isLoading.value && !currentUser.value)
+defineSlots<{
+  default(): any
+  fallback?(): any
+}>()
 </script>
 
 <script lang="ts">
