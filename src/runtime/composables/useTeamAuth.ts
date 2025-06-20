@@ -747,6 +747,17 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     }
   }
 
+  // Clear impersonation data from localStorage
+  const clearImpersonationData = () => {
+    try {
+      if (typeof window === 'undefined') return
+      localStorage.removeItem('team_auth_impersonation')
+    }
+    catch (error) {
+      console.error('Failed to clear impersonation data:', error)
+    }
+  }
+
   // Watch for state changes and persist them
   watch([currentUser, currentTeam, currentRole, isImpersonating, impersonationExpiresAt], () => {
     persistState()
@@ -1126,6 +1137,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     if (process.server) return
     
     getClient().auth.onAuthStateChange(async (event, session) => {
+      console.log('🔥 Auth state change:', event, session?.user?.email)
       try {
         if (event === 'SIGNED_IN' && session) {
           await updateStateFromSession(session)
@@ -1134,6 +1146,10 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           resetStateWithClear()
         }
         else if (event === 'TOKEN_REFRESHED' && session) {
+          await updateStateFromSession(session)
+        }
+        else if (event === 'USER_UPDATED' && session) {
+          // Handle session changes during impersonation
           await updateStateFromSession(session)
         }
       }
