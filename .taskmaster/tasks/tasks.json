@@ -76,7 +76,7 @@
         "dependencies": [
           1
         ],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -95,7 +95,7 @@
               1
             ],
             "details": "Enable RLS on the teams table with 'ALTER TABLE teams ENABLE ROW LEVEL SECURITY'. Create policies that allow: 1) SELECT access for all team members (by joining with team_members table), 2) UPDATE access only for team owners, 3) INSERT/DELETE access for service role only. Ensure the policies use the current user context via auth.uid() for user identification.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test each policy by attempting operations as different user roles. Verify owners can update team details while admins and members cannot. Confirm all team members can view their teams."
           },
           {
@@ -106,7 +106,7 @@
               1
             ],
             "details": "Enable RLS on the team_members table. Create policies that allow: 1) SELECT access for members of the same team, 2) INSERT/DELETE access for admins and owners within their team, 3) Full access for super_admins across all teams. Use auth.uid() to identify the current user and join with team_members to determine their role within each team.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test member visibility within teams. Verify admins can add/remove members while regular members cannot. Confirm super_admins have full access across all teams."
           },
           {
@@ -117,7 +117,7 @@
               1
             ],
             "details": "Enable RLS on the invites table. Create policies that allow: 1) Full CRUD operations for admins and owners within their team, 2) SELECT access for invitees based on their email and token, 3) No access for regular team members. Include a policy for service role access for system-level operations. Ensure proper joins with team_members to verify admin/owner status.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test invite creation as admins and owners. Verify regular members cannot create or view invites. Test that users can view invites addressed to their email with the correct token."
           },
           {
@@ -128,7 +128,7 @@
               1
             ],
             "details": "Enable RLS on the impersonation_sessions table. Create policies that allow: 1) INSERT/UPDATE operations only for the service role, 2) SELECT access for super_admins but only for sessions they initiated (where admin_user_id = auth.uid()), 3) No direct access for regular users, admins, or owners. Add appropriate comments explaining the security implications of these policies.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test that only the service role can create impersonation sessions. Verify super_admins can only view their own sessions. Confirm regular users, admins, and owners have no access to this table."
           }
         ]
@@ -1435,7 +1435,7 @@
     ],
     "metadata": {
       "created": "2025-06-18T17:53:26.166Z",
-      "updated": "2025-06-20T10:47:59.924Z",
+      "updated": "2025-06-20T10:50:27.249Z",
       "description": "Tasks for master context"
     }
   }

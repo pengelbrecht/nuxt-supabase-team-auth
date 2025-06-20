@@ -63,6 +63,11 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       return
     }
     
+    // Skip if user hasn't changed
+    if (currentUser.value?.id === user.id) {
+      return
+    }
+    
     isUpdating = true
     
     try {
@@ -127,9 +132,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
     // Load user profile
     try {
-      console.log('🔥 Fetching profile for user:', user.id)
       currentProfile.value = await getProfile()
-      console.log('🔥 Profile loaded:', currentProfile.value)
     }
     catch (error) {
       console.warn('Failed to fetch profile information:', error)
