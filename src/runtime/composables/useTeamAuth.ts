@@ -1180,15 +1180,20 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       },
     )
 
-    // Set up periodic expiration checks for impersonation
-    const expirationInterval = setInterval(() => {
-      checkImpersonationExpiration()
-    }, 60000) // Check every minute
+    // Set up periodic expiration checks for impersonation (client-side only)
+    let expirationInterval: NodeJS.Timeout | null = null
+    if (!process.server) {
+      expirationInterval = setInterval(() => {
+        checkImpersonationExpiration()
+      }, 60000) // Check every minute
+    }
 
     // Clean up intervals and session sync on unmount
     if (getCurrentInstance()) {
       onUnmounted(() => {
-        clearInterval(expirationInterval)
+        if (expirationInterval) {
+          clearInterval(expirationInterval)
+        }
         if (sessionSyncCleanup) {
           sessionSyncCleanup()
         }
