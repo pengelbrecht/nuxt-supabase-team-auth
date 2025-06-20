@@ -9,11 +9,12 @@
         </div>
       </template>
 
-      <div class="space-y-6">
+      <div class="space-y-8">
         <!-- Search Input -->
         <UFormField
           label="Search Users"
           name="search"
+          class="flex items-center justify-between mb-4 gap-2"
         >
           <UInput
             v-model="searchQuery"
@@ -31,6 +32,7 @@
           name="reason"
           required
           description="Please provide a business justification for this impersonation session."
+          class="mb-4"
         >
           <UTextarea
             v-model="impersonationReason"

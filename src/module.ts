@@ -93,6 +93,24 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.options.css = nuxt.options.css || []
     nuxt.options.css.push(resolver.resolve('./runtime/assets/css/components.css'))
 
+    // Add server API routes
+    nuxt.hook('nitro:config', (nitroConfig) => {
+      nitroConfig.handlers = nitroConfig.handlers || []
+      
+      // Add impersonation API endpoints
+      nitroConfig.handlers.push({
+        route: '/api/impersonate',
+        method: 'post',
+        handler: resolver.resolve('./runtime/server/api/impersonate.post.ts'),
+      })
+      
+      nitroConfig.handlers.push({
+        route: '/api/stop-impersonation',
+        method: 'post',
+        handler: resolver.resolve('./runtime/server/api/stop-impersonation.post.ts'),
+      })
+    })
+
     // Add type declarations
     nuxt.hook('prepare:types', (options) => {
       options.references.push({
