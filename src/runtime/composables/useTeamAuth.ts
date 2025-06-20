@@ -63,13 +63,8 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       return
     }
     
-    // Skip if user and essential data haven't changed
-    if (currentUser.value?.id === user.id && 
-        currentUser.value?.email === user.email &&
-        currentTeam.value && 
-        currentRole.value) {
-      return
-    }
+    // Only skip if we're already updating or if this is the exact same session
+    // Allow all legitimate session changes to go through
     
     isUpdating = true
     
