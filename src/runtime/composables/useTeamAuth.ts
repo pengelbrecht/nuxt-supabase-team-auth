@@ -1272,9 +1272,9 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
             })
           } catch (error) {
             console.warn('Failed to restore session with stored tokens:', error)
-            // Clear the flag on error and force reload
+            // Clear the flag on error - auth listener will handle the state
             updateAuthState({ stoppingImpersonation: false })
-            window.location.reload()
+            // Don't force reload - let the auth state management handle recovery
           }
         }
 
@@ -1288,9 +1288,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           color: 'green',
           icon: 'i-lucide-user-x',
         })
-
-        // Navigate to clean state
-        await navigateTo('/dashboard', { external: true })
 
       } catch (error: any) {
         console.error('Stop impersonation failed:', error)
