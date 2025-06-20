@@ -1,6 +1,6 @@
 import { ref, reactive, computed, watch, onMounted, onUnmounted, getCurrentInstance, triggerRef } from 'vue'
 import type { Ref } from 'vue'
-import type { SupabaseClient, AuthSession, User as SupabaseUser } from '@supabase/supabase-js'
+import type { SupabaseClient, AuthSession, User as SupabaseUser, AuthChangeEvent } from '@supabase/supabase-js'
 import type { User, Profile, Team, TeamMember, TeamAuth, TeamAuthState } from '../types'
 import { useSessionSync } from './useSessionSync'
 
@@ -57,9 +57,11 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   
   const updateStateFromSession = async (session: AuthSession) => {
     const user = session.user
+    console.log(`🔥 updateStateFromSession called for: ${user.email} (${user.id})`)
     
     // Prevent concurrent execution
     if (isUpdating) {
+      console.log('🔥 Already updating, skipping')
       return
     }
     
@@ -76,6 +78,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       email: user.email!,
       user_metadata: user.user_metadata,
     }
+    console.log(`🔥 Updated currentUser: ${currentUser.value.email}`)
 
     // Fetch team information from database
     try {
@@ -115,9 +118,11 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           company_vat_number: teamMember.teams.company_vat_number,
         }
         currentRole.value = teamMember.role
+        console.log(`🔥 Updated team: ${currentTeam.value.name}, role: ${currentRole.value}`)
       }
       else {
         // No team membership found
+        console.log('🔥 No team membership found for user')
         currentTeam.value = null
         currentRole.value = null
       }
@@ -131,6 +136,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     // Load user profile
     try {
       currentProfile.value = await getProfile()
+      console.log(`🔥 Updated profile: ${currentProfile.value?.full_name || 'No name'}`)
     }
     catch (error) {
       console.warn('Failed to fetch profile information:', error)
@@ -143,6 +149,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     
     } finally {
       isUpdating = false
+      console.log('🔥 updateStateFromSession complete')
     }
   }
 
@@ -1136,21 +1143,37 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   const setupEnhancedAuthListener = () => {
     if (process.server) return
     
-    getClient().auth.onAuthStateChange(async (event, session) => {
-      console.log('🔥 Auth state change:', event, session?.user?.email)
+    getClient().auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
+      console.log(`🔥 Auth event: "${event}" | User: ${session?.user?.email || 'none'} | ID: ${session?.user?.id || 'none'}`)
+      
       try {
-        if (event === 'SIGNED_IN' && session) {
-          await updateStateFromSession(session)
-        }
-        else if (event === 'SIGNED_OUT') {
-          resetStateWithClear()
-        }
-        else if (event === 'TOKEN_REFRESHED' && session) {
-          await updateStateFromSession(session)
-        }
-        else if (event === 'USER_UPDATED' && session) {
-          // Handle session changes during impersonation
-          await updateStateFromSession(session)
+        switch (event) {
+          case 'SIGNED_IN':
+            console.log('🔥 Processing SIGNED_IN event')
+            if (session) await updateStateFromSession(session)
+            break
+            
+          case 'SIGNED_OUT':
+            console.log('🔥 Processing SIGNED_OUT event')
+            resetStateWithClear()
+            break
+            
+          case 'TOKEN_REFRESHED':
+            console.log('🔥 Processing TOKEN_REFRESHED event')
+            if (session) await updateStateFromSession(session)
+            break
+            
+          case 'USER_UPDATED':
+            console.log('🔥 Processing USER_UPDATED event')
+            if (session) await updateStateFromSession(session)
+            break
+            
+          case 'PASSWORD_RECOVERY':
+            console.log('🔥 Ignoring PASSWORD_RECOVERY event')
+            break
+            
+          default:
+            console.log(`🔥 Unhandled auth event: ${event}`)
         }
       }
       catch (error) {
