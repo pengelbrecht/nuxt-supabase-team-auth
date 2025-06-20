@@ -95,8 +95,6 @@ export function useImpersonation() {
         },
       })
 
-      console.log('Impersonation response:', response)
-
       if (!response.success || !response.session || !response.impersonation) {
         console.error('Invalid response structure:', response)
         throw new Error('Invalid impersonation response')
@@ -123,17 +121,20 @@ export function useImpersonation() {
         refresh_token: response.session.refresh_token,
       })
 
-      // Add timeout to prevent hanging
+      // Add timeout to prevent hanging (longer timeout for impersonation)
       Promise.race([
         sessionPromise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 3000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 8000))
       ]).then(
         (result: any) => {
-          // Session set successfully
+          // Session set successfully - auth listener will handle state update
         },
         (error) => {
-          console.warn('Session setting failed or timed out:', error)
-          // TODO: Need different approach to refresh auth state without circular dependency
+          // Only warn if it's not a timeout - timeouts are expected during impersonation
+          if (!error.message.includes('timeout')) {
+            console.warn('Session setting failed:', error)
+          }
+          // The auth state will be updated by the auth listener when the session is ready
         }
       )
       
