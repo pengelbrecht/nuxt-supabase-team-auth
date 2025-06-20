@@ -214,7 +214,12 @@ export function useImpersonation() {
       })
 
       // Reload to clean state
-      await navigateTo('/dashboard', { external: true })
+      try {
+        await navigateTo('/dashboard', { external: true })
+      } catch (navError) {
+        // navigateTo might throw but that's expected during page reload
+        console.log('Navigation during impersonation stop (expected):', navError)
+      }
     }
     catch (error: unknown) {
       console.error('Failed to stop impersonation:', error)
