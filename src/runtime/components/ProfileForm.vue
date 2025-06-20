@@ -1,7 +1,10 @@
 <template>
   <SettingsTabContainer>
     <!-- Error Messages Only - Success shown in button -->
-    <div v-if="message?.type === 'error'" class="mb-6">
+    <div
+      v-if="message?.type === 'error'"
+      class="mb-6"
+    >
       <UAlert
         color="red"
         title="Error"

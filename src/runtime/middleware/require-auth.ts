@@ -19,7 +19,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // Redirect to login if not authenticated
   if (!currentUser.value) {
+    const config = useRuntimeConfig()
+    const loginPage = config.public.teamAuth?.loginPage || '/signin'
     const redirectUrl = `${to.path}${to.search ? `?${new URLSearchParams(to.query).toString()}` : ''}`
-    return navigateTo(`/login?redirect=${encodeURIComponent(redirectUrl)}`)
+    return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
   }
 })

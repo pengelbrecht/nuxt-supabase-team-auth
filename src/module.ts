@@ -1,4 +1,4 @@
-import { defineNuxtModule, addPlugin, createResolver, addImports, addComponentsDir } from '@nuxt/kit'
+import { defineNuxtModule, addPlugin, createResolver, addImports, addComponentsDir, installModule } from '@nuxt/kit'
 import { defu } from 'defu'
 
 export interface ModuleOptions {
@@ -40,8 +40,9 @@ export default defineNuxtModule<ModuleOptions>({
     redirectTo: '/dashboard',
     emailTemplates: {},
   },
-  setup(options, nuxt) {
+  async setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
+
 
     // Merge options with runtime config
     nuxt.options.runtimeConfig.public.teamAuth = defu(
@@ -75,6 +76,10 @@ export default defineNuxtModule<ModuleOptions>({
       {
         name: 'useSupabaseClient',
         from: resolver.resolve('./runtime/composables/useSupabaseClient'),
+      },
+      {
+        name: 'useImpersonation',
+        from: resolver.resolve('./runtime/composables/useImpersonation'),
       },
     ])
 

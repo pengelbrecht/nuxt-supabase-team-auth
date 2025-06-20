@@ -65,7 +65,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Require authentication for protected routes
   if (isProtectedRoute && !currentUser.value) {
     const redirectUrl = `${currentPath}${to.search ? `?${new URLSearchParams(to.query).toString()}` : ''}`
-    return navigateTo(`/login?redirect=${encodeURIComponent(redirectUrl)}`)
+    const config = useRuntimeConfig()
+    const loginPage = config.public.teamAuth?.loginPage || '/signin'
+    return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
   }
 
   // Handle impersonation restrictions

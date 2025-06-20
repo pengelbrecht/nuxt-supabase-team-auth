@@ -76,7 +76,7 @@
         "dependencies": [
           1
         ],
-        "status": "done",
+        "status": "in-progress",
         "subtasks": [
           {
             "id": 1,
@@ -1416,11 +1416,26 @@
         ],
         "priority": "low",
         "subtasks": []
+      },
+      {
+        "id": 36,
+        "title": "Package Current Project as a Distributable Nuxt Module",
+        "description": "Analyze the current project structure and package it as a Nuxt module following best practices.",
+        "details": "1. Research Nuxt module packaging best practices, focusing on structure, configuration, and distribution.\n2. Examine the current codebase to identify components, utilities, and configurations that should be exposed as part of the module versus those that should remain internal.\n3. Define the module's entry points and ensure compatibility with both ESM and CJS.\n4. Plan and implement a build process that compiles the module for distribution, including bundling and minification.\n5. Set up npm/pnpm scripts for building, testing, and publishing the module.\n6. Ensure the package.json is correctly configured with metadata, dependencies, and peer dependencies.\n7. Document the module's API, installation instructions, and usage examples.\n8. Consider versioning strategy and semantic versioning for future updates.",
+        "testStrategy": "1. Verify the module can be installed and used in a fresh Nuxt 3 project.\n2. Test the module's API to ensure all exposed functions and components work as expected.\n3. Run integration tests to confirm the module integrates smoothly with existing Nuxt 3 applications.\n4. Use tools like np and npm pack to simulate publishing and ensure the package is correctly structured.\n5. Validate the module's compatibility with both ESM and CJS environments.\n6. Review documentation for accuracy and completeness, ensuring it covers all aspects of installation and usage.",
+        "status": "pending",
+        "dependencies": [
+          1,
+          4,
+          5
+        ],
+        "priority": "high",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-06-18T17:53:26.166Z",
-      "updated": "2025-06-18T18:02:38.326Z",
+      "updated": "2025-06-20T10:47:59.924Z",
       "description": "Tasks for master context"
     }
   }

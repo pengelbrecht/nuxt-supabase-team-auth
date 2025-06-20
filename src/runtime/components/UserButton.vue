@@ -216,12 +216,9 @@ const dropdownItems = computed(() => {
 
 // Watch for successful impersonation to close modal
 watch(justStartedImpersonation, (newValue, oldValue) => {
-  console.log('🔥 UserButton watcher triggered:', { newValue, oldValue, modalOpen: showSettingsModal.value })
   if (newValue) {
-    console.log('🔥 Impersonation started successfully, closing settings modal...')
     showSettingsModal.value = false
     clearSuccessFlag()
-    console.log('🔥 Modal closed, flag cleared')
   }
 })
 </script>

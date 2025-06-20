@@ -117,12 +117,6 @@ export function useImpersonation() {
       // Clear the loading state immediately since we got a successful response
       isStarting.value = false
       
-      console.log('Setting session with new tokens...')
-      console.log('🔥 About to call setSession with:', {
-        user_id: response.session.user?.id,
-        access_token: response.session.access_token?.substring(0, 20) + '...'
-      })
-      
       // Try to set the session, but don't let it block the UI
       const sessionPromise = supabase.auth.setSession({
         access_token: response.session.access_token,
@@ -135,10 +129,10 @@ export function useImpersonation() {
         new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 3000))
       ]).then(
         (result: any) => {
-          console.log('🔥 Session set result:', { data: result?.data?.user?.id, error: result?.error })
+          // Session set successfully
         },
         (error) => {
-          console.warn('🔥 Session setting failed or timed out:', error)
+          console.warn('Session setting failed or timed out:', error)
           // TODO: Need different approach to refresh auth state without circular dependency
         }
       )
@@ -151,10 +145,7 @@ export function useImpersonation() {
       })
 
       // Signal successful impersonation for UI components to react
-      console.log('🔥 Setting justStartedImpersonation flag to true')
       justStartedImpersonation.value = true
-      
-      console.log('🔥 Impersonation setup complete, flag set:', justStartedImpersonation.value)
     }
     catch (error: unknown) {
       console.error('Failed to start impersonation:', error)

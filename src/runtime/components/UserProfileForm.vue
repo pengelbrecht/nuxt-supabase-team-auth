@@ -54,7 +54,6 @@
             size="md"
           />
         </UFormField>
-
       </UCard>
     </UForm>
 
@@ -121,8 +120,8 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import * as v from 'valibot'
 import { useTeamAuth } from '../composables/useTeamAuth'
-import UserCard from './UserCard.vue'
 import type { Profile } from '../types'
+import UserCard from './UserCard.vue'
 
 // Form validation schema
 const profileSchema = v.object({
@@ -155,10 +154,10 @@ const emit = defineEmits<{
 }>()
 
 // Get auth state and functions
-const { 
-  currentUser, 
-  currentProfile, 
-  getProfile, 
+const {
+  currentUser,
+  currentProfile,
+  getProfile,
   updateProfile,
   getTeamMemberProfile,
   updateTeamMemberProfile,
@@ -190,7 +189,7 @@ const targetUserName = computed(() => profileData.value?.full_name || form.email
 const hasChanges = computed(() => {
   const fieldsToCompare = ['full_name', 'email']
 
-  return fieldsToCompare.some(field => {
+  return fieldsToCompare.some((field) => {
     const formValue = form[field as keyof typeof form] || ''
     const originalValue = originalForm.value[field as keyof typeof form] || ''
     return formValue !== originalValue
@@ -206,10 +205,12 @@ const loadProfileData = async () => {
       // Load current user's profile
       if (!currentProfile.value) {
         profileData.value = await getProfile()
-      } else {
+      }
+      else {
         profileData.value = currentProfile.value
       }
-    } else if (props.userId) {
+    }
+    else if (props.userId) {
       // Load other user's profile
       profileData.value = await getTeamMemberProfile(props.userId)
     }
@@ -218,7 +219,8 @@ const loadProfileData = async () => {
     if (profileData.value) {
       form.full_name = profileData.value.full_name || ''
       form.email = profileData.value.email || currentUser.value?.email || ''
-    } else if (isEditingSelf.value && currentUser.value) {
+    }
+    else if (isEditingSelf.value && currentUser.value) {
       // Fallback for self editing
       form.full_name = currentUser.value.user_metadata?.name || ''
       form.email = currentUser.value.email || ''
@@ -257,11 +259,11 @@ const handleSubmit = async () => {
       full_name: form.full_name,
     }
 
-
     // Call appropriate update function
     if (isEditingSelf.value) {
       await updateProfile(updateData)
-    } else if (props.userId) {
+    }
+    else if (props.userId) {
       await updateTeamMemberProfile(props.userId, updateData)
     }
 
@@ -272,7 +274,7 @@ const handleSubmit = async () => {
     if (!props.isModal) {
       toast.add({
         title: 'Profile Updated',
-        description: isEditingSelf.value 
+        description: isEditingSelf.value
           ? 'Your profile has been updated successfully.'
           : `${targetUserName.value}'s profile has been updated.`,
         color: 'green',
@@ -283,7 +285,7 @@ const handleSubmit = async () => {
   }
   catch (error: any) {
     console.error('Profile update error:', error)
-    
+
     // Only show toast when not in modal mode (let parent handle modal toasts)
     if (!props.isModal) {
       toast.add({
@@ -292,7 +294,7 @@ const handleSubmit = async () => {
         color: 'red',
       })
     }
-    
+
     emit('error', error.message)
   }
   finally {

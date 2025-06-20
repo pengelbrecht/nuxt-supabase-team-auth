@@ -20,7 +20,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Ensure user is authenticated
   if (!currentUser.value) {
     const redirectUrl = `${to.path}${to.search ? `?${new URLSearchParams(to.query).toString()}` : ''}`
-    return navigateTo(`/login?redirect=${encodeURIComponent(redirectUrl)}`)
+    const config = useRuntimeConfig()
+    const loginPage = config.public.teamAuth?.loginPage || '/signin'
+    return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
   }
 
   // Ensure user belongs to a team
@@ -60,7 +62,9 @@ export function createTeamAccessMiddleware(options: {
     // Ensure user is authenticated
     if (!currentUser.value) {
       const redirectUrl = `${to.path}${to.search ? `?${new URLSearchParams(to.query).toString()}` : ''}`
-      return navigateTo(`/login?redirect=${encodeURIComponent(redirectUrl)}`)
+      const config = useRuntimeConfig()
+    const loginPage = config.public.teamAuth?.loginPage || '/signin'
+    return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
     }
 
     // Check team membership requirement

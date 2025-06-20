@@ -14,7 +14,8 @@ onMounted(async () => {
   try {
     const { currentUser } = await import('../composables/useTeamAuth').then(m => m.useTeamAuth())
     showContent.value = !!currentUser.value
-  } catch (e) {
+  }
+  catch (e) {
     console.error('SignedIn error:', e)
     showContent.value = false
   }

@@ -1,6 +1,6 @@
 <template>
-  <UModal 
-    v-model:open="modalOpen" 
+  <UModal
+    v-model:open="modalOpen"
     :ui="{ width: 'sm:max-w-2xl' }"
   >
     <template #header>
@@ -9,7 +9,10 @@
           <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Edit User: {{ displayName }}
           </h2>
-          <p v-if="isLoading" class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <p
+            v-if="isLoading"
+            class="text-sm text-gray-600 dark:text-gray-400 mt-1"
+          >
             Loading user information...
           </p>
         </div>
@@ -45,10 +48,16 @@
 
     <template #body>
       <div class="p-6">
-        <div v-if="!userId" class="text-center py-8 text-gray-500">
+        <div
+          v-if="!userId"
+          class="text-center py-8 text-gray-500"
+        >
           No user selected
         </div>
-        <div v-else-if="isLoading" class="text-center py-8 text-gray-500">
+        <div
+          v-else-if="isLoading"
+          class="text-center py-8 text-gray-500"
+        >
           Loading user information...
         </div>
         <UserProfileForm
@@ -67,9 +76,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import UserProfileForm from './UserProfileForm.vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import type { Profile } from '../types'
+import UserProfileForm from './UserProfileForm.vue'
 
 // Props
 interface Props {
@@ -82,8 +91,8 @@ const props = defineProps<Props>()
 // Emits
 const emit = defineEmits<{
   'update:open': [value: boolean]
-  saved: [profile: Profile]
-  error: [error: string]
+  'saved': [profile: Profile]
+  'error': [error: string]
 }>()
 
 // Get auth state and functions
@@ -101,7 +110,7 @@ const toast = useToast()
 // Computed properties
 const modalOpen = computed({
   get: () => props.open,
-  set: (value: boolean) => emit('update:open', value)
+  set: (value: boolean) => emit('update:open', value),
 })
 
 const displayName = computed(() => {
@@ -164,7 +173,7 @@ const handleSaved = (profile: Profile) => {
   if (userProfile.value) {
     userProfile.value = { ...userProfile.value, ...profile }
   }
-  
+
   emit('saved', profile)
   emit('update:open', false)
 }

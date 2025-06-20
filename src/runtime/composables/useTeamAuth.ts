@@ -51,51 +51,15 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     return getSupabaseClient()
   }
 
-  // State initialization with session validation
-  const initializeState = async () => {
-    try {
-      isLoading.value = true
-
-      // Get current session (client-side only)
-      if (process.server) return
-      
-      const { data: { session } } = await getClient().auth.getSession()
-
-      if (session?.user) {
-        // Validate session by trying to fetch user's team data
-        try {
-          await updateStateFromSession(session)
-        }
-        catch (error: any) {
-          // If session is invalid (e.g., user doesn't exist in database after reset)
-          console.warn('Session validation failed, clearing invalid session:', error.message)
-          await getClient().auth.signOut()
-          resetState()
-        }
-      }
-      else {
-        resetState()
-      }
-    }
-    catch (error) {
-      console.error('Failed to initialize auth state:', error)
-      resetState()
-    }
-    finally {
-      isLoading.value = false
-    }
-  }
 
   // Update state from session
   let isUpdating = false
   
   const updateStateFromSession = async (session: AuthSession) => {
     const user = session.user
-    console.log('🔥 updateStateFromSession called with user:', user.id, user.email)
     
     // Prevent concurrent execution
     if (isUpdating) {
-      console.log('🔥 Update already in progress, skipping')
       return
     }
     
@@ -109,7 +73,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       email: user.email!,
       user_metadata: user.user_metadata,
     }
-    console.log('🔥 Set currentUser to:', currentUser.value)
 
     // Fetch team information from database
     try {
@@ -192,31 +155,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     impersonationExpiresAt.value = null
   }
 
-  // Auth state change listener (client-side only)
-  const setupAuthListener = () => {
-    if (process.server) return
-    
-    const authListener = getClient().auth.onAuthStateChange(async (event, session) => {
-      console.log('🔥 AUTH LISTENER FIRED! Event:', event, 'User ID:', session?.user?.id)
-      console.trace('🔥 Auth listener call stack')
-      
-      if (event === 'SIGNED_IN' && session) {
-        console.log('🔥 Processing SIGNED_IN event for:', session.user.email)
-        await updateStateFromSession(session)
-      }
-      else if (event === 'SIGNED_OUT') {
-        console.log('🔥 Processing SIGNED_OUT event')
-        resetState()
-      }
-      else if (event === 'TOKEN_REFRESHED' && session) {
-        console.log('🔥 Processing TOKEN_REFRESHED event for:', session.user.email)
-        await updateStateFromSession(session)
-      }
-      else {
-        console.log('🔥 Unhandled auth event:', event, session?.user?.email)
-      }
-    })
-  }
 
   // Authentication methods
   const signUpWithTeam = async (email: string, password: string, teamName: string): Promise<void> => {
@@ -1317,18 +1255,15 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     
     // Force refresh auth state (for impersonation debugging)
     refreshAuthState: async () => {
-      console.log('🔥 Manually refreshing auth state...')
       try {
         const { data: { session } } = await getClient().auth.getSession()
         if (session) {
-          console.log('🔥 Found session, updating state:', session.user.id)
           await updateStateFromSession(session)
         } else {
-          console.log('🔥 No session found, resetting state')
           resetState()
         }
       } catch (error) {
-        console.error('🔥 Failed to refresh auth state:', error)
+        console.error('Failed to refresh auth state:', error)
       }
     },
   }

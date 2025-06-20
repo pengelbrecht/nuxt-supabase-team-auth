@@ -11,9 +11,9 @@ describe('RLS Policies', () => {
   beforeAll(() => {
     // Service role client for setup/teardown with no session persistence
     serviceClient = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { 
-        persistSession: false 
-      }
+      auth: {
+        persistSession: false,
+      },
     })
   })
 
@@ -26,7 +26,7 @@ describe('RLS Policies', () => {
         .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
 
       console.log('Service role team members query:', { members, error })
-      
+
       expect(error).toBeNull()
       expect(members).toHaveLength(4)
     })
@@ -37,7 +37,7 @@ describe('RLS Policies', () => {
         .rpc('get_user_team_ids', { user_uuid: '22222222-2222-2222-2222-222222222222' })
 
       console.log('get_user_team_ids function test:', { data, error })
-      
+
       expect(error).toBeNull()
       expect(data).toContain('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
     })
@@ -47,14 +47,14 @@ describe('RLS Policies', () => {
     it('Alpha owner should see 4 Alpha team members', async () => {
       // Create a fresh client for this test with no session persistence
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { 
-          persistSession: false 
-        }
+        auth: {
+          persistSession: false,
+        },
       })
-      
+
       const { data: authData, error: authError } = await testClient.auth.signInWithPassword({
         email: 'owner@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       expect(authError).toBeNull()
@@ -71,16 +71,16 @@ describe('RLS Policies', () => {
         .select('*')
         .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
 
-      console.log('Alpha owner team members query:', { 
-        members, 
+      console.log('Alpha owner team members query:', {
+        members,
         error,
         userId: authData.user?.id,
-        sessionExists: !!authData.session
+        sessionExists: !!authData.session,
       })
-      
+
       expect(error).toBeNull()
       expect(members).toHaveLength(4)
-      
+
       // Clean up
       await testClient.auth.signOut()
     })
@@ -88,14 +88,14 @@ describe('RLS Policies', () => {
     it('Alpha member should see 4 Alpha team members', async () => {
       // Create a fresh client with no session persistence
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { 
-          persistSession: false 
-        }
+        auth: {
+          persistSession: false,
+        },
       })
-      
+
       const { data: authData, error: authError } = await testClient.auth.signInWithPassword({
         email: 'member@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       expect(authError).toBeNull()
@@ -107,15 +107,15 @@ describe('RLS Policies', () => {
         .select('*')
         .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
 
-      console.log('Alpha member team members query:', { 
-        members, 
+      console.log('Alpha member team members query:', {
+        members,
         error,
-        userId: authData.user?.id
+        userId: authData.user?.id,
       })
-      
+
       expect(error).toBeNull()
       expect(members).toHaveLength(4)
-      
+
       // Clean up
       await testClient.auth.signOut()
     })
@@ -123,14 +123,14 @@ describe('RLS Policies', () => {
     it('Beta owner should see 0 Alpha team members (cross-team isolation)', async () => {
       // Create a fresh client with no session persistence
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { 
-          persistSession: false 
-        }
+        auth: {
+          persistSession: false,
+        },
       })
-      
+
       const { data: authData, error: authError } = await testClient.auth.signInWithPassword({
         email: 'owner@b.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       expect(authError).toBeNull()
@@ -143,10 +143,10 @@ describe('RLS Policies', () => {
         .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
 
       console.log('Beta owner Alpha team query:', { members, error, userId: authData.user?.id })
-      
+
       expect(error).toBeNull()
       expect(members).toHaveLength(0)
-      
+
       // Clean up
       await testClient.auth.signOut()
     })
@@ -156,14 +156,14 @@ describe('RLS Policies', () => {
     it('Alpha member should see Alpha team profiles', async () => {
       // Create a fresh client with no session persistence
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { 
-          persistSession: false 
-        }
+        auth: {
+          persistSession: false,
+        },
       })
-      
+
       const { data: authData, error: authError } = await testClient.auth.signInWithPassword({
         email: 'member@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       expect(authError).toBeNull()
@@ -175,13 +175,13 @@ describe('RLS Policies', () => {
         .select('*')
 
       console.log('Alpha member profiles query:', { profiles, error, userId: authData.user?.id })
-      
+
       expect(error).toBeNull()
       // Should see at least their own profile + team members
       expect(profiles).toBeDefined()
       expect(Array.isArray(profiles)).toBe(true)
       expect(profiles.length).toBeGreaterThan(0)
-      
+
       // Clean up
       await testClient.auth.signOut()
     })
@@ -191,14 +191,14 @@ describe('RLS Policies', () => {
     it('Alpha owner should see Alpha team', async () => {
       // Create a fresh client with no session persistence
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { 
-          persistSession: false 
-        }
+        auth: {
+          persistSession: false,
+        },
       })
-      
+
       const { data: authData, error: authError } = await testClient.auth.signInWithPassword({
         email: 'owner@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       expect(authError).toBeNull()
@@ -210,11 +210,11 @@ describe('RLS Policies', () => {
         .select('*')
 
       console.log('Alpha owner teams query:', { teams, error, userId: authData.user?.id })
-      
+
       expect(error).toBeNull()
       expect(teams).toHaveLength(1)
       expect(teams?.[0]?.name).toBe('Alpha Corporation')
-      
+
       // Clean up
       await testClient.auth.signOut()
     })
@@ -223,12 +223,12 @@ describe('RLS Policies', () => {
   describe('Permission Restrictions - What Members CANNOT Do', () => {
     it('Member cannot update other team member roles', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       const { data: authData } = await testClient.auth.signInWithPassword({
         email: 'member@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // First verify the client is properly authenticated by doing a SELECT
@@ -237,10 +237,10 @@ describe('RLS Policies', () => {
         .select('*')
         .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
 
-      console.log('Member SELECT verification:', { 
-        memberData: memberData?.length, 
+      console.log('Member SELECT verification:', {
+        memberData: memberData?.length,
         selectError,
-        userId: authData?.user?.id 
+        userId: authData?.user?.id,
       })
 
       // Check current role before update
@@ -267,26 +267,27 @@ describe('RLS Policies', () => {
         .single()
 
       console.log('Member trying to update role:', { data, error, beforeRole: beforeData?.role, afterRole: afterData?.role })
-      
+
       // Either should get explicit error OR role should remain unchanged
       if (error) {
         expect(error.code).toBe('42501') // Insufficient privilege
-      } else {
+      }
+      else {
         // If no error, the operation should have been silently blocked by RLS
         expect(afterData?.role).toBe(beforeData?.role) // Role should not have changed
       }
-      
+
       await testClient.auth.signOut()
     })
 
     it('Member cannot delete other team members', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'member@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Count team members before delete
@@ -308,32 +309,33 @@ describe('RLS Policies', () => {
         .select('*', { count: 'exact' })
         .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
 
-      console.log('Member trying to delete member:', { 
-        data, 
-        error, 
-        beforeCount: beforeCount?.length, 
-        afterCount: afterCount?.length 
+      console.log('Member trying to delete member:', {
+        data,
+        error,
+        beforeCount: beforeCount?.length,
+        afterCount: afterCount?.length,
       })
-      
+
       // Either should get explicit error OR count should remain unchanged
       if (error) {
         expect(error.code).toBe('42501') // Insufficient privilege
-      } else {
+      }
+      else {
         // If no error, the operation should have been silently blocked by RLS
         expect(afterCount?.length).toBe(beforeCount?.length) // Count should not have changed
       }
-      
+
       await testClient.auth.signOut()
     })
 
     it('Member cannot add new team members', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'member@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Try to add new member (should fail)
@@ -342,25 +344,25 @@ describe('RLS Policies', () => {
         .insert({
           team_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
           user_id: '99999999-9999-9999-9999-999999999999',
-          role: 'member'
+          role: 'member',
         })
 
       console.log('Member trying to add member:', { data, error })
-      
+
       expect(error).not.toBeNull()
       expect(error?.code).toBe('42501') // Insufficient privilege
-      
+
       await testClient.auth.signOut()
     })
 
     it('Member cannot update team settings', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'member@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Check team name before update
@@ -383,21 +385,22 @@ describe('RLS Policies', () => {
         .eq('id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
         .single()
 
-      console.log('Member trying to update team:', { 
-        data, 
-        error, 
-        beforeName: beforeData?.name, 
-        afterName: afterData?.name 
+      console.log('Member trying to update team:', {
+        data,
+        error,
+        beforeName: beforeData?.name,
+        afterName: afterData?.name,
       })
-      
+
       // Either should get explicit error OR name should remain unchanged
       if (error) {
         expect(error.code).toBe('42501') // Insufficient privilege
-      } else {
+      }
+      else {
         // If no error, the operation should have been silently blocked by RLS
         expect(afterData?.name).toBe(beforeData?.name) // Name should not have changed
       }
-      
+
       await testClient.auth.signOut()
     })
   })
@@ -405,12 +408,12 @@ describe('RLS Policies', () => {
   describe('Admin Permissions - What Admins CAN Do', () => {
     it('Admin can promote member to admin', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'admin@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // First, let's check current role
@@ -431,7 +434,7 @@ describe('RLS Policies', () => {
         .eq('user_id', '44444444-4444-4444-4444-444444444444')
 
       console.log('Admin promoting member to admin:', { data, error })
-      
+
       expect(error).toBeNull()
 
       // Verify the change
@@ -450,18 +453,18 @@ describe('RLS Policies', () => {
         .update({ role: 'member' })
         .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
         .eq('user_id', '44444444-4444-4444-4444-444444444444')
-      
+
       await testClient.auth.signOut()
     })
 
     it('Admin can invite new admin (consistent with promotion permissions)', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'admin@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Count team members before insert
@@ -477,11 +480,11 @@ describe('RLS Policies', () => {
         .insert({
           team_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
           user_id: '77777777-7777-7777-7777-777777777777', // owner@b.test from seed data
-          role: 'admin'
+          role: 'admin',
         })
 
       console.log('Admin inviting new admin:', { data, error })
-      
+
       expect(error).toBeNull() // Should succeed now
 
       // Count team members after insert
@@ -498,18 +501,18 @@ describe('RLS Policies', () => {
         .delete()
         .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
         .eq('user_id', '77777777-7777-7777-7777-777777777777')
-      
+
       await testClient.auth.signOut()
     })
 
     it('Admin can delete members but not owners/admins', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'admin@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Count team members before delete attempt
@@ -531,23 +534,24 @@ describe('RLS Policies', () => {
         .select('*', { count: 'exact' })
         .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
 
-      console.log('Admin trying to delete owner:', { 
-        ownerDeleteData, 
-        ownerDeleteError, 
-        beforeCount: beforeCount?.length, 
-        afterCount: afterCount?.length 
+      console.log('Admin trying to delete owner:', {
+        ownerDeleteData,
+        ownerDeleteError,
+        beforeCount: beforeCount?.length,
+        afterCount: afterCount?.length,
       })
-      
+
       // Either should get explicit error OR count should remain unchanged (RLS blocked)
       if (ownerDeleteError) {
         expect(ownerDeleteError.code).toBe('42501') // Insufficient privilege
-      } else {
+      }
+      else {
         expect(afterCount?.length).toBe(beforeCount?.length) // Count should not have changed
       }
 
       // Note: We would test deleting a member here, but we only have one member
       // and don't want to break other tests. In a real scenario, admin should be able to delete members.
-      
+
       await testClient.auth.signOut()
     })
   })
@@ -555,12 +559,12 @@ describe('RLS Policies', () => {
   describe('Admin Restrictions - What Admins CANNOT Do', () => {
     it('Admin cannot promote anyone to owner', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'admin@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Try to promote member to owner (should fail)
@@ -571,21 +575,21 @@ describe('RLS Policies', () => {
         .eq('user_id', '44444444-4444-4444-4444-444444444444')
 
       console.log('Admin trying to promote to owner:', { data, error })
-      
+
       expect(error).not.toBeNull()
       expect(error?.code).toBe('42501') // Insufficient privilege
-      
+
       await testClient.auth.signOut()
     })
 
     it('Admin cannot update their own role', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'admin@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Try to promote themselves to owner (should fail)
@@ -596,21 +600,21 @@ describe('RLS Policies', () => {
         .eq('user_id', '33333333-3333-3333-3333-333333333333') // admin's own ID
 
       console.log('Admin trying to self-promote:', { data, error })
-      
+
       expect(error).not.toBeNull()
       expect(error?.code).toBe('42501') // Insufficient privilege
-      
+
       await testClient.auth.signOut()
     })
 
     it('Admin cannot update team settings', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'admin@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Check team name before update
@@ -633,20 +637,21 @@ describe('RLS Policies', () => {
         .eq('id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
         .single()
 
-      console.log('Admin trying to update team:', { 
-        data, 
-        error, 
-        beforeName: beforeData?.name, 
-        afterName: afterData?.name 
+      console.log('Admin trying to update team:', {
+        data,
+        error,
+        beforeName: beforeData?.name,
+        afterName: afterData?.name,
       })
-      
+
       // Either should get explicit error OR name should remain unchanged (RLS blocked)
       if (error) {
         expect(error.code).toBe('42501') // Insufficient privilege
-      } else {
+      }
+      else {
         expect(afterData?.name).toBe(beforeData?.name) // Name should not have changed
       }
-      
+
       await testClient.auth.signOut()
     })
   })
@@ -654,12 +659,12 @@ describe('RLS Policies', () => {
   describe('Owner Permissions - What Owners CAN Do', () => {
     it('Owner can update team settings', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'owner@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       const originalName = 'Alpha Corporation'
@@ -672,7 +677,7 @@ describe('RLS Policies', () => {
         .eq('id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
 
       console.log('Owner updating team name:', { data, error })
-      
+
       expect(error).toBeNull()
 
       // Verify the change
@@ -689,18 +694,18 @@ describe('RLS Policies', () => {
         .from('teams')
         .update({ name: originalName })
         .eq('id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
-      
+
       await testClient.auth.signOut()
     })
 
     it('Owner can promote members to admin', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'owner@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Promote member to admin (should succeed)
@@ -711,7 +716,7 @@ describe('RLS Policies', () => {
         .eq('user_id', '44444444-4444-4444-4444-444444444444')
 
       console.log('Owner promoting member to admin:', { data, error })
-      
+
       expect(error).toBeNull()
 
       // Restore original role
@@ -720,7 +725,7 @@ describe('RLS Policies', () => {
         .update({ role: 'member' })
         .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
         .eq('user_id', '44444444-4444-4444-4444-444444444444')
-      
+
       await testClient.auth.signOut()
     })
   })
@@ -728,12 +733,12 @@ describe('RLS Policies', () => {
   describe('Owner Restrictions - What Owners CANNOT Do', () => {
     it('Owner cannot degrade themselves', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'owner@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Try to degrade themselves to admin (should fail)
@@ -744,21 +749,21 @@ describe('RLS Policies', () => {
         .eq('user_id', '22222222-2222-2222-2222-222222222222') // owner's own ID
 
       console.log('Owner trying to degrade themselves:', { data, error })
-      
+
       expect(error).not.toBeNull()
       expect(error?.code).toBe('42501') // Insufficient privilege (cannot modify own role)
-      
+
       await testClient.auth.signOut()
     })
 
     it('Owner cannot assign super_admin role', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'owner@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Try to promote member to super_admin (should fail)
@@ -769,21 +774,21 @@ describe('RLS Policies', () => {
         .eq('user_id', '44444444-4444-4444-4444-444444444444')
 
       console.log('Owner trying to assign super_admin:', { data, error })
-      
+
       expect(error).not.toBeNull()
       expect(error?.code).toBe('42501') // Insufficient privilege
-      
+
       await testClient.auth.signOut()
     })
 
     it('Owner cannot delete super_admins', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'owner@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Count team members before delete attempt
@@ -805,20 +810,21 @@ describe('RLS Policies', () => {
         .select('*', { count: 'exact' })
         .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
 
-      console.log('Owner trying to delete super_admin:', { 
-        data, 
-        error, 
-        beforeCount: beforeCount?.length, 
-        afterCount: afterCount?.length 
+      console.log('Owner trying to delete super_admin:', {
+        data,
+        error,
+        beforeCount: beforeCount?.length,
+        afterCount: afterCount?.length,
       })
-      
+
       // Either should get explicit error OR count should remain unchanged (RLS blocked)
       if (error) {
         expect(error.code).toBe('42501') // Insufficient privilege
-      } else {
+      }
+      else {
         expect(afterCount?.length).toBe(beforeCount?.length) // Count should not have changed
       }
-      
+
       await testClient.auth.signOut()
     })
   })
@@ -826,12 +832,12 @@ describe('RLS Policies', () => {
   describe('Super Admin Permissions - What Super Admins CAN Do', () => {
     it('Super admin can see all teams across organizations', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'super@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Query all teams (should see both Alpha and Beta)
@@ -840,22 +846,22 @@ describe('RLS Policies', () => {
         .select('*')
 
       console.log('Super admin teams query:', { teams, error })
-      
+
       expect(error).toBeNull()
       expect(teams).toHaveLength(2)
       expect(teams?.map(t => t.name).sort()).toEqual(['Alpha Corporation', 'Beta Industries'])
-      
+
       await testClient.auth.signOut()
     })
 
     it('Super admin can see all team members across organizations', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'super@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Query all team members (should see all 7)
@@ -864,21 +870,21 @@ describe('RLS Policies', () => {
         .select('*')
 
       console.log('Super admin all members query:', { members, error, count: members?.length })
-      
+
       expect(error).toBeNull()
       expect(members).toHaveLength(7) // 4 Alpha + 3 Beta
-      
+
       await testClient.auth.signOut()
     })
 
     it('Super admin can see all profiles across organizations', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'super@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Query all profiles (should see all 7)
@@ -887,10 +893,10 @@ describe('RLS Policies', () => {
         .select('*')
 
       console.log('Super admin all profiles query:', { profiles, error, count: profiles?.length })
-      
+
       expect(error).toBeNull()
       expect(profiles).toHaveLength(7) // All users
-      
+
       await testClient.auth.signOut()
     })
   })
@@ -898,12 +904,12 @@ describe('RLS Policies', () => {
   describe('Multiple Owners Policy', () => {
     it('Should allow multiple owners per team', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       await testClient.auth.signInWithPassword({
         email: 'owner@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Count current owners (may vary depending on test order)
@@ -924,7 +930,7 @@ describe('RLS Policies', () => {
         .eq('user_id', '33333333-3333-3333-3333-333333333333') // admin@a.test
 
       console.log('Multiple owners test:', { data, error })
-      
+
       expect(error).toBeNull() // Should succeed now
 
       // Verify we now have one more owner
@@ -944,19 +950,19 @@ describe('RLS Policies', () => {
           .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
           .eq('user_id', '33333333-3333-3333-3333-333333333333')
       }
-      
+
       await testClient.auth.signOut()
     })
 
     it('Should prevent team from having zero owners (database constraint)', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       // Use super admin who can modify anyone (bypasses RLS self-modification restriction)
       await testClient.auth.signInWithPassword({
         email: 'super@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Promote admin to owner first (so we have 2 owners)
@@ -1011,7 +1017,7 @@ describe('RLS Policies', () => {
         .update({ role: 'admin' })
         .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
         .eq('user_id', '33333333-3333-3333-3333-333333333333') // restore admin@a.test
-      
+
       await testClient.auth.signOut()
     })
   })
@@ -1019,13 +1025,13 @@ describe('RLS Policies', () => {
   describe('Cross-Team Isolation', () => {
     it('Users cannot see other teams data', async () => {
       const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false }
+        auth: { persistSession: false },
       })
-      
+
       // Test as Alpha member
       await testClient.auth.signInWithPassword({
         email: 'member@a.test',
-        password: 'password123'
+        password: 'password123',
       })
 
       // Try to see Beta team members (should see none)
@@ -1035,7 +1041,7 @@ describe('RLS Policies', () => {
         .eq('team_id', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')
 
       console.log('Alpha member trying to see Beta members:', { betaMembers, betaError })
-      
+
       expect(betaError).toBeNull()
       expect(betaMembers).toHaveLength(0)
 
@@ -1046,10 +1052,10 @@ describe('RLS Policies', () => {
         .eq('id', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')
 
       console.log('Alpha member trying to see Beta team:', { betaTeam, teamError })
-      
+
       expect(teamError).toBeNull()
       expect(betaTeam).toHaveLength(0)
-      
+
       await testClient.auth.signOut()
     })
   })

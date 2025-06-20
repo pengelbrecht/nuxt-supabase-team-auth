@@ -55,140 +55,139 @@
                   </p>
                 </template>
 
-            <UFormField
-              label="Team Name"
-              name="name"
-              required
-              class="mb-4"
-            >
-              <UInput
-                v-model="form.name"
-                placeholder="Enter team name"
-                :disabled="isTeamLoading"
-                size="md"
-              />
-            </UFormField>
+                <UFormField
+                  label="Team Name"
+                  name="name"
+                  required
+                  class="mb-4"
+                >
+                  <UInput
+                    v-model="form.name"
+                    placeholder="Enter team name"
+                    :disabled="isTeamLoading"
+                    size="md"
+                  />
+                </UFormField>
 
-            <UFormField
-              label="Company Name"
-              name="company_name"
-              class="mb-4"
-            >
-              <UInput
-                v-model="form.company_name"
-                placeholder="Legal company name"
-                :disabled="isTeamLoading"
-                size="md"
-              />
-            </UFormField>
-          </UCard>
+                <UFormField
+                  label="Company Name"
+                  name="company_name"
+                  class="mb-4"
+                >
+                  <UInput
+                    v-model="form.company_name"
+                    placeholder="Legal company name"
+                    :disabled="isTeamLoading"
+                    size="md"
+                  />
+                </UFormField>
+              </UCard>
 
-          <!-- Company Address Section -->
-          <UCard
-            variant="subtle"
-            class="mb-6"
-          >
-            <template #header>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Company Address
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Address information for invoicing and legal purposes.
-              </p>
-            </template>
-
-            <UFormField
-              label="Address Line 1"
-              name="company_address_line1"
-              class="mb-4"
-            >
-              <UInput
-                v-model="form.company_address_line1"
-                placeholder="Street address"
-                :disabled="isTeamLoading"
-                size="md"
-              />
-            </UFormField>
-
-            <UFormField
-              label="Address Line 2"
-              name="company_address_line2"
-              class="mb-4"
-            >
-              <UInput
-                v-model="form.company_address_line2"
-                placeholder="Apartment, suite, etc. (optional)"
-                :disabled="isTeamLoading"
-                size="md"
-              />
-            </UFormField>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <UFormField
-                label="City"
-                name="company_city"
+              <!-- Company Address Section -->
+              <UCard
+                variant="subtle"
+                class="mb-6"
               >
-                <UInput
-                  v-model="form.company_city"
-                  placeholder="City"
-                  :disabled="isTeamLoading"
-                  size="md"
-                />
-              </UFormField>
+                <template #header>
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    Company Address
+                  </h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Address information for invoicing and legal purposes.
+                  </p>
+                </template>
 
-              <UFormField
-                label="State/Province"
-                name="company_state"
-              >
-                <UInput
-                  v-model="form.company_state"
-                  placeholder="State or Province"
-                  :disabled="isTeamLoading"
-                  size="md"
-                />
-              </UFormField>
-            </div>
+                <UFormField
+                  label="Address Line 1"
+                  name="company_address_line1"
+                  class="mb-4"
+                >
+                  <UInput
+                    v-model="form.company_address_line1"
+                    placeholder="Street address"
+                    :disabled="isTeamLoading"
+                    size="md"
+                  />
+                </UFormField>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <UFormField
-                label="Postal Code"
-                name="company_postal_code"
-              >
-                <UInput
-                  v-model="form.company_postal_code"
-                  placeholder="ZIP or Postal Code"
-                  :disabled="isTeamLoading"
-                  size="md"
-                />
-              </UFormField>
+                <UFormField
+                  label="Address Line 2"
+                  name="company_address_line2"
+                  class="mb-4"
+                >
+                  <UInput
+                    v-model="form.company_address_line2"
+                    placeholder="Apartment, suite, etc. (optional)"
+                    :disabled="isTeamLoading"
+                    size="md"
+                  />
+                </UFormField>
 
-              <UFormField
-                label="Country"
-                name="company_country"
-              >
-                <UInput
-                  v-model="form.company_country"
-                  placeholder="Country"
-                  :disabled="isTeamLoading"
-                  size="md"
-                />
-              </UFormField>
-            </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <UFormField
+                    label="City"
+                    name="company_city"
+                  >
+                    <UInput
+                      v-model="form.company_city"
+                      placeholder="City"
+                      :disabled="isTeamLoading"
+                      size="md"
+                    />
+                  </UFormField>
 
-            <UFormField
-              label="VAT Number"
-              name="company_vat_number"
-              class="mb-4"
-            >
-              <UInput
-                v-model="form.company_vat_number"
-                placeholder="Tax/VAT identification number"
-                :disabled="isTeamLoading"
-                size="md"
-              />
-            </UFormField>
-          </UCard>
+                  <UFormField
+                    label="State/Province"
+                    name="company_state"
+                  >
+                    <UInput
+                      v-model="form.company_state"
+                      placeholder="State or Province"
+                      :disabled="isTeamLoading"
+                      size="md"
+                    />
+                  </UFormField>
+                </div>
 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <UFormField
+                    label="Postal Code"
+                    name="company_postal_code"
+                  >
+                    <UInput
+                      v-model="form.company_postal_code"
+                      placeholder="ZIP or Postal Code"
+                      :disabled="isTeamLoading"
+                      size="md"
+                    />
+                  </UFormField>
+
+                  <UFormField
+                    label="Country"
+                    name="company_country"
+                  >
+                    <UInput
+                      v-model="form.company_country"
+                      placeholder="Country"
+                      :disabled="isTeamLoading"
+                      size="md"
+                    />
+                  </UFormField>
+                </div>
+
+                <UFormField
+                  label="VAT Number"
+                  name="company_vat_number"
+                  class="mb-4"
+                >
+                  <UInput
+                    v-model="form.company_vat_number"
+                    placeholder="Tax/VAT identification number"
+                    :disabled="isTeamLoading"
+                    size="md"
+                  />
+                </UFormField>
+              </UCard>
             </UForm>
           </div>
         </UCard>
@@ -223,9 +222,9 @@
           </template>
 
           <!-- Team Members List -->
-          <ul 
+          <ul
             v-if="teamMembers.length > 0"
-            role="list" 
+            role="list"
             class="divide-y divide-default"
           >
             <li
@@ -239,7 +238,7 @@
                 <UAvatar size="md">
                   {{ getMemberInitials(member) }}
                 </UAvatar>
-                
+
                 <div class="text-sm min-w-0">
                   <p class="text-highlighted font-medium truncate">
                     {{ member.profile?.full_name || 'Unknown User' }}
@@ -439,7 +438,6 @@ const activeTab = ref('company') // Track active tab
 const showEditUserModal = ref(false)
 const editingUserId = ref<string | null>(null)
 
-
 // Toast notifications
 const toast = useToast()
 
@@ -530,7 +528,7 @@ const getAvailableRoleOptions = (member: any) => {
   if (currentRole.value === 'super_admin') {
     return [
       ...baseOptions,
-      { label: 'Owner', value: 'owner' }
+      { label: 'Owner', value: 'owner' },
     ]
   }
 
@@ -538,7 +536,7 @@ const getAvailableRoleOptions = (member: any) => {
   if (currentRole.value === 'owner') {
     return [
       ...baseOptions,
-      { label: 'Owner', value: 'owner' }
+      { label: 'Owner', value: 'owner' },
     ]
   }
 
@@ -558,7 +556,7 @@ const getInviteRoleOptions = computed(() => {
     return [
       { label: 'Member', value: 'member' },
       { label: 'Admin', value: 'admin' },
-      { label: 'Owner', value: 'owner' }
+      { label: 'Owner', value: 'owner' },
     ]
   }
 
@@ -566,7 +564,7 @@ const getInviteRoleOptions = computed(() => {
   if (currentRole.value === 'owner') {
     return [
       { label: 'Member', value: 'member' },
-      { label: 'Admin', value: 'admin' }
+      { label: 'Admin', value: 'admin' },
     ]
   }
 
@@ -574,7 +572,7 @@ const getInviteRoleOptions = computed(() => {
   if (currentRole.value === 'admin') {
     return [
       { label: 'Member', value: 'member' },
-      { label: 'Admin', value: 'admin' }
+      { label: 'Admin', value: 'admin' },
     ]
   }
 
@@ -745,9 +743,9 @@ const handleInviteMember = async () => {
     toast.add({
       title: 'Invitation Sent',
       description: `Invitation sent to ${inviteEmail.value}`,
-      color: 'green'
+      color: 'green',
     })
-    
+
     inviteEmail.value = ''
     inviteRole.value = 'member'
     showInviteModal.value = false
@@ -760,7 +758,7 @@ const handleInviteMember = async () => {
     toast.add({
       title: 'Invitation Failed',
       description: error.message || 'Failed to send invitation. Please try again.',
-      color: 'red'
+      color: 'red',
     })
   }
   finally {
@@ -777,7 +775,7 @@ const handleRoleChange = async (member: any, newRole: string) => {
     toast.add({
       title: 'Permission Denied',
       description: 'You do not have permission to change this member\'s role.',
-      color: 'red'
+      color: 'red',
     })
     return
   }
@@ -787,7 +785,7 @@ const handleRoleChange = async (member: any, newRole: string) => {
     toast.add({
       title: 'Invalid Action',
       description: 'You cannot change your own role.',
-      color: 'red'
+      color: 'red',
     })
     return
   }
@@ -802,7 +800,7 @@ const handleRoleChange = async (member: any, newRole: string) => {
     toast.add({
       title: 'Role Updated',
       description: `${member.profile?.full_name || member.profile?.email} is now ${formatRole(newRole).toLowerCase()}`,
-      color: 'green'
+      color: 'green',
     })
   }
   catch (error: any) {
@@ -810,7 +808,7 @@ const handleRoleChange = async (member: any, newRole: string) => {
     toast.add({
       title: 'Update Failed',
       description: error.message || 'Failed to update member role. Please try again.',
-      color: 'red'
+      color: 'red',
     })
   }
 }
@@ -832,13 +830,13 @@ const handleUserSaved = (profile: any) => {
   // Find the member to get their name for the toast
   const member = teamMembers.value.find(m => m.user_id === editingUserId.value)
   const memberName = member?.profile?.full_name || member?.profile?.email || 'User'
-  
+
   toast.add({
     title: 'User Updated',
     description: `${memberName}'s profile has been updated successfully.`,
     color: 'green',
   })
-  
+
   // The modal will close automatically
   // The reactive state is already updated by the composable
 }
@@ -855,9 +853,9 @@ const confirmDeleteMember = async () => {
 
   try {
     isDeletingMember.value = true
-    
+
     await removeMember(memberToDelete.value.user_id)
-    
+
     toast.add({
       title: 'Member Removed',
       description: `${memberToDelete.value.profile?.full_name || memberToDelete.value.profile?.email} has been removed from the team.`,

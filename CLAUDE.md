@@ -1,5 +1,11 @@
 # Claude Development Notes
 
+## Project Type
+- **This is a Nuxt Module** - designed to be installed in other Nuxt projects
+- The `/playground` directory is for testing and showcasing the module
+- Development happens in `/src/runtime` for module code
+- Test the module by running `pnpm run dev` which starts the playground
+
 ## Package Manager
 - **Always use `pnpm`** - NOT npm or yarn
 - Commands: `pnpm install`, `pnpm run dev`, `pnpm run build`, etc.

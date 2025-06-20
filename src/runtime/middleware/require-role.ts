@@ -41,7 +41,9 @@ export function createRequireRoleMiddleware(
     // Ensure user is authenticated
     if (!currentUser.value) {
       const redirectUrl = `${to.path}${to.search ? `?${new URLSearchParams(to.query).toString()}` : ''}`
-      return navigateTo(`/login?redirect=${encodeURIComponent(redirectUrl)}`)
+      const config = useRuntimeConfig()
+      const loginPage = config.public.teamAuth?.loginPage || '/signin'
+      return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
     }
 
     // Check if user has a role (requires team membership)
