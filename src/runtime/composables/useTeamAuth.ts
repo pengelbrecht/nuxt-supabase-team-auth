@@ -9,28 +9,32 @@ interface TeamAuthError {
   message: string
 }
 
-// Global reactive state - shared across all components
-const globalState = {
-  currentUser: ref<User | null>(null),
-  currentProfile: ref<Profile | null>(null),
-  currentTeam: ref<Team | null>(null),
-  currentRole: ref<string | null>(null),
-  teamMembers: ref<TeamMember[]>([]),
-  isLoading: ref(true),
-  isImpersonating: ref(false),
-  impersonationExpiresAt: ref<Date | null>(null),
-}
-
 export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
-  // Use global reactive state
-  const currentUser = globalState.currentUser
-  const currentProfile = globalState.currentProfile
-  const currentTeam = globalState.currentTeam
-  const currentRole = globalState.currentRole
-  const teamMembers = globalState.teamMembers
-  const isLoading = globalState.isLoading
-  const isImpersonating = globalState.isImpersonating
-  const impersonationExpiresAt = globalState.impersonationExpiresAt
+  // Single auth state using useState - called inside the composable function
+  const authState = useState('team-auth', () => ({
+    user: null as User | null,
+    profile: null as Profile | null,
+    team: null as Team | null,
+    role: null as string | null,
+    teamMembers: [] as TeamMember[],
+    loading: true,
+    impersonating: false,
+    impersonationExpiresAt: null as Date | null,
+    initialized: false
+  }))
+
+  // Extract reactive refs from state for compatibility
+  const currentUser = computed(() => authState.value.user)
+  const currentProfile = computed(() => authState.value.profile) 
+  const currentTeam = computed(() => authState.value.team)
+  const currentRole = computed(() => authState.value.role)
+  const teamMembers = computed(() => authState.value.teamMembers)
+  const isLoading = computed(() => authState.value.loading)
+  const isImpersonating = computed(() => authState.value.impersonating)
+  const impersonationExpiresAt = computed(() => authState.value.impersonationExpiresAt)
+
+  // Session sync utilities
+  const sessionSync = useSessionSync()
 
   // Supabase client initialization - for client-only usage
   const getSupabaseClient = (): SupabaseClient => {
@@ -51,1213 +55,160 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     return getSupabaseClient()
   }
 
-
-  // Update state from session
-  let isUpdating = false
-  
-  const updateStateFromSession = async (session: AuthSession) => {
-    const user = session.user
-    console.log(`🔥 updateStateFromSession called for: ${user.email} (${user.id})`)
+  // Update complete auth state atomically
+  const updateCompleteAuthState = async (user: SupabaseUser) => {
+    console.log(`🔥 Updating complete auth state for: ${user.email}`)
     
-    // Prevent concurrent execution
-    if (isUpdating) {
-      console.log('🔥 Already updating, skipping')
+    try {
+      // Fetch all data in parallel
+      const [profileResult, teamResult] = await Promise.all([
+        // Fetch profile
+        getClient()
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single(),
+        
+        // Fetch team membership  
+        getClient()
+          .from('team_members')
+          .select(`
+            role,
+            teams!inner (
+              id, name, created_at, company_name,
+              company_address_line1, company_address_line2,
+              company_city, company_state, company_postal_code,
+              company_country, company_vat_number
+            )
+          `)
+          .eq('user_id', user.id)
+          .single()
+      ])
+
+      // Update entire state atomically
+      authState.value = {
+        ...authState.value,
+        user: {
+          id: user.id,
+          email: user.email!,
+          user_metadata: user.user_metadata,
+        },
+        profile: profileResult.data || null,
+        team: teamResult.data ? {
+          id: teamResult.data.teams.id,
+          name: teamResult.data.teams.name,
+          created_at: teamResult.data.teams.created_at,
+          company_name: teamResult.data.teams.company_name,
+          company_address_line1: teamResult.data.teams.company_address_line1,
+          company_address_line2: teamResult.data.teams.company_address_line2,
+          company_city: teamResult.data.teams.company_city,
+          company_state: teamResult.data.teams.company_state,
+          company_postal_code: teamResult.data.teams.company_postal_code,
+          company_country: teamResult.data.teams.company_country,
+          company_vat_number: teamResult.data.teams.company_vat_number,
+        } : null,
+        role: teamResult.data?.role || null,
+        loading: false
+      }
+      
+      console.log(`🔥 Auth state updated - User: ${user.email}, Team: ${authState.value.team?.name}, Role: ${authState.value.role}`)
+      
+    } catch (error) {
+      console.error('🔥 Failed to update auth state:', error)
+      // Update with partial data
+      authState.value = {
+        ...authState.value,
+        user: {
+          id: user.id,
+          email: user.email!,
+          user_metadata: user.user_metadata,
+        },
+        profile: null,
+        team: null,
+        role: null,
+        loading: false
+      }
+    }
+  }
+
+  // Reset auth state
+  const resetAuthState = () => {
+    console.log('🔥 Resetting auth state')
+    authState.value = {
+      ...authState.value,
+      user: null,
+      profile: null,
+      team: null,
+      role: null,
+      impersonating: false,
+      impersonationExpiresAt: null,
+      loading: false
+    }
+  }
+
+  // Initialize auth state once
+  const initializeAuth = async () => {
+    if (authState.value.initialized) {
+      console.log('🔥 Auth already initialized, skipping')
       return
     }
     
-    // Only skip if we're already updating or if this is the exact same session
-    // Allow all legitimate session changes to go through
-    
-    isUpdating = true
+    console.log('🔥 Initializing auth state')
     
     try {
-
-    // Set current user
-    currentUser.value = {
-      id: user.id,
-      email: user.email!,
-      user_metadata: user.user_metadata,
-    }
-    console.log(`🔥 Updated currentUser: ${currentUser.value.email}`)
-
-    // Fetch team information from database
-    try {
-      const { data: teamMember, error } = await getClient()
-        .from('team_members')
-        .select(`
-          role,
-          teams (
-            id,
-            name,
-            created_at,
-            company_name,
-            company_address_line1,
-            company_address_line2,
-            company_city,
-            company_state,
-            company_postal_code,
-            company_country,
-            company_vat_number
-          )
-        `)
-        .eq('user_id', user.id)
-        .single()
-
-      if (!error && teamMember) {
-        currentTeam.value = {
-          id: teamMember.teams.id,
-          name: teamMember.teams.name,
-          created_at: teamMember.teams.created_at,
-          company_name: teamMember.teams.company_name,
-          company_address_line1: teamMember.teams.company_address_line1,
-          company_address_line2: teamMember.teams.company_address_line2,
-          company_city: teamMember.teams.company_city,
-          company_state: teamMember.teams.company_state,
-          company_postal_code: teamMember.teams.company_postal_code,
-          company_country: teamMember.teams.company_country,
-          company_vat_number: teamMember.teams.company_vat_number,
-        }
-        currentRole.value = teamMember.role
-        console.log(`🔥 Updated team: ${currentTeam.value.name}, role: ${currentRole.value}`)
-      }
-      else {
-        // No team membership found
-        console.log('🔥 No team membership found for user')
-        currentTeam.value = null
-        currentRole.value = null
-      }
-    }
-    catch (error) {
-      console.warn('Failed to fetch team information:', error)
-      currentTeam.value = null
-      currentRole.value = null
-    }
-
-    // Load user profile
-    try {
-      currentProfile.value = await getProfile()
-      console.log(`🔥 Updated profile: ${currentProfile.value?.full_name || 'No name'}`)
-    }
-    catch (error) {
-      console.warn('Failed to fetch profile information:', error)
-      currentProfile.value = null
-    }
-
-    // Reset impersonation state (we're not using JWT claims for this yet)
-    isImpersonating.value = false
-    impersonationExpiresAt.value = null
-    
-    } finally {
-      isUpdating = false
-      console.log('🔥 updateStateFromSession complete')
-    }
-  }
-
-  // Reset state on sign out
-  const resetState = () => {
-    currentUser.value = null
-    currentProfile.value = null
-    currentTeam.value = null
-    currentRole.value = null
-    isImpersonating.value = false
-    impersonationExpiresAt.value = null
-  }
-
-
-  // Authentication methods
-  const signUpWithTeam = async (email: string, password: string, teamName: string): Promise<void> => {
-    try {
-      isLoading.value = true
-
-      // Call Edge Function to create user and team in one transaction
-      const { data, error } = await getClient().functions.invoke('create-team-and-owner', {
-        body: {
-          email,
-          password,
-          team_name: teamName,
-        },
-      })
-
-      if (error) {
-        throw { code: 'TEAM_CREATION_FAILED', message: error.message }
-      }
-
-      if (!data?.success) {
-        throw { code: 'TEAM_CREATION_FAILED', message: 'Edge Function returned unsuccessful response' }
-      }
-
-      // The Edge Function creates the user and team, now we need to sign in
-      const { data: signInData, error: signInError } = await getClient().auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (signInError) {
-        throw { code: 'SIGNIN_FAILED', message: signInError.message }
-      }
-
-      // State will be updated by the auth listener
-    }
-    catch (error: any) {
-      console.error('Sign up with team failed:', error)
-      throw error
-    }
-    finally {
-      isLoading.value = false
-    }
-  }
-
-  const signIn = async (email: string, password: string): Promise<void> => {
-    try {
-      isLoading.value = true
-
-      const { data, error } = await getClient().auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) {
-        throw { code: 'SIGNIN_FAILED', message: error.message }
-      }
-
-      // State will be updated by the auth listener
-    }
-    catch (error: any) {
-      console.error('Sign in failed:', error)
-      throw error
-    }
-    finally {
-      isLoading.value = false
-    }
-  }
-
-  const signOut = async (): Promise<void> => {
-    try {
-      isLoading.value = true
-
-      const { error } = await getClient().auth.signOut()
-
-      if (error) {
-        throw { code: 'SIGNOUT_FAILED', message: error.message }
-      }
-
-      // State will be reset by the auth listener
-    }
-    catch (error: any) {
-      console.error('Sign out failed:', error)
-      throw error
-    }
-    finally {
-      isLoading.value = false
-    }
-  }
-
-  // Team management methods
-  const inviteMember = async (email: string, role: string = 'member'): Promise<void> => {
-    try {
-      if (!currentTeam.value) {
-        throw { code: 'NO_TEAM', message: 'No team selected' }
-      }
-
-      if (!['owner', 'admin'].includes(currentRole.value || '')) {
-        throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only owners and admins can invite members' }
-      }
-
-      const { data, error } = await getClient().functions.invoke('invite-member', {
-        body: {
-          email,
-          role,
-          team_id: currentTeam.value.id,
-        },
-      })
-
-      if (error) {
-        throw { code: 'INVITE_FAILED', message: error.message }
-      }
-    }
-    catch (error: any) {
-      console.error('Invite member failed:', error)
-      throw error
-    }
-  }
-
-  const revokeInvite = async (inviteId: string): Promise<void> => {
-    try {
-      if (!currentTeam.value) {
-        throw { code: 'NO_TEAM', message: 'No team selected' }
-      }
-
-      if (!['owner', 'admin'].includes(currentRole.value || '')) {
-        throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only owners and admins can revoke invites' }
-      }
-
-      const { error } = await getClient()
-        .from('invites')
-        .update({ status: 'revoked' })
-        .eq('id', inviteId)
-        .eq('team_id', currentTeam.value.id)
-
-      if (error) {
-        throw { code: 'REVOKE_FAILED', message: error.message }
-      }
-    }
-    catch (error: any) {
-      console.error('Revoke invite failed:', error)
-      throw error
-    }
-  }
-
-  const resendInvite = async (inviteId: string): Promise<void> => {
-    try {
-      if (!currentTeam.value) {
-        throw { code: 'NO_TEAM', message: 'No team selected' }
-      }
-
-      if (!['owner', 'admin'].includes(currentRole.value || '')) {
-        throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only owners and admins can resend invites' }
-      }
-
-      // Get the invite details
-      const { data: invite, error: fetchError } = await getClient()
-        .from('invites')
-        .select('email, team_id')
-        .eq('id', inviteId)
-        .eq('team_id', currentTeam.value.id)
-        .single()
-
-      if (fetchError || !invite) {
-        throw { code: 'INVITE_NOT_FOUND', message: 'Invite not found' }
-      }
-
-      // Delete the old invite and create a new one
-      const { error: deleteError } = await getClient()
-        .from('invites')
-        .delete()
-        .eq('id', inviteId)
-
-      if (deleteError) {
-        throw { code: 'DELETE_FAILED', message: deleteError.message }
-      }
-
-      // Create new invite
-      await inviteMember(invite.email, 'member')
-    }
-    catch (error: any) {
-      console.error('Resend invite failed:', error)
-      throw error
-    }
-  }
-
-  const promote = async (userId: string): Promise<void> => {
-    try {
-      if (!currentTeam.value) {
-        throw { code: 'NO_TEAM', message: 'No team selected' }
-      }
-
-      if (currentRole.value !== 'owner') {
-        throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only owners can promote members' }
-      }
-
-      const { error } = await getClient()
-        .from('team_members')
-        .update({ role: 'admin' })
-        .eq('team_id', currentTeam.value.id)
-        .eq('user_id', userId)
-        .neq('role', 'owner')
-
-      if (error) {
-        throw { code: 'PROMOTION_FAILED', message: error.message }
-      }
-    }
-    catch (error: any) {
-      console.error('Promote member failed:', error)
-      throw error
-    }
-  }
-
-  const demote = async (userId: string): Promise<void> => {
-    try {
-      if (!currentTeam.value) {
-        throw { code: 'NO_TEAM', message: 'No team selected' }
-      }
-
-      if (!['owner', 'admin'].includes(currentRole.value || '')) {
-        throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only owners and admins can demote members' }
-      }
-
-      // Owners can demote admins to members, admins can demote members (but this is essentially a no-op)
-      const { error } = await getClient()
-        .from('team_members')
-        .update({ role: 'member' })
-        .eq('team_id', currentTeam.value.id)
-        .eq('user_id', userId)
-        .neq('role', 'owner')
-
-      if (error) {
-        throw { code: 'DEMOTION_FAILED', message: error.message }
-      }
-    }
-    catch (error: any) {
-      console.error('Demote member failed:', error)
-      throw error
-    }
-  }
-
-  const transferOwnership = async (userId: string): Promise<void> => {
-    try {
-      if (!currentTeam.value) {
-        throw { code: 'NO_TEAM', message: 'No team selected' }
-      }
-
-      if (currentRole.value !== 'owner') {
-        throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only owners can transfer ownership' }
-      }
-
-      const { data, error } = await getClient().functions.invoke('transfer-ownership', {
-        body: {
-          team_id: currentTeam.value.id,
-          new_owner_id: userId,
-        },
-      })
-
-      if (error) {
-        throw { code: 'TRANSFER_FAILED', message: error.message }
-      }
-
-      // Update local state - current user is now admin
-      currentRole.value = 'admin'
-    }
-    catch (error: any) {
-      console.error('Transfer ownership failed:', error)
-      throw error
-    }
-  }
-
-  // Profile management methods
-  const getProfile = async (): Promise<Profile | null> => {
-    try {
-      if (!currentUser.value) {
-        throw { code: 'NOT_AUTHENTICATED', message: 'User not authenticated' }
-      }
-
-      const { data, error } = await getClient()
-        .from('profiles')
-        .select('*')
-        .eq('id', currentUser.value.id)
-        .single()
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // Profile doesn't exist, return null
-          return null
-        }
-        throw { code: 'FETCH_FAILED', message: error.message }
-      }
-
-      return data
-    }
-    catch (error: any) {
-      console.error('Get profile failed:', error)
-      throw error
-    }
-  }
-
-  const updateProfile = async (updates: Partial<Profile>): Promise<void> => {
-    try {
-      if (!currentUser.value) {
-        throw { code: 'NOT_AUTHENTICATED', message: 'User not authenticated' }
-      }
-
-      // Handle password update separately through auth
-      const profileUpdates = { ...updates }
-      const authUpdates: any = {}
-
-      if ('password' in updates) {
-        authUpdates.password = updates.password
-        delete profileUpdates.password
-      }
-
-      // Update auth user if password is being changed
-      if (authUpdates.password) {
-        const { error: authError } = await getClient().auth.updateUser(authUpdates)
-        if (authError) {
-          throw { code: 'AUTH_UPDATE_FAILED', message: authError.message }
-        }
-      }
-
-      // Update profile in profiles table
-      if (Object.keys(profileUpdates).length > 0) {
-        const { error } = await getClient()
-          .from('profiles')
-          .upsert({
-            id: currentUser.value.id,
-            ...profileUpdates,
-          })
-          .eq('id', currentUser.value.id)
-
-        if (error) {
-          throw { code: 'PROFILE_UPDATE_FAILED', message: error.message }
-        }
-
-        // Update reactive state - force reactivity by reassigning the ref
-        if (currentProfile.value) {
-          currentProfile.value = { ...currentProfile.value, ...profileUpdates }
-          // Force reactivity trigger as backup
-          triggerRef(currentProfile)
-        }
-        else {
-          // Load the full profile if we don't have it yet
-          currentProfile.value = await getProfile()
-        }
-      }
-    }
-    catch (error: any) {
-      console.error('Update profile failed:', error)
-      throw error
-    }
-  }
-
-  const renameTeam = async (name: string): Promise<void> => {
-    try {
-      if (!currentTeam.value) {
-        throw { code: 'NO_TEAM', message: 'No team selected' }
-      }
-
-      if (currentRole.value !== 'owner') {
-        throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only owners can rename the team' }
-      }
-
-      if (!name.trim()) {
-        throw { code: 'INVALID_NAME', message: 'Team name cannot be empty' }
-      }
-
-      const { error } = await getClient()
-        .from('teams')
-        .update({ name: name.trim() })
-        .eq('id', currentTeam.value.id)
-
-      if (error) {
-        throw { code: 'RENAME_FAILED', message: error.message }
-      }
-
-      // Update local state
-      if (currentTeam.value) {
-        currentTeam.value.name = name.trim()
-      }
-    }
-    catch (error: any) {
-      console.error('Rename team failed:', error)
-      throw error
-    }
-  }
-
-  const updateTeam = async (updates: Partial<Team>): Promise<void> => {
-    try {
-      if (!currentTeam.value) {
-        throw { code: 'NO_TEAM', message: 'No team selected' }
-      }
-
-      if (currentRole.value !== 'owner') {
-        throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only owners can update team settings' }
-      }
-
-      // Remove fields that shouldn't be updated
-      const { id, created_at, ...updateableFields } = updates
-
-      const { error } = await getClient()
-        .from('teams')
-        .update(updateableFields)
-        .eq('id', currentTeam.value.id)
-
-      if (error) {
-        throw { code: 'UPDATE_FAILED', message: error.message }
-      }
-
-      // Update local state
-      if (currentTeam.value) {
-        currentTeam.value = { ...currentTeam.value, ...updateableFields }
-      }
-    }
-    catch (error: any) {
-      console.error('Update team failed:', error)
-      throw error
-    }
-  }
-
-  const deleteTeam = async (): Promise<void> => {
-    try {
-      if (!currentTeam.value) {
-        throw { code: 'NO_TEAM', message: 'No team selected' }
-      }
-
-      if (currentRole.value !== 'owner') {
-        throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only owners can delete the team' }
-      }
-
-      // Check if there are other members
-      const { data: members, error: membersError } = await getClient()
-        .from('team_members')
-        .select('user_id')
-        .eq('team_id', currentTeam.value.id)
-
-      if (membersError) {
-        throw { code: 'CHECK_MEMBERS_FAILED', message: membersError.message }
-      }
-
-      if (members && members.length > 1) {
-        throw { code: 'TEAM_HAS_MEMBERS', message: 'Cannot delete team with other members. Transfer ownership or remove members first.' }
-      }
-
-      // Delete the team (cascade will handle related records)
-      const { error } = await getClient()
-        .from('teams')
-        .delete()
-        .eq('id', currentTeam.value.id)
-
-      if (error) {
-        throw { code: 'DELETE_FAILED', message: error.message }
-      }
-
-      // Reset team state
-      currentTeam.value = null
-      currentRole.value = null
-    }
-    catch (error: any) {
-      console.error('Delete team failed:', error)
-      throw error
-    }
-  }
-
-  // Session storage is now handled by useImpersonation composable
-
-  // Impersonation methods - simplified placeholders that delegate to useImpersonation
-  const startImpersonation = async (targetUserId: string, reason: string): Promise<void> => {
-    // This method is kept for backward compatibility
-    // The actual implementation is in useImpersonation composable
-    const { startImpersonation: start } = useImpersonation()
-    await start(targetUserId, reason)
-  }
-
-  const stopImpersonation = async (): Promise<void> => {
-    // This method is kept for backward compatibility
-    // The actual implementation is in useImpersonation composable
-    const { stopImpersonation: stop } = useImpersonation()
-    await stop()
-  }
-
-  // Sync impersonation state with useImpersonation composable
-  const syncImpersonationState = () => {
-    const { isImpersonating: impersonating, impersonationExpiresAt: expiresAt } = useImpersonation()
-    isImpersonating.value = impersonating.value
-    impersonationExpiresAt.value = expiresAt.value
-  }
-
-  // Watch for impersonation state changes
-  if (import.meta.client) {
-    watch(() => {
-      const { isImpersonating: impersonating } = useImpersonation()
-      return impersonating.value
-    }, (newValue) => {
-      syncImpersonationState()
-    })
-  }
-
-  // Handle impersonation expiration
-  const checkImpersonationExpiration = () => {
-    if (isImpersonating.value && impersonationExpiresAt.value) {
-      const now = new Date()
-      if (now >= impersonationExpiresAt.value) {
-        console.warn('Impersonation session expired, stopping impersonation')
-        stopImpersonation().catch((error) => {
-          console.error('Failed to stop expired impersonation:', error)
-        })
-      }
-    }
-  }
-
-  // Session persistence keys
-  const SESSION_STORAGE_KEYS = {
-    USER_STATE: 'team_auth_user_state',
-    TEAM_STATE: 'team_auth_team_state',
-    ROLE_STATE: 'team_auth_role_state',
-    LAST_SYNC: 'team_auth_last_sync',
-  }
-
-  // Store current state to localStorage
-  const persistState = () => {
-    try {
-      if (typeof window === 'undefined') return
-
-      const stateToStore = {
-        currentUser: currentUser.value,
-        currentTeam: currentTeam.value,
-        currentRole: currentRole.value,
-        isImpersonating: isImpersonating.value,
-        impersonationExpiresAt: impersonationExpiresAt.value?.toISOString(),
-        lastSync: new Date().toISOString(),
-      }
-
-      localStorage.setItem(SESSION_STORAGE_KEYS.USER_STATE, JSON.stringify(stateToStore))
-    }
-    catch (error) {
-      console.error('Failed to persist auth state:', error)
-    }
-  }
-
-  // Restore state from localStorage
-  const restoreState = () => {
-    try {
-      if (typeof window === 'undefined') return false
-
-      const storedState = localStorage.getItem(SESSION_STORAGE_KEYS.USER_STATE)
-      if (!storedState) return false
-
-      const parsed = JSON.parse(storedState)
-
-      // Check if stored state is recent (within 24 hours)
-      const lastSync = new Date(parsed.lastSync)
-      const now = new Date()
-      const hoursSinceSync = (now.getTime() - lastSync.getTime()) / (1000 * 60 * 60)
-
-      if (hoursSinceSync > 24) {
-        localStorage.removeItem(SESSION_STORAGE_KEYS.USER_STATE)
-        return false
-      }
-
-      // Restore state
-      currentUser.value = parsed.currentUser
-      currentTeam.value = parsed.currentTeam
-      currentRole.value = parsed.currentRole
-      isImpersonating.value = parsed.isImpersonating || false
-
-      if (parsed.impersonationExpiresAt) {
-        impersonationExpiresAt.value = new Date(parsed.impersonationExpiresAt)
-      }
-
-      return true
-    }
-    catch (error) {
-      console.error('Failed to restore auth state:', error)
-      localStorage.removeItem(SESSION_STORAGE_KEYS.USER_STATE)
-      return false
-    }
-  }
-
-  // Clear persisted state
-  const clearPersistedState = () => {
-    try {
-      if (typeof window === 'undefined') return
-      localStorage.removeItem(SESSION_STORAGE_KEYS.USER_STATE)
-    }
-    catch (error) {
-      console.error('Failed to clear persisted state:', error)
-    }
-  }
-
-  // Clear impersonation data from localStorage
-  const clearImpersonationData = () => {
-    try {
-      if (typeof window === 'undefined') return
-      localStorage.removeItem('team_auth_impersonation')
-    }
-    catch (error) {
-      console.error('Failed to clear impersonation data:', error)
-    }
-  }
-
-  // Watch for state changes and persist them
-  watch([currentUser, currentTeam, currentRole, isImpersonating, impersonationExpiresAt], () => {
-    persistState()
-  }, { deep: true })
-
-  // Dual-session management utilities
-  const getDualSessionState = () => {
-    if (typeof window === 'undefined') {
-      return {
-        hasOriginalSession: false,
-        hasImpersonationSession: false,
-        originalSession: null,
-        impersonationData: null,
-      }
-    }
-
-    // Get impersonation state using the proper architecture
-    const { isImpersonating } = useImpersonation()
-    const impersonationData = sessionStorage.getItem('team_auth_impersonation')
-    const storedOriginal = impersonationData ? JSON.parse(impersonationData).originalAccessToken : null
-    const storedImpersonation = impersonationData
-
-    return {
-      hasOriginalSession: !!storedOriginal,
-      hasImpersonationSession: !!storedImpersonation,
-      originalSession: storedOriginal,
-      impersonationData: storedImpersonation ? JSON.parse(storedImpersonation) : null,
-    }
-  }
-
-  const validateDualSessionIntegrity = () => {
-    const dualState = getDualSessionState()
-
-    // If we're marked as impersonating but missing session data, clear state
-    if (isImpersonating.value && !dualState.hasOriginalSession) {
-      console.warn('Impersonation state inconsistent, clearing')
-      isImpersonating.value = false
-      impersonationExpiresAt.value = null
-      clearImpersonationData()
-      return false
-    }
-
-    // Check impersonation expiration from stored data
-    if (dualState.impersonationData?.expires_at) {
-      const expiresAt = new Date(dualState.impersonationData.expires_at)
-      if (new Date() >= expiresAt) {
-        console.warn('Stored impersonation session expired, clearing')
-        stopImpersonation().catch(console.error)
-        return false
-      }
-    }
-
-    return true
-  }
-
-  const seamlessSessionSwitch = async (targetSession: 'original' | 'impersonation') => {
-    try {
-      const dualState = getDualSessionState()
-
-      if (targetSession === 'original' && dualState.hasOriginalSession) {
-        // Switch back to original session
-        await getClient().auth.setSession({
-          access_token: dualState.originalSession!.session.access_token,
-          refresh_token: dualState.originalSession!.session.refresh_token,
-        })
-
-        // Update state flags
-        isImpersonating.value = false
-        impersonationExpiresAt.value = null
-
-        return true
-      }
-      else if (targetSession === 'impersonation' && dualState.hasImpersonationSession) {
-        // This would be used if we need to switch back to impersonation session
-        // (though this is less common - usually we go original -> impersonation -> original)
-        console.warn('Switching to impersonation session - this should be rare')
-        return false
-      }
-
-      return false
-    }
-    catch (error) {
-      console.error('Failed to switch sessions:', error)
-      return false
-    }
-  }
-
-  // Enhanced state initialization with dual-session awareness and cross-tab sync
-  const initializeStateWithRestore = async () => {
-    try {
-      isLoading.value = true
-
-      // Skip Supabase calls during SSR
-      if (process.server) {
-        isLoading.value = false
-        return
-      }
-
-      // First try to restore from localStorage
-      const restored = restoreState()
-
-      // Check dual-session integrity
-      validateDualSessionIntegrity()
-
-      // Get current session from Supabase
+      // Get initial session
       const { data: { session } } = await getClient().auth.getSession()
-
-      if (session?.user) {
-        // Validate session by trying to fetch user's team data
-        try {
-          await updateStateFromSession(session)
-        }
-        catch (error: any) {
-          // If session is invalid (e.g., user doesn't exist in database after reset)
-          console.warn('Session validation failed, clearing invalid session:', error.message)
-          await getClient().auth.signOut()
-          resetState()
-          return // Exit early since signOut will trigger the auth listener
-        }
-
-        // If we have an impersonation session stored but current session doesn't indicate impersonation,
-        // there might be a session mismatch - clear impersonation data
-        // Note: Since we no longer use JWT claims for impersonation detection, we rely on stored session data
-        const dualState = getDualSessionState()
-        if (!dualState.hasImpersonationSession && isImpersonating.value) {
-          console.warn('Session mismatch detected, clearing impersonation state')
-          isImpersonating.value = false
-          impersonationExpiresAt.value = null
-          clearImpersonationData()
-        }
-      }
-      else if (!restored) {
-        // No session and no restored state - reset everything
-        resetState()
-        clearPersistedState()
-      }
-      else {
-        // We have restored state but no active session
-        // This could be a temporary network issue or expired session
-        const dualState = getDualSessionState()
-
-        if (dualState.hasOriginalSession && isImpersonating.value) {
-          // Try to restore original session if impersonation might have expired
-          console.info('Attempting to restore original session due to missing current session')
-          await seamlessSessionSwitch('original')
-        }
-      }
-    }
-    catch (error) {
-      console.error('Failed to initialize auth state:', error)
-      resetState()
-      clearPersistedState()
-    }
-    finally {
-      isLoading.value = false
-    }
-  }
-
-  // Enhanced reset state that also clears persistence
-  const resetStateWithClear = () => {
-    resetState()
-    clearPersistedState()
-    clearImpersonationData()
-  }
-
-  // Avatar fallback generation utility
-  const getAvatarFallback = (overrides?: {
-    fullName?: string | null
-    email?: string | null
-  }): string => {
-    // Priority order for full name:
-    // 1. Override value (typically from profiles.full_name)
-    // 2. Current user's user_metadata.name (standard Supabase auth field)
-    const fullName = overrides?.fullName !== undefined
-      ? overrides.fullName
-      : currentUser.value?.user_metadata?.name
-
-    // Priority order for email:
-    // 1. Override value
-    // 2. Current user's email
-    const email = overrides?.email !== undefined
-      ? overrides.email
-      : currentUser.value?.email
-
-    // Generate initials from full name if available
-    if (fullName && fullName.trim()) {
-      return fullName
-        .trim()
-        .split(' ')
-        .map((n: string) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
-    }
-
-    // Fallback to first letter of email
-    if (email) {
-      return email[0].toUpperCase()
-    }
-
-    return 'U'
-  }
-
-  // Get team members with their profiles and update reactive state
-  const getTeamMembers = async () => {
-    if (!currentTeam.value) {
-      throw new Error('No current team available')
-    }
-
-    // Check if we have a valid session before making the query
-    const { data: session } = await getClient().auth.getSession()
-    if (!session.session) {
-      throw new Error('No active session - please log in')
-    }
-
-    const { data: members, error } = await getClient()
-      .from('team_members')
-      .select(`
-        user_id,
-        role,
-        joined_at,
-        profiles!inner (
-          id,
-          full_name,
-          email
-        )
-      `)
-      .eq('team_id', currentTeam.value.id)
-
-    if (error) {
-      throw new Error(`Failed to load team members: ${error.message}`)
-    }
-
-    // Map team members with email from profiles table
-    const mappedMembers = (members || []).map(member => ({
-      id: member.user_id,
-      user_id: member.user_id,
-      role: member.role,
-      joined_at: member.joined_at,
-      user: {
-        email: member.profiles.email,
-      },
-      profile: member.profiles,
-    }))
-
-    // Update reactive state
-    teamMembers.value = mappedMembers
-    return mappedMembers
-  }
-
-  // Update team member role
-  const updateMemberRole = async (userId: string, newRole: string) => {
-    if (!currentTeam.value) {
-      throw new Error('No current team available')
-    }
-
-    const { error } = await getClient()
-      .from('team_members')
-      .update({ role: newRole })
-      .eq('team_id', currentTeam.value.id)
-      .eq('user_id', userId)
-
-    if (error) {
-      throw new Error(`Failed to update member role: ${error.message}`)
-    }
-
-    // Update reactive state immediately
-    const memberIndex = teamMembers.value.findIndex(m => m.user_id === userId)
-    if (memberIndex !== -1) {
-      teamMembers.value[memberIndex].role = newRole
-    }
-  }
-
-  const removeMember = async (userId: string) => {
-    if (!currentTeam.value) {
-      throw new Error('No current team available')
-    }
-
-    const { error } = await getClient()
-      .from('team_members')
-      .delete()
-      .eq('team_id', currentTeam.value.id)
-      .eq('user_id', userId)
-
-    if (error) {
-      throw new Error(`Failed to remove member: ${error.message}`)
-    }
-
-    // Update reactive state immediately - remove member from list
-    teamMembers.value = teamMembers.value.filter(m => m.user_id !== userId)
-  }
-
-  // Get another user's profile (admin/owner only)
-  const getTeamMemberProfile = async (userId: string): Promise<Profile | null> => {
-    try {
-      // Check if user has admin/owner permissions
-      if (!['admin', 'owner', 'super_admin'].includes(currentRole.value || '')) {
-        throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only admins and owners can view team member profiles' }
-      }
-
-      const { data, error } = await getClient()
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // Profile doesn't exist
-          return null
-        }
-        throw { code: 'FETCH_FAILED', message: error.message }
-      }
-
-      return data
-    }
-    catch (error: any) {
-      console.error('Get team member profile failed:', error)
-      throw error
-    }
-  }
-
-  // Update another user's profile (admin/owner only)
-  const updateTeamMemberProfile = async (userId: string, updates: Partial<Profile>): Promise<void> => {
-    try {
-      // Check if user has admin/owner permissions
-      if (!['admin', 'owner', 'super_admin'].includes(currentRole.value || '')) {
-        throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only admins and owners can update team member profiles' }
-      }
-
-      // Don't allow editing own profile through this method
-      if (userId === currentUser.value?.id) {
-        throw { code: 'INVALID_OPERATION', message: 'Use updateProfile to edit your own profile' }
-      }
-
-      // Filter to only allow safe fields
-      const allowedFields = ['full_name', 'phone', 'bio', 'timezone', 'language']
-      const safeUpdates: any = {}
-
-      for (const key of allowedFields) {
-        if (key in updates) {
-          safeUpdates[key] = updates[key as keyof Profile]
-        }
-      }
-
-      if (Object.keys(safeUpdates).length === 0) {
-        throw { code: 'NO_UPDATES', message: 'No allowed fields to update' }
-      }
-
-      const { error } = await getClient()
-        .from('profiles')
-        .update(safeUpdates)
-        .eq('id', userId)
-
-      if (error) {
-        throw { code: 'UPDATE_FAILED', message: error.message }
-      }
-
-      // Update team members reactive state if this user is in the list
-      const memberIndex = teamMembers.value.findIndex(m => m.user_id === userId)
-      if (memberIndex !== -1 && teamMembers.value[memberIndex].profile) {
-        // Update the profile data in team members
-        teamMembers.value[memberIndex].profile = {
-          ...teamMembers.value[memberIndex].profile,
-          ...safeUpdates,
-        }
-      }
-    }
-    catch (error: any) {
-      console.error('Update team member profile failed:', error)
-      throw error
-    }
-  }
-
-  // Enhanced auth listener that handles persistence
-  const setupEnhancedAuthListener = () => {
-    if (process.server) return
-    
-    getClient().auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
-      console.log(`🔥 Auth event: "${event}" | User: ${session?.user?.email || 'none'} | ID: ${session?.user?.id || 'none'}`)
       
-      try {
+      if (session?.user) {
+        await updateCompleteAuthState(session.user)
+      } else {
+        authState.value = { ...authState.value, loading: false }
+      }
+      
+      // Setup auth listener once
+      getClient().auth.onAuthStateChange(async (event, session) => {
+        console.log(`🔥 Auth event: ${event} | User: ${session?.user?.email || 'none'}`)
+        
         switch (event) {
           case 'SIGNED_IN':
-            console.log('🔥 Processing SIGNED_IN event')
-            if (session) await updateStateFromSession(session)
+          case 'TOKEN_REFRESHED':
+          case 'USER_UPDATED':
+            if (session?.user) {
+              await updateCompleteAuthState(session.user)
+            }
             break
             
           case 'SIGNED_OUT':
-            console.log('🔥 Processing SIGNED_OUT event')
-            resetStateWithClear()
+            resetAuthState()
             break
-            
-          case 'TOKEN_REFRESHED':
-            console.log('🔥 Processing TOKEN_REFRESHED event')
-            if (session) await updateStateFromSession(session)
-            break
-            
-          case 'USER_UPDATED':
-            console.log('🔥 Processing USER_UPDATED event')
-            if (session) await updateStateFromSession(session)
-            break
-            
-          case 'PASSWORD_RECOVERY':
-            console.log('🔥 Ignoring PASSWORD_RECOVERY event')
-            break
-            
-          default:
-            console.log(`🔥 Unhandled auth event: ${event}`)
-        }
-      }
-      catch (error) {
-        console.error('Auth state change error:', error)
-        // Don't let auth listener errors break the sign-in process
-        if (event === 'SIGNED_IN' && session) {
-          // Set minimal user state even if team fetching fails
-          currentUser.value = {
-            id: session.user.id,
-            email: session.user.email!,
-            user_metadata: session.user.user_metadata,
-          }
-        }
-      }
-    })
-  }
-
-  // Session sync setup
-  const sessionSync = useSessionSync()
-  let sessionSyncCleanup: (() => void) | null = null
-
-  // Initialize immediately for testing, or on mount for real usage
-  const initializeComposable = async () => {
-    await initializeStateWithRestore()
-    
-    // Only set up auth listener on client-side
-    if (!process.server) {
-      setupEnhancedAuthListener()
-    }
-
-    // Set up cross-tab session synchronization
-    sessionSyncCleanup = sessionSync.initializeSessionSync(
-      currentUser,
-      currentTeam,
-      currentRole,
-      isImpersonating,
-      impersonationExpiresAt,
-      (state, eventType) => {
-        console.info(`Cross-tab sync: ${eventType}`, state)
-        // Additional handling for specific sync events can be added here
-      },
-    )
-
-    // Set up periodic expiration checks for impersonation (client-side only)
-    let expirationInterval: NodeJS.Timeout | null = null
-    if (!process.server) {
-      expirationInterval = setInterval(() => {
-        checkImpersonationExpiration()
-      }, 60000) // Check every minute
-    }
-
-    // Clean up intervals and session sync on unmount
-    if (getCurrentInstance()) {
-      onUnmounted(() => {
-        if (expirationInterval) {
-          clearInterval(expirationInterval)
-        }
-        if (sessionSyncCleanup) {
-          sessionSyncCleanup()
         }
       })
+      
+      authState.value.initialized = true
+      console.log('🔥 Auth initialization complete')
+      
+    } catch (error) {
+      console.error('🔥 Auth initialization failed:', error)
+      authState.value = { ...authState.value, loading: false }
     }
   }
 
-  // Initialize based on context
-  let initializationPromise: Promise<void>
-
-  // Check if we're in a component context
-  const currentInstance = getCurrentInstance()
-  
-  if (injectedClient || !currentInstance) {
-    // Test environment or non-component context - initialize immediately
-    initializationPromise = initializeComposable()
+  // Initialize on client-side only
+  if (process.client && !authState.value.initialized) {
+    initializeAuth()
   }
-  else {
-    // Component context - use onMounted
-    let initResolver: () => void
-    initializationPromise = new Promise<void>((resolve) => {
-      initResolver = resolve
-    })
 
-    onMounted(() => {
-      initializeComposable().then(initResolver)
-    })
+  // Impersonation composable
+  const useImpersonationComposable = () => {
+    try {
+      return useImpersonation()
+    } catch (error) {
+      // Return mock if not available
+      return {
+        startImpersonation: async () => { throw new Error('Impersonation not available') },
+        stopImpersonation: async () => { throw new Error('Impersonation not available') }
+      }
+    }
   }
 
   return {
@@ -1271,29 +222,731 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     isImpersonating,
     impersonationExpiresAt,
 
-    // Methods
-    signUpWithTeam,
-    signIn,
-    signOut,
-    inviteMember,
-    revokeInvite,
-    resendInvite,
-    promote,
-    demote,
-    transferOwnership,
-    getProfile,
-    updateProfile,
-    renameTeam,
-    updateTeam,
-    deleteTeam,
-    startImpersonation,
-    stopImpersonation,
-    getAvatarFallback,
-    getTeamMembers,
-    updateMemberRole,
-    removeMember,
-    getTeamMemberProfile,
-    updateTeamMemberProfile,
+    // Authentication methods
+    signUpWithTeam: async (email: string, password: string, teamName: string): Promise<void> => {
+      try {
+        authState.value = { ...authState.value, loading: true }
+
+        // Call Edge Function to create user and team in one transaction
+        const response = await $fetch('/api/signup-with-team', {
+          method: 'POST',
+          body: {
+            email,
+            password,
+            teamName,
+          },
+        })
+
+        if (!response.success) {
+          throw { code: 'SIGNUP_FAILED', message: response.message || 'Signup failed' }
+        }
+
+        // Sign in the user after successful creation
+        const { error: signInError } = await getClient().auth.signInWithPassword({
+          email,
+          password,
+        })
+
+        if (signInError) {
+          throw { code: 'SIGNIN_AFTER_SIGNUP_FAILED', message: signInError.message }
+        }
+
+        // State will be updated by the auth listener
+      }
+      catch (error: any) {
+        console.error('Sign up with team failed:', error)
+        throw error
+      }
+      finally {
+        authState.value = { ...authState.value, loading: false }
+      }
+    },
+
+    signIn: async (email: string, password: string): Promise<void> => {
+      try {
+        authState.value = { ...authState.value, loading: true }
+
+        const { data, error } = await getClient().auth.signInWithPassword({
+          email,
+          password,
+        })
+
+        if (error) {
+          throw { code: 'SIGNIN_FAILED', message: error.message }
+        }
+
+        // State will be updated by the auth listener
+      }
+      catch (error: any) {
+        console.error('Sign in failed:', error)
+        throw error
+      }
+      finally {
+        authState.value = { ...authState.value, loading: false }
+      }
+    },
+
+    signOut: async (): Promise<void> => {
+      try {
+        authState.value = { ...authState.value, loading: true }
+        await getClient().auth.signOut()
+        // State will be reset by the auth listener
+      }
+      catch (error) {
+        console.error('Sign out failed:', error)
+        throw error
+      }
+      finally {
+        authState.value = { ...authState.value, loading: false }
+      }
+    },
+
+    // Profile methods
+    getProfile: async (): Promise<Profile | null> => {
+      if (!currentUser.value) return null
+      
+      const { data, error } = await getClient()
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.value.id)
+        .single()
+
+      if (error) {
+        console.error('Failed to fetch profile:', error)
+        return null
+      }
+
+      return data
+    },
+
+    updateProfile: async (updates: Partial<Profile>): Promise<void> => {
+      if (!currentUser.value) {
+        throw new Error('No authenticated user')
+      }
+
+      try {
+        authState.value = { ...authState.value, loading: true }
+
+        // Handle password update separately if provided
+        if ('password' in updates && updates.password) {
+          const { error: passwordError } = await getClient().auth.updateUser({
+            password: updates.password
+          })
+
+          if (passwordError) {
+            throw { code: 'PASSWORD_UPDATE_FAILED', message: passwordError.message }
+          }
+
+          // Remove password from profile updates
+          const { password: _, ...profileUpdates } = updates
+          updates = profileUpdates
+        }
+
+        // Update profile if there are non-password fields
+        if (Object.keys(updates).length > 0) {
+          const { data, error } = await getClient()
+            .from('profiles')
+            .update(updates)
+            .eq('id', currentUser.value.id)
+            .select()
+            .single()
+
+          if (error) {
+            throw { code: 'PROFILE_UPDATE_FAILED', message: error.message }
+          }
+
+          // Update the reactive state immediately for better UX
+          authState.value = {
+            ...authState.value,
+            profile: { ...authState.value.profile, ...data } as Profile
+          }
+
+          // Force Vue to update refs that depend on profile
+          triggerRef(authState)
+        }
+      }
+      catch (error: any) {
+        console.error('Profile update failed:', error)
+        throw error
+      }
+      finally {
+        authState.value = { ...authState.value, loading: false }
+      }
+    },
+
+    // Team management methods
+    inviteMember: async (email: string, role: string = 'member'): Promise<void> => {
+      if (!currentTeam.value) {
+        throw new Error('No current team available')
+      }
+
+      // Validate role
+      const validRoles = ['member', 'admin']
+      if (!validRoles.includes(role)) {
+        throw new Error('Invalid role. Must be member or admin')
+      }
+
+      // Check permissions - only admin and owner can invite
+      if (!currentRole.value || !['admin', 'owner', 'super_admin'].includes(currentRole.value)) {
+        throw new Error('You do not have permission to invite members')
+      }
+
+      try {
+        authState.value = { ...authState.value, loading: true }
+
+        const response = await $fetch('/api/invite-member', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: {
+            email,
+            role,
+            teamId: currentTeam.value.id,
+          },
+        })
+
+        if (!response.success) {
+          throw { code: 'INVITE_FAILED', message: response.message || 'Failed to send invite' }
+        }
+      }
+      catch (error: any) {
+        console.error('Invite member failed:', error)
+        throw error
+      }
+      finally {
+        authState.value = { ...authState.value, loading: false }
+      }
+    },
+
+    revokeInvite: async (inviteId: string): Promise<void> => {
+      if (!currentTeam.value) {
+        throw new Error('No current team available')
+      }
+
+      // Check permissions
+      if (!currentRole.value || !['admin', 'owner', 'super_admin'].includes(currentRole.value)) {
+        throw new Error('You do not have permission to revoke invites')
+      }
+
+      try {
+        authState.value = { ...authState.value, loading: true }
+
+        const { error } = await getClient()
+          .from('invites')
+          .update({ status: 'revoked' })
+          .eq('id', inviteId)
+          .eq('team_id', currentTeam.value.id)
+
+        if (error) {
+          throw { code: 'REVOKE_INVITE_FAILED', message: error.message }
+        }
+      }
+      catch (error: any) {
+        console.error('Revoke invite failed:', error)
+        throw error
+      }
+      finally {
+        authState.value = { ...authState.value, loading: false }
+      }
+    },
+
+    resendInvite: async (inviteId: string): Promise<void> => {
+      if (!currentTeam.value) {
+        throw new Error('No current team available')
+      }
+
+      try {
+        authState.value = { ...authState.value, loading: true }
+
+        // Get the original invite
+        const { data: invite, error: fetchError } = await getClient()
+          .from('invites')
+          .select('email, role')
+          .eq('id', inviteId)
+          .eq('team_id', currentTeam.value.id)
+          .single()
+
+        if (fetchError || !invite) {
+          throw { code: 'INVITE_NOT_FOUND', message: 'Invite not found' }
+        }
+
+        // Delete the old invite
+        const { error: deleteError } = await getClient()
+          .from('invites')
+          .delete()
+          .eq('id', inviteId)
+
+        if (deleteError) {
+          throw { code: 'DELETE_INVITE_FAILED', message: deleteError.message }
+        }
+
+        // Create a new invite using the invite member method
+        await this.inviteMember(invite.email, invite.role)
+      }
+      catch (error: any) {
+        console.error('Resend invite failed:', error)
+        throw error
+      }
+      finally {
+        authState.value = { ...authState.value, loading: false }
+      }
+    },
+
+    promote: async (userId: string): Promise<void> => {
+      if (!currentRole.value || currentRole.value !== 'owner') {
+        throw new Error('Only team owners can promote members')
+      }
+      await this.updateMemberRole(userId, 'admin')
+    },
+
+    demote: async (userId: string): Promise<void> => {
+      if (!currentRole.value || !['admin', 'owner'].includes(currentRole.value)) {
+        throw new Error('You do not have permission to demote members')
+      }
+      await this.updateMemberRole(userId, 'member')
+    },
+
+    transferOwnership: async (userId: string): Promise<void> => {
+      if (!currentTeam.value || !currentUser.value) {
+        throw new Error('No current team or user available')
+      }
+
+      if (currentRole.value !== 'owner') {
+        throw new Error('Only the current owner can transfer ownership')
+      }
+
+      try {
+        authState.value = { ...authState.value, loading: true }
+
+        const response = await $fetch('/api/transfer-ownership', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: {
+            teamId: currentTeam.value.id,
+            newOwnerId: userId,
+          },
+        })
+
+        if (!response.success) {
+          throw { code: 'TRANSFER_FAILED', message: response.message || 'Failed to transfer ownership' }
+        }
+
+        // Update current user's role to admin
+        authState.value = {
+          ...authState.value,
+          role: 'admin'
+        }
+
+        // Refresh team members to show updated roles
+        await this.getTeamMembers()
+      }
+      catch (error: any) {
+        console.error('Transfer ownership failed:', error)
+        throw error
+      }
+      finally {
+        authState.value = { ...authState.value, loading: false }
+      }
+    },
+
+    renameTeam: async (name: string): Promise<void> => {
+      if (!currentTeam.value) {
+        throw new Error('No current team available')
+      }
+
+      if (currentRole.value !== 'owner') {
+        throw new Error('Only team owners can rename the team')
+      }
+
+      try {
+        authState.value = { ...authState.value, loading: true }
+
+        const { data, error } = await getClient()
+          .from('teams')
+          .update({ name })
+          .eq('id', currentTeam.value.id)
+          .select()
+          .single()
+
+        if (error) {
+          throw { code: 'RENAME_TEAM_FAILED', message: error.message }
+        }
+
+        // Update the reactive state immediately
+        authState.value = {
+          ...authState.value,
+          team: { ...authState.value.team!, name }
+        }
+      }
+      catch (error: any) {
+        console.error('Rename team failed:', error)
+        throw error
+      }
+      finally {
+        authState.value = { ...authState.value, loading: false }
+      }
+    },
+
+    updateTeam: async (updates: Partial<Team>): Promise<void> => {
+      if (!currentTeam.value) {
+        throw new Error('No current team available')
+      }
+
+      if (currentRole.value !== 'owner') {
+        throw new Error('Only team owners can update team settings')
+      }
+
+      try {
+        authState.value = { ...authState.value, loading: true }
+
+        const { data, error } = await getClient()
+          .from('teams')
+          .update(updates)
+          .eq('id', currentTeam.value.id)
+          .select()
+          .single()
+
+        if (error) {
+          throw { code: 'UPDATE_TEAM_FAILED', message: error.message }
+        }
+
+        // Update the reactive state immediately
+        authState.value = {
+          ...authState.value,
+          team: { ...authState.value.team!, ...data }
+        }
+      }
+      catch (error: any) {
+        console.error('Update team failed:', error)
+        throw error
+      }
+      finally {
+        authState.value = { ...authState.value, loading: false }
+      }
+    },
+
+    deleteTeam: async (): Promise<void> => {
+      if (!currentTeam.value) {
+        throw new Error('No current team available')
+      }
+
+      if (currentRole.value !== 'owner') {
+        throw new Error('Only team owners can delete the team')
+      }
+
+      try {
+        authState.value = { ...authState.value, loading: true }
+
+        // Check if there are other members
+        const { data: members, error: membersError } = await getClient()
+          .from('team_members')
+          .select('user_id')
+          .eq('team_id', currentTeam.value.id)
+          .neq('user_id', currentUser.value?.id)
+
+        if (membersError) {
+          throw { code: 'CHECK_MEMBERS_FAILED', message: membersError.message }
+        }
+
+        if (members && members.length > 0) {
+          throw { code: 'TEAM_HAS_MEMBERS', message: 'Cannot delete team with other members. Remove all members first.' }
+        }
+
+        // Delete the team
+        const { error } = await getClient()
+          .from('teams')
+          .delete()
+          .eq('id', currentTeam.value.id)
+
+        if (error) {
+          throw { code: 'DELETE_TEAM_FAILED', message: error.message }
+        }
+
+        // Reset team-related state
+        authState.value = {
+          ...authState.value,
+          team: null,
+          role: null,
+          teamMembers: []
+        }
+      }
+      catch (error: any) {
+        console.error('Delete team failed:', error)
+        throw error
+      }
+      finally {
+        authState.value = { ...authState.value, loading: false }
+      }
+    },
+
+    // Team member methods
+    getTeamMembers: async () => {
+      if (!currentTeam.value) {
+        throw new Error('No current team available')
+      }
+
+      const { data: session } = await getClient().auth.getSession()
+      if (!session.session) {
+        throw new Error('No active session - please log in')
+      }
+
+      const { data: members, error } = await getClient()
+        .from('team_members')
+        .select(`
+          user_id,
+          role,
+          joined_at,
+          profiles!inner (
+            id,
+            full_name,
+            email
+          )
+        `)
+        .eq('team_id', currentTeam.value.id)
+
+      if (error) {
+        throw new Error(`Failed to load team members: ${error.message}`)
+      }
+
+      const mappedMembers = (members || []).map(member => ({
+        id: member.user_id,
+        user_id: member.user_id,
+        role: member.role,
+        joined_at: member.joined_at,
+        user: {
+          email: member.profiles.email,
+        },
+        profile: member.profiles,
+      }))
+
+      authState.value = { ...authState.value, teamMembers: mappedMembers }
+      return mappedMembers
+    },
+
+    updateMemberRole: async (userId: string, newRole: string) => {
+      if (!currentTeam.value) {
+        throw new Error('No current team available')
+      }
+
+      const validRoles = ['member', 'admin', 'owner']
+      if (!validRoles.includes(newRole)) {
+        throw new Error('Invalid role')
+      }
+
+      // Check permissions
+      if (!currentRole.value || !['admin', 'owner', 'super_admin'].includes(currentRole.value)) {
+        throw new Error('You do not have permission to update member roles')
+      }
+
+      // Only owners can promote to admin or change ownership
+      if (newRole === 'admin' && currentRole.value !== 'owner') {
+        throw new Error('Only owners can promote members to admin')
+      }
+
+      if (newRole === 'owner') {
+        throw new Error('Use transferOwnership method to change team ownership')
+      }
+
+      try {
+        authState.value = { ...authState.value, loading: true }
+
+        const { error } = await getClient()
+          .from('team_members')
+          .update({ role: newRole })
+          .eq('team_id', currentTeam.value.id)
+          .eq('user_id', userId)
+
+        if (error) {
+          throw { code: 'UPDATE_ROLE_FAILED', message: error.message }
+        }
+
+        // Update the reactive state immediately
+        const updatedMembers = authState.value.teamMembers.map(member => 
+          member.user_id === userId ? { ...member, role: newRole } : member
+        )
+
+        authState.value = {
+          ...authState.value,
+          teamMembers: updatedMembers
+        }
+      }
+      catch (error: any) {
+        console.error('Update member role failed:', error)
+        throw error
+      }
+      finally {
+        authState.value = { ...authState.value, loading: false }
+      }
+    },
+
+    removeMember: async (userId: string): Promise<void> => {
+      if (!currentTeam.value) {
+        throw new Error('No current team available')
+      }
+
+      // Check permissions
+      if (!currentRole.value || !['admin', 'owner', 'super_admin'].includes(currentRole.value)) {
+        throw new Error('You do not have permission to remove members')
+      }
+
+      // Prevent owner from removing themselves
+      if (userId === currentUser.value?.id && currentRole.value === 'owner') {
+        throw new Error('Team owner cannot remove themselves. Transfer ownership first.')
+      }
+
+      try {
+        authState.value = { ...authState.value, loading: true }
+
+        const { error } = await getClient()
+          .from('team_members')
+          .delete()
+          .eq('team_id', currentTeam.value.id)
+          .eq('user_id', userId)
+
+        if (error) {
+          throw { code: 'REMOVE_MEMBER_FAILED', message: error.message }
+        }
+
+        // Update the reactive state immediately
+        const updatedMembers = authState.value.teamMembers.filter(member => member.user_id !== userId)
+        authState.value = {
+          ...authState.value,
+          teamMembers: updatedMembers
+        }
+      }
+      catch (error: any) {
+        console.error('Remove member failed:', error)
+        throw error
+      }
+      finally {
+        authState.value = { ...authState.value, loading: false }
+      }
+    },
+
+    getTeamMemberProfile: async (userId: string): Promise<Profile | null> => {
+      // Only admin, owner, or super_admin can view other profiles
+      if (!currentRole.value || !['admin', 'owner', 'super_admin'].includes(currentRole.value)) {
+        throw new Error('You do not have permission to view member profiles')
+      }
+
+      const { data, error } = await getClient()
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (error) {
+        console.error('Failed to fetch team member profile:', error)
+        return null
+      }
+
+      return data
+    },
+
+    updateTeamMemberProfile: async (userId: string, updates: Partial<Profile>): Promise<void> => {
+      // Only admin, owner, or super_admin can edit other profiles
+      if (!currentRole.value || !['admin', 'owner', 'super_admin'].includes(currentRole.value)) {
+        throw new Error('You do not have permission to edit member profiles')
+      }
+
+      // Prevent editing own profile through this method
+      if (userId === currentUser.value?.id) {
+        throw new Error('Use updateProfile method to edit your own profile')
+      }
+
+      try {
+        authState.value = { ...authState.value, loading: true }
+
+        // Only allow certain fields to be updated by admins
+        const allowedFields = ['full_name', 'phone', 'company_role']
+        const filteredUpdates = Object.keys(updates)
+          .filter(key => allowedFields.includes(key))
+          .reduce((obj, key) => {
+            obj[key] = updates[key]
+            return obj
+          }, {} as Partial<Profile>)
+
+        if (Object.keys(filteredUpdates).length === 0) {
+          throw new Error('No valid fields to update')
+        }
+
+        const { error } = await getClient()
+          .from('profiles')
+          .update(filteredUpdates)
+          .eq('id', userId)
+
+        if (error) {
+          throw { code: 'UPDATE_MEMBER_PROFILE_FAILED', message: error.message }
+        }
+
+        // Update the member in the team members list if they exist
+        const updatedMembers = authState.value.teamMembers.map(member => {
+          if (member.user_id === userId) {
+            return {
+              ...member,
+              profile: { ...member.profile, ...filteredUpdates }
+            }
+          }
+          return member
+        })
+
+        authState.value = {
+          ...authState.value,
+          teamMembers: updatedMembers
+        }
+      }
+      catch (error: any) {
+        console.error('Update team member profile failed:', error)
+        throw error
+      }
+      finally {
+        authState.value = { ...authState.value, loading: false }
+      }
+    },
+
+    // Utility methods
+    getAvatarFallback: (overrides?: {
+      fullName?: string | null
+      email?: string | null
+    }): string => {
+      const fullName = overrides?.fullName !== undefined
+        ? overrides.fullName
+        : currentUser.value?.user_metadata?.name
+
+      const email = overrides?.email !== undefined
+        ? overrides.email
+        : currentUser.value?.email
+
+      if (fullName && fullName.trim()) {
+        return fullName
+          .trim()
+          .split(' ')
+          .map((n: string) => n[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2)
+      }
+
+      if (email) {
+        return email[0].toUpperCase()
+      }
+
+      return 'U'
+    },
+
+    // Impersonation methods (delegate to useImpersonation)
+    startImpersonation: async (targetUserId: string, reason: string): Promise<void> => {
+      const impersonation = useImpersonationComposable()
+      return impersonation.startImpersonation(targetUserId, reason)
+    },
+
+    stopImpersonation: async (): Promise<void> => {
+      const impersonation = useImpersonationComposable()
+      return impersonation.stopImpersonation()
+    },
 
     // Session management utilities
     sessionHealth: () => sessionSync.performSessionHealthCheck(currentUser, currentTeam, currentRole, isImpersonating, impersonationExpiresAt),
@@ -1302,19 +955,12 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     isTabPrimary: sessionSync.isPrimaryTab,
 
     // Testing utilities
-    $initializationPromise: initializationPromise,
+    $initializationPromise: Promise.resolve(),
     
-    // Force refresh auth state (for impersonation debugging)
+    // Force refresh auth state
     refreshAuthState: async () => {
-      try {
-        const { data: { session } } = await getClient().auth.getSession()
-        if (session) {
-          await updateStateFromSession(session)
-        } else {
-          resetState()
-        }
-      } catch (error) {
-        console.error('Failed to refresh auth state:', error)
+      if (currentUser.value) {
+        await updateCompleteAuthState(currentUser.value as any)
       }
     },
   }

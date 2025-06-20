@@ -148,11 +148,7 @@ export function useImpersonation() {
       // Signal successful impersonation for UI components to react
       justStartedImpersonation.value = true
       
-      // Manually trigger auth state refresh since setSession might not trigger listener
-      const { refreshAuthState } = useTeamAuth()
-      setTimeout(() => {
-        refreshAuthState()
-      }, 500)
+      // Let the auth listener handle the state update naturally
     }
     catch (error: unknown) {
       console.error('Failed to start impersonation:', error)
