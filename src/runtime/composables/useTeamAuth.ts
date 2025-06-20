@@ -9,19 +9,39 @@ interface TeamAuthError {
   message: string
 }
 
+// Global flag to prevent multiple auth listeners
+let authListenerRegistered = false
+
+// Clean initial state (no localStorage complexity)
+const createInitialAuthState = () => ({
+  // Core auth
+  user: null as User | null,
+  profile: null as Profile | null,
+  team: null as Team | null,
+  role: null as string | null,
+  teamMembers: [] as TeamMember[],
+  
+  // Impersonation state (unified here)
+  impersonating: false,
+  impersonatedUser: null as any,
+  impersonationExpiresAt: null as Date | null,
+  originalUser: null as User | null, // Store the super admin
+  impersonationSessionId: null as string | null,
+  
+  // State management
+  loading: true,
+  initialized: false
+})
+
 export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
-  // Single auth state using useState - called inside the composable function
-  const authState = useState('team-auth', () => ({
-    user: null as User | null,
-    profile: null as Profile | null,
-    team: null as Team | null,
-    role: null as string | null,
-    teamMembers: [] as TeamMember[],
-    loading: true,
-    impersonating: false,
-    impersonationExpiresAt: null as Date | null,
-    initialized: false
-  }))
+  // Clean unified auth state using useState
+  const authState = useState('team-auth', () => createInitialAuthState())
+
+  // Simple immediate state update (no localStorage complexity)
+  const updateAuthState = (updates: Partial<typeof authState.value>) => {
+    console.log('🔥 Updating auth state immediately:', updates)
+    authState.value = { ...authState.value, ...updates }
+  }
 
   // Extract reactive refs from state for compatibility
   const currentUser = computed(() => authState.value.user)
@@ -32,6 +52,10 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   const isLoading = computed(() => authState.value.loading)
   const isImpersonating = computed(() => authState.value.impersonating)
   const impersonationExpiresAt = computed(() => authState.value.impersonationExpiresAt)
+
+  // Impersonation-specific computed properties
+  const impersonatedUser = computed(() => authState.value.impersonatedUser)
+  const originalUser = computed(() => authState.value.originalUser)
 
   // Session sync utilities
   const sessionSync = useSessionSync()
@@ -55,39 +79,111 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     return getSupabaseClient()
   }
 
-  // Update complete auth state atomically
+  // Update complete auth state atomically using updateAuthState helper
   const updateCompleteAuthState = async (user: SupabaseUser) => {
     console.log(`🔥 Updating complete auth state for: ${user.email}`)
     
     try {
-      // Fetch all data in parallel
-      const [profileResult, teamResult] = await Promise.all([
-        // Fetch profile
-        getClient()
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single(),
+      console.log(`🔥 About to fetch profile and team data for user: ${user.id}`)
+      
+      // Debug: Check client session before queries
+      console.log('🔥 Getting client session...')
+      const sessionPromise = getClient().auth.getSession()
+      const sessionResult = await Promise.race([
+        sessionPromise,
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('getSession timeout')), 1500)
+        )
+      ]) as any
+      
+      console.log('🔥 Session result:', sessionResult)
+      const clientSession = sessionResult.data || sessionResult
+      
+      console.log('🔥 Client session status:', {
+        hasSession: !!clientSession.session,
+        userId: clientSession.session?.user?.id,
+        sessionUserId: user.id,
+        match: clientSession.session?.user?.id === user.id
+      })
+      
+      // If session doesn't match, wait a bit for session to settle
+      if (clientSession.session?.user?.id !== user.id) {
+        console.log('🔥 Session mismatch detected, waiting for session to update...')
+        await new Promise(resolve => setTimeout(resolve, 1000))
         
-        // Fetch team membership  
-        getClient()
-          .from('team_members')
-          .select(`
-            role,
-            teams!inner (
-              id, name, created_at, company_name,
-              company_address_line1, company_address_line2,
-              company_city, company_state, company_postal_code,
-              company_country, company_vat_number
-            )
-          `)
-          .eq('user_id', user.id)
-          .single()
-      ])
+        // Check again
+        const { data: updatedSession } = await getClient().auth.getSession()
+        console.log('🔥 Session after wait:', {
+          hasSession: !!updatedSession.session,
+          userId: updatedSession.session?.user?.id,
+          match: updatedSession.session?.user?.id === user.id
+        })
+        
+        if (updatedSession.session?.user?.id !== user.id) {
+          console.log('🔥 Session still mismatched, skipping database queries')
+          // Update with minimal data for now
+          updateAuthState({
+            user: {
+              id: user.id,
+              email: user.email!,
+              user_metadata: user.user_metadata,
+            },
+            profile: null,
+            team: null,
+            role: null,
+            loading: false
+          })
+          return
+        }
+      }
+      
+      // Fetch profile first with timeout
+      console.log('🔥 Fetching profile...')
+      const profilePromise = getClient()
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+      
+      const profileResult = await Promise.race([
+        profilePromise,
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Profile query timeout')), 5000)
+        )
+      ]) as any
+      
+      console.log('🔥 Profile fetch result:', profileResult.error ? `ERROR: ${profileResult.error.message}` : 'SUCCESS')
+      
+      // Fetch team membership with timeout
+      console.log('🔥 Fetching team membership...')
+      const teamPromise = getClient()
+        .from('team_members')
+        .select(`
+          role,
+          teams!inner (
+            id, name, created_at, company_name,
+            company_address_line1, company_address_line2,
+            company_city, company_state, company_postal_code,
+            company_country, company_vat_number
+          )
+        `)
+        .eq('user_id', user.id)
+        .single()
+        
+      const teamResult = await Promise.race([
+        teamPromise,
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Team query timeout')), 5000)
+        )
+      ]) as any
+        
+      console.log('🔥 Team fetch result:', teamResult.error ? `ERROR: ${teamResult.error.message}` : 'SUCCESS')
+      
+      console.log(`🔥 Fetch complete - Profile: ${profileResult.error ? 'ERROR' : 'SUCCESS'}, Team: ${teamResult.error ? 'ERROR' : 'SUCCESS'}`)
 
-      // Update entire state atomically
-      authState.value = {
-        ...authState.value,
+      // Use updateAuthState for immediate, consistent updates
+      console.log(`🔥 About to call updateAuthState with user data`)
+      updateAuthState({
         user: {
           id: user.id,
           email: user.email!,
@@ -109,15 +205,14 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         } : null,
         role: teamResult.data?.role || null,
         loading: false
-      }
+      })
       
       console.log(`🔥 Auth state updated - User: ${user.email}, Team: ${authState.value.team?.name}, Role: ${authState.value.role}`)
       
     } catch (error) {
       console.error('🔥 Failed to update auth state:', error)
-      // Update with partial data
-      authState.value = {
-        ...authState.value,
+      // Update with partial data using same helper
+      updateAuthState({
         user: {
           id: user.id,
           email: user.email!,
@@ -127,7 +222,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         team: null,
         role: null,
         loading: false
-      }
+      })
     }
   }
 
@@ -146,6 +241,9 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     }
   }
 
+  // Deduplication for concurrent auth updates
+  const lastProcessedEvent = ref<string>('')
+  
   // Initialize auth state once
   const initializeAuth = async () => {
     if (authState.value.initialized) {
@@ -165,24 +263,40 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         authState.value = { ...authState.value, loading: false }
       }
       
-      // Setup auth listener once
-      getClient().auth.onAuthStateChange(async (event, session) => {
-        console.log(`🔥 Auth event: ${event} | User: ${session?.user?.email || 'none'}`)
+      // Setup auth listener once globally
+      if (!authListenerRegistered) {
+        authListenerRegistered = true
+        console.log('🔥 Registering auth listener (once)')
         
-        switch (event) {
-          case 'SIGNED_IN':
-          case 'TOKEN_REFRESHED':
-          case 'USER_UPDATED':
-            if (session?.user) {
-              await updateCompleteAuthState(session.user)
-            }
-            break
-            
-          case 'SIGNED_OUT':
-            resetAuthState()
-            break
-        }
-      })
+        getClient().auth.onAuthStateChange(async (event, session) => {
+          // Deduplicate events
+          const eventKey = `${event}:${session?.user?.id || 'none'}:${session?.user?.email || 'none'}`
+          if (lastProcessedEvent.value === eventKey) {
+            console.log(`🔥 Skipping duplicate auth event: ${eventKey}`)
+            return
+          }
+          lastProcessedEvent.value = eventKey
+          
+          console.log(`🔥 Auth event: ${event} | User: ${session?.user?.email || 'none'}`)
+          
+          switch (event) {
+            case 'SIGNED_IN':
+            case 'TOKEN_REFRESHED':
+            case 'USER_UPDATED':
+              if (session?.user) {
+                await updateCompleteAuthState(session.user)
+              }
+              break
+              
+            case 'SIGNED_OUT':
+              resetAuthState()
+              lastProcessedEvent.value = '' // Reset on signout
+              break
+          }
+        })
+      } else {
+        console.log('🔥 Auth listener already registered, skipping')
+      }
       
       authState.value.initialized = true
       console.log('🔥 Auth initialization complete')
@@ -937,15 +1051,98 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       return 'U'
     },
 
-    // Impersonation methods (delegate to useImpersonation)
+    // Unified impersonation methods (no delegation)
     startImpersonation: async (targetUserId: string, reason: string): Promise<void> => {
-      const impersonation = useImpersonationComposable()
-      return impersonation.startImpersonation(targetUserId, reason)
+      try {
+        updateAuthState({ loading: true })
+
+        // Store original user before impersonation
+        const originalUser = currentUser.value
+        if (!originalUser) {
+          throw new Error('No authenticated user to start impersonation from')
+        }
+
+        // Call impersonation API
+        const response = await $fetch('/api/impersonate', {
+          method: 'POST',
+          body: { targetUserId, reason },
+        })
+
+        if (!response.success) {
+          throw new Error(response.message || 'Failed to start impersonation')
+        }
+
+        // IMMEDIATE state update (like useImpersonation pattern)
+        updateAuthState({
+          // Keep current user for now, auth listener will update it
+          originalUser,
+          impersonating: true,
+          impersonatedUser: response.impersonation.target_user,
+          impersonationExpiresAt: new Date(response.impersonation.expires_at),
+          impersonationSessionId: response.impersonation.session_id,
+          loading: false
+        })
+
+        console.log('🔥 Impersonation state updated immediately')
+
+        // Set the new session (auth listener will handle the rest)
+        await getClient().auth.setSession({
+          access_token: response.session.access_token,
+          refresh_token: response.session.refresh_token,
+        })
+
+      } catch (error: any) {
+        console.error('Start impersonation failed:', error)
+        updateAuthState({ loading: false })
+        throw error
+      }
     },
 
     stopImpersonation: async (): Promise<void> => {
-      const impersonation = useImpersonationComposable()
-      return impersonation.stopImpersonation()
+      try {
+        updateAuthState({ loading: true })
+
+        if (!isImpersonating.value || !authState.value.impersonationSessionId) {
+          throw new Error('No active impersonation session')
+        }
+
+        // Call stop impersonation API
+        const { data: { session } } = await getClient().auth.getSession()
+        if (!session) {
+          throw new Error('No active session')
+        }
+
+        await $fetch('/api/stop-impersonation', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: {
+            sessionId: authState.value.impersonationSessionId,
+          },
+        })
+
+        // IMMEDIATE state reset (like useImpersonation pattern)
+        const originalUser = authState.value.originalUser
+        updateAuthState({
+          impersonating: false,
+          impersonatedUser: null,
+          impersonationExpiresAt: null,
+          impersonationSessionId: null,
+          originalUser: null,
+          loading: false
+        })
+
+        console.log('🔥 Impersonation stopped, state reset immediately')
+
+        // Navigate to clean state
+        await navigateTo('/dashboard', { external: true })
+
+      } catch (error: any) {
+        console.error('Stop impersonation failed:', error)
+        updateAuthState({ loading: false })
+        throw error
+      }
     },
 
     // Session management utilities

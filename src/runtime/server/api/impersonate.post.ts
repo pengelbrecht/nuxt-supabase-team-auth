@@ -79,6 +79,7 @@ export default defineEventHandler(async (event) => {
       .single()
 
     if (targetError || !targetMember) {
+      console.error('Target user query error:', targetError)
       throw createError({
         statusCode: 404,
         message: 'Target user not found',
