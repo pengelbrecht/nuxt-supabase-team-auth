@@ -643,203 +643,38 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     }
   }
 
-  // Four-tier token storage system for impersonation
-  const STORAGE_KEYS = {
-    TIER_1: 'team_auth_session', // Primary session data
-    TIER_2: 'team_auth_impersonation', // Impersonation metadata
-    TIER_3: 'team_auth_original_user', // Original user backup
-    TIER_4: 'team_auth_security_token', // Security validation token
-  }
+  // Session storage is now handled by useImpersonation composable
 
-  const storeImpersonationData = (originalSession: AuthSession, impersonationData: any) => {
-    try {
-      if (typeof window === 'undefined') return
-
-      // Tier 1: Store current session backup
-      localStorage.setItem(STORAGE_KEYS.TIER_1, JSON.stringify({
-        access_token: originalSession.access_token,
-        refresh_token: originalSession.refresh_token,
-        expires_at: originalSession.expires_at,
-        user: originalSession.user,
-      }))
-
-      // Tier 2: Store impersonation metadata
-      sessionStorage.setItem(STORAGE_KEYS.TIER_2, JSON.stringify({
-        session_id: impersonationData.session_id,
-        target_user_id: impersonationData.target_user_id,
-        started_at: new Date().toISOString(),
-        expires_at: impersonationData.expires_at,
-      }))
-
-      // Tier 3: Store original user data
-      localStorage.setItem(STORAGE_KEYS.TIER_3, JSON.stringify({
-        user_id: originalSession.user.id,
-        email: originalSession.user.email,
-        team_id: currentTeam.value?.id,
-        role: currentRole.value,
-      }))
-
-      // Tier 4: Generate security token for validation
-      const securityToken = btoa(JSON.stringify({
-        timestamp: Date.now(),
-        user_id: originalSession.user.id,
-        session_id: impersonationData.session_id,
-      }))
-      sessionStorage.setItem(STORAGE_KEYS.TIER_4, securityToken)
-    }
-    catch (error) {
-      console.error('Failed to store impersonation data:', error)
-      throw { code: 'STORAGE_FAILED', message: 'Failed to store impersonation session data' }
-    }
-  }
-
-  const clearImpersonationData = () => {
-    try {
-      if (typeof window === 'undefined') return
-
-      Object.values(STORAGE_KEYS).forEach((key) => {
-        localStorage.removeItem(key)
-        sessionStorage.removeItem(key)
-      })
-    }
-    catch (error) {
-      console.error('Failed to clear impersonation data:', error)
-    }
-  }
-
-  const getStoredOriginalSession = () => {
-    try {
-      if (typeof window === 'undefined') return null
-
-      const tier1Data = localStorage.getItem(STORAGE_KEYS.TIER_1)
-      const tier3Data = localStorage.getItem(STORAGE_KEYS.TIER_3)
-      const tier4Data = sessionStorage.getItem(STORAGE_KEYS.TIER_4)
-
-      if (!tier1Data || !tier3Data || !tier4Data) {
-        return null
-      }
-
-      return {
-        session: JSON.parse(tier1Data),
-        originalUser: JSON.parse(tier3Data),
-        securityToken: tier4Data,
-      }
-    }
-    catch (error) {
-      console.error('Failed to retrieve stored session:', error)
-      return null
-    }
-  }
-
-  // Impersonation methods
+  // Impersonation methods - simplified placeholders that delegate to useImpersonation
   const startImpersonation = async (targetUserId: string, reason: string): Promise<void> => {
-    try {
-      if (!currentUser.value) {
-        throw { code: 'NOT_AUTHENTICATED', message: 'User not authenticated' }
-      }
-
-      if (currentRole.value !== 'super_admin') {
-        throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only super admins can start impersonation' }
-      }
-
-      if (isImpersonating.value) {
-        throw { code: 'ALREADY_IMPERSONATING', message: 'Already impersonating another user' }
-      }
-
-      // Get current session for backup
-      const { data: { session: currentSession } } = await supabase.auth.getSession()
-      if (!currentSession) {
-        throw { code: 'NO_SESSION', message: 'No active session found' }
-      }
-
-      // Call start-impersonation Edge Function
-      const { data, error } = await supabase.functions.invoke('start-impersonation', {
-        body: {
-          target_user_id: targetUserId,
-          reason: reason.trim(),
-        },
-      })
-
-      if (error) {
-        throw { code: 'IMPERSONATION_FAILED', message: error.message }
-      }
-
-      if (!data?.access_token || !data?.session_id) {
-        throw { code: 'INVALID_RESPONSE', message: 'Invalid response from impersonation service' }
-      }
-
-      // Store original session data in four-tier system
-      storeImpersonationData(currentSession, {
-        session_id: data.session_id,
-        target_user_id: targetUserId,
-        expires_at: data.expires_at,
-      })
-
-      // Set the new impersonation session
-      await supabase.auth.setSession({
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
-      })
-
-      // Update reactive state
-      isImpersonating.value = true
-      if (data.expires_at) {
-        impersonationExpiresAt.value = new Date(data.expires_at)
-      }
-
-      // The auth listener will update the user/team state from the new JWT
-    }
-    catch (error: any) {
-      console.error('Start impersonation failed:', error)
-      throw error
-    }
+    // This method is kept for backward compatibility
+    // The actual implementation is in useImpersonation composable
+    const { startImpersonation: start } = useImpersonation()
+    await start(targetUserId, reason)
   }
 
   const stopImpersonation = async (): Promise<void> => {
-    try {
-      if (!isImpersonating.value) {
-        throw { code: 'NOT_IMPERSONATING', message: 'Not currently impersonating' }
-      }
+    // This method is kept for backward compatibility
+    // The actual implementation is in useImpersonation composable
+    const { stopImpersonation: stop } = useImpersonation()
+    await stop()
+  }
 
-      // Get stored original session
-      const storedData = getStoredOriginalSession()
-      if (!storedData) {
-        throw { code: 'NO_ORIGINAL_SESSION', message: 'Original session data not found' }
-      }
+  // Sync impersonation state with useImpersonation composable
+  const syncImpersonationState = () => {
+    const { isImpersonating: impersonating, impersonationExpiresAt: expiresAt } = useImpersonation()
+    isImpersonating.value = impersonating.value
+    impersonationExpiresAt.value = expiresAt.value
+  }
 
-      // Call stop-impersonation Edge Function
-      const { error } = await supabase.functions.invoke('stop-impersonation', {
-        body: {}, // Edge Function will handle session cleanup
-      })
-
-      if (error) {
-        console.warn('Stop impersonation Edge Function failed:', error)
-        // Continue with local cleanup even if Edge Function fails
-      }
-
-      // Restore original session
-      await supabase.auth.setSession({
-        access_token: storedData.session.access_token,
-        refresh_token: storedData.session.refresh_token,
-      })
-
-      // Clear impersonation storage
-      clearImpersonationData()
-
-      // Reset impersonation state
-      isImpersonating.value = false
-      impersonationExpiresAt.value = null
-
-      // The auth listener will restore the original user/team state
-    }
-    catch (error: any) {
-      console.error('Stop impersonation failed:', error)
-      // In case of error, try to clear storage anyway
-      clearImpersonationData()
-      isImpersonating.value = false
-      impersonationExpiresAt.value = null
-      throw error
-    }
+  // Watch for impersonation state changes
+  if (import.meta.client) {
+    watch(() => {
+      const { isImpersonating: impersonating } = useImpersonation()
+      return impersonating.value
+    }, (newValue) => {
+      syncImpersonationState()
+    })
   }
 
   // Handle impersonation expiration
@@ -950,8 +785,11 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       }
     }
 
-    const storedOriginal = getStoredOriginalSession()
-    const storedImpersonation = sessionStorage.getItem(STORAGE_KEYS.TIER_2)
+    // Get impersonation state using the proper architecture
+    const { isImpersonating } = useImpersonation()
+    const impersonationData = sessionStorage.getItem('team_auth_impersonation')
+    const storedOriginal = impersonationData ? JSON.parse(impersonationData).originalAccessToken : null
+    const storedImpersonation = impersonationData
 
     return {
       hasOriginalSession: !!storedOriginal,
@@ -1263,7 +1101,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       // Filter to only allow safe fields
       const allowedFields = ['full_name', 'phone', 'bio', 'timezone', 'language']
       const safeUpdates: any = {}
-      
+
       for (const key of allowedFields) {
         if (key in updates) {
           safeUpdates[key] = updates[key as keyof Profile]

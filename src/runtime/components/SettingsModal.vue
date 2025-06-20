@@ -22,6 +22,11 @@
           @error="handleError"
         />
       </div>
+
+      <!-- Impersonation Settings -->
+      <div v-else-if="activeTab === 'impersonation'">
+        <SuperAdminImpersonationContent />
+      </div>
     </template>
   </UModal>
 </template>
@@ -30,13 +35,14 @@
 import { ref, computed, watch } from 'vue'
 import ProfileForm from './ProfileForm.vue'
 import TeamForm from './TeamForm.vue'
+import SuperAdminImpersonationContent from './SuperAdminImpersonationContent.vue'
 
 // Props
 interface Props {
   /** Whether the modal is open */
   modelValue: boolean
   /** Which settings tab to show */
-  tab?: 'profile' | 'team'
+  tab?: 'profile' | 'team' | 'impersonation'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -66,6 +72,8 @@ const modalTitle = computed(() => {
       return 'Edit Profile'
     case 'team':
       return 'Team Settings'
+    case 'impersonation':
+      return 'Start Impersonation'
     default:
       return 'Settings'
   }
@@ -77,6 +85,8 @@ const modalDescription = computed(() => {
       return 'Manage your personal profile information and account settings'
     case 'team':
       return 'Manage team information, members, and organization settings'
+    case 'impersonation':
+      return 'Select a user to impersonate for support and debugging purposes'
     default:
       return 'Manage your account and team settings'
   }

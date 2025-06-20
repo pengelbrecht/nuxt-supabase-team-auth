@@ -71,7 +71,7 @@ const { currentUser, currentProfile, currentRole, signOut, isImpersonating, stop
 
 // Modal state
 const showSettingsModal = ref(false)
-const settingsTab = ref<'profile' | 'team'>('profile')
+const settingsTab = ref<'profile' | 'team' | 'impersonation'>('profile')
 
 // Computed properties
 const avatarFallback = computed(() => {
@@ -101,6 +101,11 @@ const openProfileSettings = () => {
 
 const openTeamSettings = () => {
   settingsTab.value = 'team'
+  showSettingsModal.value = true
+}
+
+const openImpersonationSettings = () => {
+  settingsTab.value = 'impersonation'
   showSettingsModal.value = true
 }
 
@@ -182,8 +187,7 @@ const dropdownItems = computed(() => {
         label: 'Start Impersonation',
         icon: 'i-lucide-arrow-right',
         onSelect: () => {
-          console.log('Start Impersonation clicked')
-          emit('impersonation')
+          openImpersonationSettings()
         },
       })
     }
