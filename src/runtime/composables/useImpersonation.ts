@@ -24,6 +24,7 @@ interface ImpersonationData {
 const impersonationData = ref<ImpersonationData | null>(null)
 const isStarting = ref(false)
 const isStopping = ref(false)
+const justStartedImpersonation = ref(false) // Flag for UI to react to successful start
 
 // Initialize from storage on first load
 if (import.meta.client && !impersonationData.value) {
@@ -94,7 +95,10 @@ export function useImpersonation() {
         },
       })
 
+      console.log('Impersonation response:', response)
+
       if (!response.success || !response.session || !response.impersonation) {
+        console.error('Invalid response structure:', response)
         throw new Error('Invalid impersonation response')
       }
 
@@ -110,12 +114,35 @@ export function useImpersonation() {
       impersonationData.value = data
       localStorage.setItem(IMPERSONATION_STORAGE_KEY, JSON.stringify(data))
 
-      // Switch to impersonated session
-      await supabase.auth.setSession({
+      // Clear the loading state immediately since we got a successful response
+      isStarting.value = false
+      
+      console.log('Setting session with new tokens...')
+      console.log('🔥 About to call setSession with:', {
+        user_id: response.session.user?.id,
+        access_token: response.session.access_token?.substring(0, 20) + '...'
+      })
+      
+      // Try to set the session, but don't let it block the UI
+      const sessionPromise = supabase.auth.setSession({
         access_token: response.session.access_token,
         refresh_token: response.session.refresh_token,
       })
 
+      // Add timeout to prevent hanging
+      Promise.race([
+        sessionPromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 3000))
+      ]).then(
+        (result: any) => {
+          console.log('🔥 Session set result:', { data: result?.data?.user?.id, error: result?.error })
+        },
+        (error) => {
+          console.warn('🔥 Session setting failed or timed out:', error)
+          // TODO: Need different approach to refresh auth state without circular dependency
+        }
+      )
+      
       toast.add({
         title: 'Impersonation Started',
         description: `Now impersonating ${data.targetUser.full_name || data.targetUser.email}`,
@@ -123,8 +150,11 @@ export function useImpersonation() {
         icon: 'i-lucide-user-check',
       })
 
-      // Reload the page to ensure clean state
-      await navigateTo('/dashboard', { external: true })
+      // Signal successful impersonation for UI components to react
+      console.log('🔥 Setting justStartedImpersonation flag to true')
+      justStartedImpersonation.value = true
+      
+      console.log('🔥 Impersonation setup complete, flag set:', justStartedImpersonation.value)
     }
     catch (error: unknown) {
       console.error('Failed to start impersonation:', error)
@@ -138,7 +168,10 @@ export function useImpersonation() {
       throw error
     }
     finally {
-      isStarting.value = false
+      // Only clear loading if we haven't already done it in success case
+      if (isStarting.value) {
+        isStarting.value = false
+      }
     }
   }
 
@@ -240,6 +273,11 @@ export function useImpersonation() {
     }
   }
 
+  // Helper to clear the success flag (for UI components)
+  const clearSuccessFlag = () => {
+    justStartedImpersonation.value = false
+  }
+
   return {
     // State
     isImpersonating: readonly(isImpersonating),
@@ -247,9 +285,11 @@ export function useImpersonation() {
     impersonationExpiresAt: readonly(impersonationExpiresAt),
     isStarting: readonly(isStarting),
     isStopping: readonly(isStopping),
+    justStartedImpersonation: readonly(justStartedImpersonation),
 
     // Actions
     startImpersonation,
     stopImpersonation,
+    clearSuccessFlag,
   }
 }

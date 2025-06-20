@@ -44,6 +44,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
+import { useImpersonation } from '../composables/useImpersonation'
 import SettingsModal from './SettingsModal.vue'
 
 // Props
@@ -68,6 +69,7 @@ const emit = defineEmits<{
 
 // Get auth state
 const { currentUser, currentProfile, currentRole, signOut, isImpersonating, stopImpersonation, getAvatarFallback } = useTeamAuth()
+const { justStartedImpersonation, clearSuccessFlag } = useImpersonation()
 
 // Modal state
 const showSettingsModal = ref(false)
@@ -210,5 +212,16 @@ const dropdownItems = computed(() => {
   })
 
   return items
+})
+
+// Watch for successful impersonation to close modal
+watch(justStartedImpersonation, (newValue, oldValue) => {
+  console.log('🔥 UserButton watcher triggered:', { newValue, oldValue, modalOpen: showSettingsModal.value })
+  if (newValue) {
+    console.log('🔥 Impersonation started successfully, closing settings modal...')
+    showSettingsModal.value = false
+    clearSuccessFlag()
+    console.log('🔥 Modal closed, flag cleared')
+  }
 })
 </script>

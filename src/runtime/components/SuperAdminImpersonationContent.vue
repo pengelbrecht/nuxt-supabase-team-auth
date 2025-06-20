@@ -163,7 +163,7 @@ import RoleBadge from './RoleBadge.vue'
 
 // Get auth composable
 const { currentUser, currentRole, getAvatarFallback } = useTeamAuth()
-const { startImpersonation, isStarting } = useImpersonation()
+const { startImpersonation, isStarting, justStartedImpersonation, clearSuccessFlag } = useImpersonation()
 const toast = useToast()
 
 // Component state
@@ -374,6 +374,8 @@ const getUserInitials = (user: any) => {
     email: user.email,
   })
 }
+
+// Note: Modal closing is handled by UserButton watching justStartedImpersonation
 
 // Initialize component
 onMounted(() => {

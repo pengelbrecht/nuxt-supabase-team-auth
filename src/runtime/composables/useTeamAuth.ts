@@ -43,15 +43,23 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     return nuxtApp.$teamAuthClient as SupabaseClient
   }
 
-  const supabase = getSupabaseClient()
+  // Lazy client access - only get when needed and only on client
+  const getClient = () => {
+    if (process.server) {
+      throw new Error('Supabase client not available during SSR')
+    }
+    return getSupabaseClient()
+  }
 
   // State initialization with session validation
   const initializeState = async () => {
     try {
       isLoading.value = true
 
-      // Get current session
-      const { data: { session } } = await supabase.auth.getSession()
+      // Get current session (client-side only)
+      if (process.server) return
+      
+      const { data: { session } } = await getClient().auth.getSession()
 
       if (session?.user) {
         // Validate session by trying to fetch user's team data
@@ -61,7 +69,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         catch (error: any) {
           // If session is invalid (e.g., user doesn't exist in database after reset)
           console.warn('Session validation failed, clearing invalid session:', error.message)
-          await supabase.auth.signOut()
+          await getClient().auth.signOut()
           resetState()
         }
       }
@@ -79,8 +87,21 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   }
 
   // Update state from session
+  let isUpdating = false
+  
   const updateStateFromSession = async (session: AuthSession) => {
     const user = session.user
+    console.log('🔥 updateStateFromSession called with user:', user.id, user.email)
+    
+    // Prevent concurrent execution
+    if (isUpdating) {
+      console.log('🔥 Update already in progress, skipping')
+      return
+    }
+    
+    isUpdating = true
+    
+    try {
 
     // Set current user
     currentUser.value = {
@@ -88,10 +109,11 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       email: user.email!,
       user_metadata: user.user_metadata,
     }
+    console.log('🔥 Set currentUser to:', currentUser.value)
 
     // Fetch team information from database
     try {
-      const { data: teamMember, error } = await supabase
+      const { data: teamMember, error } = await getClient()
         .from('team_members')
         .select(`
           role,
@@ -142,7 +164,9 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
     // Load user profile
     try {
+      console.log('🔥 Fetching profile for user:', user.id)
       currentProfile.value = await getProfile()
+      console.log('🔥 Profile loaded:', currentProfile.value)
     }
     catch (error) {
       console.warn('Failed to fetch profile information:', error)
@@ -152,6 +176,10 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     // Reset impersonation state (we're not using JWT claims for this yet)
     isImpersonating.value = false
     impersonationExpiresAt.value = null
+    
+    } finally {
+      isUpdating = false
+    }
   }
 
   // Reset state on sign out
@@ -164,17 +192,28 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     impersonationExpiresAt.value = null
   }
 
-  // Auth state change listener
+  // Auth state change listener (client-side only)
   const setupAuthListener = () => {
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    if (process.server) return
+    
+    const authListener = getClient().auth.onAuthStateChange(async (event, session) => {
+      console.log('🔥 AUTH LISTENER FIRED! Event:', event, 'User ID:', session?.user?.id)
+      console.trace('🔥 Auth listener call stack')
+      
       if (event === 'SIGNED_IN' && session) {
+        console.log('🔥 Processing SIGNED_IN event for:', session.user.email)
         await updateStateFromSession(session)
       }
       else if (event === 'SIGNED_OUT') {
+        console.log('🔥 Processing SIGNED_OUT event')
         resetState()
       }
       else if (event === 'TOKEN_REFRESHED' && session) {
+        console.log('🔥 Processing TOKEN_REFRESHED event for:', session.user.email)
         await updateStateFromSession(session)
+      }
+      else {
+        console.log('🔥 Unhandled auth event:', event, session?.user?.email)
       }
     })
   }
@@ -185,7 +224,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       isLoading.value = true
 
       // Call Edge Function to create user and team in one transaction
-      const { data, error } = await supabase.functions.invoke('create-team-and-owner', {
+      const { data, error } = await getClient().functions.invoke('create-team-and-owner', {
         body: {
           email,
           password,
@@ -202,7 +241,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       }
 
       // The Edge Function creates the user and team, now we need to sign in
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await getClient().auth.signInWithPassword({
         email,
         password,
       })
@@ -226,7 +265,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     try {
       isLoading.value = true
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await getClient().auth.signInWithPassword({
         email,
         password,
       })
@@ -250,7 +289,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     try {
       isLoading.value = true
 
-      const { error } = await supabase.auth.signOut()
+      const { error } = await getClient().auth.signOut()
 
       if (error) {
         throw { code: 'SIGNOUT_FAILED', message: error.message }
@@ -278,7 +317,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only owners and admins can invite members' }
       }
 
-      const { data, error } = await supabase.functions.invoke('invite-member', {
+      const { data, error } = await getClient().functions.invoke('invite-member', {
         body: {
           email,
           role,
@@ -306,7 +345,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only owners and admins can revoke invites' }
       }
 
-      const { error } = await supabase
+      const { error } = await getClient()
         .from('invites')
         .update({ status: 'revoked' })
         .eq('id', inviteId)
@@ -333,7 +372,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       }
 
       // Get the invite details
-      const { data: invite, error: fetchError } = await supabase
+      const { data: invite, error: fetchError } = await getClient()
         .from('invites')
         .select('email, team_id')
         .eq('id', inviteId)
@@ -345,7 +384,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       }
 
       // Delete the old invite and create a new one
-      const { error: deleteError } = await supabase
+      const { error: deleteError } = await getClient()
         .from('invites')
         .delete()
         .eq('id', inviteId)
@@ -373,7 +412,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only owners can promote members' }
       }
 
-      const { error } = await supabase
+      const { error } = await getClient()
         .from('team_members')
         .update({ role: 'admin' })
         .eq('team_id', currentTeam.value.id)
@@ -401,7 +440,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       }
 
       // Owners can demote admins to members, admins can demote members (but this is essentially a no-op)
-      const { error } = await supabase
+      const { error } = await getClient()
         .from('team_members')
         .update({ role: 'member' })
         .eq('team_id', currentTeam.value.id)
@@ -428,7 +467,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only owners can transfer ownership' }
       }
 
-      const { data, error } = await supabase.functions.invoke('transfer-ownership', {
+      const { data, error } = await getClient().functions.invoke('transfer-ownership', {
         body: {
           team_id: currentTeam.value.id,
           new_owner_id: userId,
@@ -455,7 +494,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         throw { code: 'NOT_AUTHENTICATED', message: 'User not authenticated' }
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await getClient()
         .from('profiles')
         .select('*')
         .eq('id', currentUser.value.id)
@@ -494,7 +533,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
       // Update auth user if password is being changed
       if (authUpdates.password) {
-        const { error: authError } = await supabase.auth.updateUser(authUpdates)
+        const { error: authError } = await getClient().auth.updateUser(authUpdates)
         if (authError) {
           throw { code: 'AUTH_UPDATE_FAILED', message: authError.message }
         }
@@ -502,7 +541,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
       // Update profile in profiles table
       if (Object.keys(profileUpdates).length > 0) {
-        const { error } = await supabase
+        const { error } = await getClient()
           .from('profiles')
           .upsert({
             id: currentUser.value.id,
@@ -546,7 +585,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         throw { code: 'INVALID_NAME', message: 'Team name cannot be empty' }
       }
 
-      const { error } = await supabase
+      const { error } = await getClient()
         .from('teams')
         .update({ name: name.trim() })
         .eq('id', currentTeam.value.id)
@@ -579,7 +618,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       // Remove fields that shouldn't be updated
       const { id, created_at, ...updateableFields } = updates
 
-      const { error } = await supabase
+      const { error } = await getClient()
         .from('teams')
         .update(updateableFields)
         .eq('id', currentTeam.value.id)
@@ -610,7 +649,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       }
 
       // Check if there are other members
-      const { data: members, error: membersError } = await supabase
+      const { data: members, error: membersError } = await getClient()
         .from('team_members')
         .select('user_id')
         .eq('team_id', currentTeam.value.id)
@@ -624,7 +663,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       }
 
       // Delete the team (cascade will handle related records)
-      const { error } = await supabase
+      const { error } = await getClient()
         .from('teams')
         .delete()
         .eq('id', currentTeam.value.id)
@@ -830,7 +869,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
       if (targetSession === 'original' && dualState.hasOriginalSession) {
         // Switch back to original session
-        await supabase.auth.setSession({
+        await getClient().auth.setSession({
           access_token: dualState.originalSession!.session.access_token,
           refresh_token: dualState.originalSession!.session.refresh_token,
         })
@@ -861,6 +900,12 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     try {
       isLoading.value = true
 
+      // Skip Supabase calls during SSR
+      if (process.server) {
+        isLoading.value = false
+        return
+      }
+
       // First try to restore from localStorage
       const restored = restoreState()
 
@@ -868,7 +913,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       validateDualSessionIntegrity()
 
       // Get current session from Supabase
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session } } = await getClient().auth.getSession()
 
       if (session?.user) {
         // Validate session by trying to fetch user's team data
@@ -878,7 +923,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         catch (error: any) {
           // If session is invalid (e.g., user doesn't exist in database after reset)
           console.warn('Session validation failed, clearing invalid session:', error.message)
-          await supabase.auth.signOut()
+          await getClient().auth.signOut()
           resetState()
           return // Exit early since signOut will trigger the auth listener
         }
@@ -973,12 +1018,12 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     }
 
     // Check if we have a valid session before making the query
-    const { data: session } = await supabase.auth.getSession()
+    const { data: session } = await getClient().auth.getSession()
     if (!session.session) {
       throw new Error('No active session - please log in')
     }
 
-    const { data: members, error } = await supabase
+    const { data: members, error } = await getClient()
       .from('team_members')
       .select(`
         user_id,
@@ -1019,7 +1064,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       throw new Error('No current team available')
     }
 
-    const { error } = await supabase
+    const { error } = await getClient()
       .from('team_members')
       .update({ role: newRole })
       .eq('team_id', currentTeam.value.id)
@@ -1041,7 +1086,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       throw new Error('No current team available')
     }
 
-    const { error } = await supabase
+    const { error } = await getClient()
       .from('team_members')
       .delete()
       .eq('team_id', currentTeam.value.id)
@@ -1063,7 +1108,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         throw { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only admins and owners can view team member profiles' }
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await getClient()
         .from('profiles')
         .select('*')
         .eq('id', userId)
@@ -1112,7 +1157,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         throw { code: 'NO_UPDATES', message: 'No allowed fields to update' }
       }
 
-      const { error } = await supabase
+      const { error } = await getClient()
         .from('profiles')
         .update(safeUpdates)
         .eq('id', userId)
@@ -1139,7 +1184,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
   // Enhanced auth listener that handles persistence
   const setupEnhancedAuthListener = () => {
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    getClient().auth.onAuthStateChange(async (event, session) => {
       try {
         if (event === 'SIGNED_IN' && session) {
           await updateStateFromSession(session)
@@ -1204,16 +1249,18 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     }
   }
 
-  // For testing environments, initialize immediately
-  // For component contexts, use onMounted
+  // Initialize based on context
   let initializationPromise: Promise<void>
 
-  // Simple heuristic: if we have injectedClient, we're likely in a test
-  if (injectedClient) {
+  // Check if we're in a component context
+  const currentInstance = getCurrentInstance()
+  
+  if (injectedClient || !currentInstance) {
+    // Test environment or non-component context - initialize immediately
     initializationPromise = initializeComposable()
   }
   else {
-    // Real component context - use onMounted
+    // Component context - use onMounted
     let initResolver: () => void
     initializationPromise = new Promise<void>((resolve) => {
       initResolver = resolve
@@ -1267,5 +1314,22 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
     // Testing utilities
     $initializationPromise: initializationPromise,
+    
+    // Force refresh auth state (for impersonation debugging)
+    refreshAuthState: async () => {
+      console.log('🔥 Manually refreshing auth state...')
+      try {
+        const { data: { session } } = await getClient().auth.getSession()
+        if (session) {
+          console.log('🔥 Found session, updating state:', session.user.id)
+          await updateStateFromSession(session)
+        } else {
+          console.log('🔥 No session found, resetting state')
+          resetState()
+        }
+      } catch (error) {
+        console.error('🔥 Failed to refresh auth state:', error)
+      }
+    },
   }
 }
