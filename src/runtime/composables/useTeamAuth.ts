@@ -1125,6 +1125,8 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
   // Enhanced auth listener that handles persistence
   const setupEnhancedAuthListener = () => {
+    if (process.server) return
+    
     getClient().auth.onAuthStateChange(async (event, session) => {
       try {
         if (event === 'SIGNED_IN' && session) {
@@ -1159,7 +1161,11 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   // Initialize immediately for testing, or on mount for real usage
   const initializeComposable = async () => {
     await initializeStateWithRestore()
-    setupEnhancedAuthListener()
+    
+    // Only set up auth listener on client-side
+    if (!process.server) {
+      setupEnhancedAuthListener()
+    }
 
     // Set up cross-tab session synchronization
     sessionSyncCleanup = sessionSync.initializeSessionSync(
