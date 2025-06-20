@@ -9,103 +9,19 @@ interface TeamAuthError {
   message: string
 }
 
-// Global flag to prevent multiple auth listeners
-let authListenerRegistered = false
-
-const IMPERSONATION_STORAGE_KEY = 'team_auth_impersonation'
-
-// Load impersonation data from localStorage
-const loadImpersonationFromStorage = () => {
-  if (!import.meta.client) return {}
-  
-  try {
-    const stored = localStorage.getItem(IMPERSONATION_STORAGE_KEY)
-    if (stored) {
-      const data = JSON.parse(stored)
-      // Check if not expired
-      if (new Date(data.expiresAt) > new Date()) {
-        return {
-          impersonating: true,
-          impersonatedUser: data.targetUser,
-          impersonationExpiresAt: new Date(data.expiresAt),
-          impersonationSessionId: data.sessionId
-        }
-      } else {
-        // Clean up expired data
-        localStorage.removeItem(IMPERSONATION_STORAGE_KEY)
-      }
-    }
-  } catch (error) {
-    console.error('Failed to load impersonation data:', error)
-    localStorage.removeItem(IMPERSONATION_STORAGE_KEY)
-  }
-  
-  return {}
-}
-
-// Save impersonation data to localStorage
-const saveImpersonationToStorage = (data: any) => {
-  if (!import.meta.client) return
-  
-  try {
-    const storageData = {
-      sessionId: data.impersonationSessionId,
-      targetUser: data.impersonatedUser,
-      expiresAt: data.impersonationExpiresAt?.toISOString(),
-    }
-    localStorage.setItem(IMPERSONATION_STORAGE_KEY, JSON.stringify(storageData))
-  } catch (error) {
-    console.error('Failed to save impersonation data:', error)
-  }
-}
-
-// Clean initial state with localStorage persistence for impersonation
-const createInitialAuthState = () => {
-  const impersonationState = loadImpersonationFromStorage()
-  
-  return {
-    // Core auth
+export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
+  // Single auth state using useState - called inside the composable function
+  const authState = useState('team-auth', () => ({
     user: null as User | null,
     profile: null as Profile | null,
     team: null as Team | null,
     role: null as string | null,
     teamMembers: [] as TeamMember[],
-    
-    // Impersonation state (unified here) - restored from localStorage
-    impersonating: impersonationState.impersonating || false,
-    impersonatedUser: impersonationState.impersonatedUser || null,
-    impersonationExpiresAt: impersonationState.impersonationExpiresAt || null,
-    originalUser: null as User | null, // Store the super admin
-    impersonationSessionId: impersonationState.impersonationSessionId || null,
-    justStartedImpersonation: false, // UI flag for modal dismissal
-    
-    // State management
     loading: true,
+    impersonating: false,
+    impersonationExpiresAt: null as Date | null,
     initialized: false
-  }
-}
-
-export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
-  // Clean unified auth state using useState
-  const authState = useState('team-auth', () => createInitialAuthState())
-
-  // Simple immediate state update with localStorage persistence for impersonation
-  const updateAuthState = (updates: Partial<typeof authState.value>) => {
-    console.log('🔥 Updating auth state immediately:', updates)
-    authState.value = { ...authState.value, ...updates }
-    
-    // Save to localStorage if impersonation state changed
-    if ('impersonating' in updates || 'impersonatedUser' in updates || 'impersonationSessionId' in updates) {
-      if (authState.value.impersonating) {
-        saveImpersonationToStorage(authState.value)
-      } else {
-        // Clear localStorage when impersonation ends
-        if (import.meta.client) {
-          localStorage.removeItem(IMPERSONATION_STORAGE_KEY)
-        }
-      }
-    }
-  }
+  }))
 
   // Extract reactive refs from state for compatibility
   const currentUser = computed(() => authState.value.user)
@@ -116,11 +32,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   const isLoading = computed(() => authState.value.loading)
   const isImpersonating = computed(() => authState.value.impersonating)
   const impersonationExpiresAt = computed(() => authState.value.impersonationExpiresAt)
-
-  // Impersonation-specific computed properties
-  const impersonatedUser = computed(() => authState.value.impersonatedUser)
-  const originalUser = computed(() => authState.value.originalUser)
-  const justStartedImpersonation = computed(() => authState.value.justStartedImpersonation)
 
   // Session sync utilities
   const sessionSync = useSessionSync()
@@ -144,47 +55,21 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     return getSupabaseClient()
   }
 
-  // Update complete auth state atomically using updateAuthState helper
+  // Update complete auth state atomically
   const updateCompleteAuthState = async (user: SupabaseUser) => {
     console.log(`🔥 Updating complete auth state for: ${user.email}`)
     
-    // For impersonation scenarios, immediately update with user data
-    // and use data from impersonation response to avoid hanging queries
-    if (authState.value.impersonating && authState.value.impersonatedUser) {
-      console.log('🔥 Impersonation active, using impersonation data')
-      const impersonatedData = authState.value.impersonatedUser
-      updateAuthState({
-        user: {
-          id: user.id,
-          email: user.email!,
-          user_metadata: user.user_metadata,
-        },
-        profile: {
-          id: impersonatedData.id,
-          full_name: impersonatedData.full_name,
-          email: impersonatedData.email,
-        } as any,
-        team: impersonatedData.team ? {
-          id: impersonatedData.team.id,
-          name: impersonatedData.team.name,
-        } as any : null,
-        role: impersonatedData.role,
-        loading: false
-      })
-      return
-    }
-    
     try {
-      console.log(`🔥 Fetching profile and team data for user: ${user.id}`)
-      
-      // Fetch all data in parallel for normal (non-impersonation) scenarios
+      // Fetch all data in parallel
       const [profileResult, teamResult] = await Promise.all([
+        // Fetch profile
         getClient()
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single(),
         
+        // Fetch team membership  
         getClient()
           .from('team_members')
           .select(`
@@ -200,8 +85,9 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           .single()
       ])
 
-      // Use updateAuthState for immediate, consistent updates
-      updateAuthState({
+      // Update entire state atomically
+      authState.value = {
+        ...authState.value,
         user: {
           id: user.id,
           email: user.email!,
@@ -223,14 +109,15 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         } : null,
         role: teamResult.data?.role || null,
         loading: false
-      })
+      }
       
       console.log(`🔥 Auth state updated - User: ${user.email}, Team: ${authState.value.team?.name}, Role: ${authState.value.role}`)
       
     } catch (error) {
       console.error('🔥 Failed to update auth state:', error)
-      // Update with partial data using same helper
-      updateAuthState({
+      // Update with partial data
+      authState.value = {
+        ...authState.value,
         user: {
           id: user.id,
           email: user.email!,
@@ -240,7 +127,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         team: null,
         role: null,
         loading: false
-      })
+      }
     }
   }
 
@@ -259,9 +146,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     }
   }
 
-  // Deduplication for concurrent auth updates
-  const lastProcessedEvent = ref<string>('')
-  
   // Initialize auth state once
   const initializeAuth = async () => {
     if (authState.value.initialized) {
@@ -278,60 +162,27 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       if (session?.user) {
         await updateCompleteAuthState(session.user)
       } else {
-        // No active session - clear any stale impersonation state
-        if (authState.value.impersonating) {
-          console.log('🔥 No active session but impersonation state found, clearing stale data')
-          if (import.meta.client) {
-            localStorage.removeItem(IMPERSONATION_STORAGE_KEY)
-          }
-          authState.value = {
-            ...createInitialAuthState(),
-            impersonating: false,
-            impersonatedUser: null,
-            impersonationExpiresAt: null,
-            impersonationSessionId: null,
-            loading: false,
-            initialized: false
-          }
-        } else {
-          authState.value = { ...authState.value, loading: false }
-        }
+        authState.value = { ...authState.value, loading: false }
       }
       
-      // Setup auth listener once globally
-      if (!authListenerRegistered) {
-        authListenerRegistered = true
-        console.log('🔥 Registering auth listener (once)')
+      // Setup auth listener once
+      getClient().auth.onAuthStateChange(async (event, session) => {
+        console.log(`🔥 Auth event: ${event} | User: ${session?.user?.email || 'none'}`)
         
-        getClient().auth.onAuthStateChange(async (event, session) => {
-          // Deduplicate events
-          const eventKey = `${event}:${session?.user?.id || 'none'}:${session?.user?.email || 'none'}`
-          if (lastProcessedEvent.value === eventKey) {
-            console.log(`🔥 Skipping duplicate auth event: ${eventKey}`)
-            return
-          }
-          lastProcessedEvent.value = eventKey
-          
-          console.log(`🔥 Auth event: ${event} | User: ${session?.user?.email || 'none'}`)
-          
-          switch (event) {
-            case 'SIGNED_IN':
-            case 'TOKEN_REFRESHED':
-            case 'USER_UPDATED':
-              if (session?.user) {
-                await updateCompleteAuthState(session.user)
-              }
-              break
-              
-            case 'SIGNED_OUT':
-              resetAuthState()
-              lastProcessedEvent.value = '' // Reset on signout
-              break
-          }
-        })
-      } else {
-        console.log('🔥 Auth listener already registered, skipping')
-      }
+        switch (event) {
+          case 'SIGNED_IN':
+          case 'TOKEN_REFRESHED':
+          case 'USER_UPDATED':
+            if (session?.user) {
+              await updateCompleteAuthState(session.user)
+            }
+            break
+            
+          case 'SIGNED_OUT':
+            resetAuthState()
+            break
+        }
+      })
       
       authState.value.initialized = true
       console.log('🔥 Auth initialization complete')
@@ -370,9 +221,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     isLoading,
     isImpersonating,
     impersonationExpiresAt,
-    impersonatedUser,
-    originalUser,
-    justStartedImpersonation,
 
     // Authentication methods
     signUpWithTeam: async (email: string, password: string, teamName: string): Promise<void> => {
@@ -1089,167 +937,15 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       return 'U'
     },
 
-    // Unified impersonation methods (no delegation)
+    // Impersonation methods (delegate to useImpersonation)
     startImpersonation: async (targetUserId: string, reason: string): Promise<void> => {
-      try {
-        updateAuthState({ loading: true })
-
-        // Store original user before impersonation
-        const originalUser = currentUser.value
-        if (!originalUser) {
-          throw new Error('No authenticated user to start impersonation from')
-        }
-
-        // Get current session for API authentication
-        const { data: { session } } = await getClient().auth.getSession()
-        if (!session) {
-          throw new Error('No active session')
-        }
-
-        // Call impersonation API
-        const response = await $fetch('/api/impersonate', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: { targetUserId, reason },
-        })
-
-        if (!response.success) {
-          throw new Error(response.message || 'Failed to start impersonation')
-        }
-
-        // IMMEDIATE state update (like useImpersonation pattern)
-        updateAuthState({
-          // Keep current user for now, auth listener will update it
-          originalUser,
-          impersonating: true,
-          impersonatedUser: response.impersonation.target_user,
-          impersonationExpiresAt: new Date(response.impersonation.expires_at),
-          impersonationSessionId: response.impersonation.session_id,
-          loading: false
-        })
-
-        console.log('🔥 Impersonation state updated immediately')
-
-        // Show success toast
-        const toast = useToast()
-        toast.add({
-          title: 'Impersonation Started',
-          description: `Now impersonating ${response.impersonation.target_user.full_name || response.impersonation.target_user.email}`,
-          color: 'blue',
-          icon: 'i-lucide-user-check',
-        })
-
-        // Signal that impersonation just started (for modal dismissal)
-        authState.value = { ...authState.value, justStartedImpersonation: true }
-
-        // Set the new session (auth listener will handle the rest)
-        await getClient().auth.setSession({
-          access_token: response.session.access_token,
-          refresh_token: response.session.refresh_token,
-        })
-
-      } catch (error: any) {
-        console.error('Start impersonation failed:', error)
-        updateAuthState({ loading: false })
-        
-        // Show error toast
-        const toast = useToast()
-        toast.add({
-          title: 'Impersonation Failed',
-          description: error.data?.message || error.message || 'Failed to start impersonation',
-          color: 'red',
-          icon: 'i-lucide-alert-circle',
-        })
-        
-        throw error
-      }
+      const impersonation = useImpersonationComposable()
+      return impersonation.startImpersonation(targetUserId, reason)
     },
 
     stopImpersonation: async (): Promise<void> => {
-      try {
-        updateAuthState({ loading: true })
-
-        if (!isImpersonating.value || !authState.value.impersonationSessionId) {
-          throw new Error('No active impersonation session')
-        }
-
-        // Call stop impersonation API
-        const { data: { session } } = await getClient().auth.getSession()
-        if (!session) {
-          // No active session - just clear local state
-          console.log('🔥 No active session, clearing impersonation state locally')
-          updateAuthState({
-            impersonating: false,
-            impersonatedUser: null,
-            impersonationExpiresAt: null,
-            impersonationSessionId: null,
-            originalUser: null,
-            loading: false
-          })
-          
-          const toast = useToast()
-          toast.add({
-            title: 'Impersonation Cleared',
-            description: 'Stale impersonation state has been cleared',
-            color: 'green',
-            icon: 'i-lucide-user-x',
-          })
-          
-          return
-        }
-
-        await $fetch('/api/stop-impersonation', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: {
-            sessionId: authState.value.impersonationSessionId,
-          },
-        })
-
-        // IMMEDIATE state reset (like useImpersonation pattern)
-        const originalUser = authState.value.originalUser
-        updateAuthState({
-          impersonating: false,
-          impersonatedUser: null,
-          impersonationExpiresAt: null,
-          impersonationSessionId: null,
-          originalUser: null,
-          loading: false
-        })
-
-        console.log('🔥 Impersonation stopped, state reset immediately')
-
-        // Show success toast
-        const toast = useToast()
-        toast.add({
-          title: 'Impersonation Ended',
-          description: 'Returned to your original session',
-          color: 'green',
-          icon: 'i-lucide-user-x',
-        })
-
-        // Navigate to clean state
-        await navigateTo('/dashboard', { external: true })
-
-      } catch (error: any) {
-        console.error('Stop impersonation failed:', error)
-        updateAuthState({ loading: false })
-        
-        // Show error toast
-        const toast = useToast()
-        toast.add({
-          title: 'Error Stopping Impersonation',
-          description: 'Session has been cleared. Please sign in again.',
-          color: 'red',
-          icon: 'i-lucide-alert-circle',
-        })
-        
-        throw error
-      }
+      const impersonation = useImpersonationComposable()
+      return impersonation.stopImpersonation()
     },
 
     // Session management utilities
@@ -1266,11 +962,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       if (currentUser.value) {
         await updateCompleteAuthState(currentUser.value as any)
       }
-    },
-
-    // Clear success flag for UI components
-    clearSuccessFlag: () => {
-      authState.value = { ...authState.value, justStartedImpersonation: false }
     },
   }
 }

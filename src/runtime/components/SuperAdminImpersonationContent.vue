@@ -120,7 +120,7 @@
 
           <!-- Empty State -->
           <div
-            v-else-if="!isLoading"
+            v-else-if="!isLoadingUsers"
             class="text-center py-12"
           >
             <UIcon
@@ -137,7 +137,7 @@
 
           <!-- Loading State -->
           <div
-            v-else-if="isLoading"
+            v-else-if="isLoadingUsers"
             class="text-center py-12"
           >
             <UIcon
@@ -157,13 +157,22 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
-import { useImpersonation } from '../composables/useImpersonation'
 import SettingsTabContainer from './SettingsTabContainer.vue'
 import RoleBadge from './RoleBadge.vue'
 
-// Get auth composable
-const { currentUser, currentRole, getAvatarFallback } = useTeamAuth()
-const { startImpersonation, isStarting, justStartedImpersonation, clearSuccessFlag } = useImpersonation()
+// Get unified auth and impersonation functionality
+const { 
+  currentUser, 
+  currentRole, 
+  getAvatarFallback, 
+  startImpersonation,
+  isLoading,
+  justStartedImpersonation,
+  clearSuccessFlag,
+} = useTeamAuth()
+
+// Local loading state for impersonation
+const isStarting = computed(() => isLoading.value)
 const toast = useToast()
 
 // Component state
@@ -172,7 +181,7 @@ const impersonationReason = ref('')
 const allUsers = ref<any[]>([])
 const searchResults = ref<any[]>([])
 const isSearching = ref(false)
-const isLoading = ref(false)
+const isLoadingUsers = ref(false)
 const impersonatingUserId = ref<string | null>(null)
 
 // Get Supabase client
@@ -207,7 +216,7 @@ const displayedUsers = computed(() => {
 // Load all users on mount
 const loadAllUsers = async () => {
   try {
-    isLoading.value = true
+    isLoadingUsers.value = true
     const supabase = getSupabaseClient()
 
     // Check if user is super admin
@@ -257,7 +266,7 @@ const loadAllUsers = async () => {
     allUsers.value = []
   }
   finally {
-    isLoading.value = false
+    isLoadingUsers.value = false
   }
 }
 

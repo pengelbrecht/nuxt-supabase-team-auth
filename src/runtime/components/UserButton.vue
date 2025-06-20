@@ -44,7 +44,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
-import { useImpersonation } from '../composables/useImpersonation'
 import SettingsModal from './SettingsModal.vue'
 
 // Props
@@ -67,9 +66,18 @@ const emit = defineEmits<{
   impersonation: []
 }>()
 
-// Get auth state
-const { currentUser, currentProfile, currentRole, signOut, isImpersonating, getAvatarFallback } = useTeamAuth()
-const { justStartedImpersonation, clearSuccessFlag, stopImpersonation } = useImpersonation()
+// Get unified auth state including impersonation
+const { 
+  currentUser, 
+  currentProfile, 
+  currentRole, 
+  signOut, 
+  isImpersonating, 
+  getAvatarFallback,
+  justStartedImpersonation,
+  clearSuccessFlag,
+  stopImpersonation
+} = useTeamAuth()
 
 // Modal state
 const showSettingsModal = ref(false)

@@ -15,14 +15,14 @@
             />
             <div>
               <div class="font-semibold text-sm">
-                Impersonating {{ impersonatedUser?.full_name || impersonatedUser?.email || 'User' }}
+                Impersonating {{ displayUser?.full_name || displayUser?.email || 'User' }}
               </div>
               <div class="text-xs text-orange-100">
-                <span v-if="impersonatedUser?.team?.name">
-                  {{ impersonatedUser.team.name }} •
+                <span v-if="displayUser?.team?.name">
+                  {{ displayUser.team.name }} •
                 </span>
                 <RoleBadge
-                  :role="impersonatedUser?.role"
+                  :role="displayUser?.role"
                   size="xs"
                   class="inline-block"
                 />
@@ -61,17 +61,50 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useImpersonation } from '../composables/useImpersonation'
+import { useTeamAuth } from '../composables/useTeamAuth'
 import RoleBadge from './RoleBadge.vue'
 
-// Get impersonation state
+// Get unified auth state including impersonation
 const {
   isImpersonating,
   impersonatedUser,
   impersonationExpiresAt,
   stopImpersonation,
-  isStopping,
-} = useImpersonation()
+  isLoading,
+  currentUser,
+  currentProfile,
+  currentTeam,
+  currentRole,
+} = useTeamAuth()
+
+// For display, use impersonated user data if available, otherwise current user data
+const displayUser = computed(() => {
+  if (!isImpersonating.value) return null
+  
+  // If we have stored impersonated user data, use it
+  if (impersonatedUser.value) {
+    return impersonatedUser.value
+  }
+  
+  // Otherwise fallback to current user/profile data
+  const user = currentUser.value
+  const profile = currentProfile.value
+  const team = currentTeam.value
+  const role = currentRole.value
+  
+  if (user) {
+    return {
+      id: user.id,
+      email: user.email,
+      full_name: profile?.full_name || user.user_metadata?.name,
+      role: role,
+      team: team
+    }
+  }
+  
+  return null
+})
+const isStopping = computed(() => isLoading.value)
 
 // Current time for countdown
 const currentTime = ref(new Date())
