@@ -2,7 +2,8 @@
   <!-- Impersonation Banner - Only shows when impersonating -->
   <div
     v-if="isImpersonating"
-    class="bg-red-600 dark:bg-red-700 text-white border-b border-red-700 dark:border-red-800 shadow-lg"
+    class="!bg-red-600 dark:!bg-red-700 !text-white !border-b !border-red-700 dark:!border-red-800 shadow-lg"
+    style="background-color: #dc2626 !important; color: white !important; border-color: #b91c1c !important;"
   >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="py-3">
@@ -11,13 +12,14 @@
           <div class="flex items-center gap-3">
             <UIcon
               name="i-lucide-user-check"
-              class="h-5 w-5 text-red-100"
+              class="h-5 w-5 !text-red-100"
+              style="color: #fecaca !important;"
             />
             <div>
               <div class="font-semibold text-sm">
                 Impersonating {{ displayUser?.full_name || displayUser?.email || 'User' }}
               </div>
-              <div class="text-xs text-red-100">
+              <div class="text-xs !text-red-100" style="color: #fecaca !important;">
                 <span v-if="displayUser?.team?.name">
                   {{ displayUser.team.name }} •
                 </span>
@@ -42,7 +44,8 @@
             size="sm"
             color="white"
             :loading="isStopping"
-            class="text-white border-white hover:bg-white hover:text-red-600"
+            class="!text-white !border-white hover:!bg-white hover:!text-red-600"
+            style="color: white !important; border-color: white !important;"
             @click="handleStopImpersonation"
           >
             <template #leading>
