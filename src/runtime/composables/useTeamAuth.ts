@@ -63,8 +63,11 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       return
     }
     
-    // Skip if user hasn't changed (but allow if we don't have team/role data yet)
-    if (currentUser.value?.id === user.id && currentTeam.value && currentRole.value) {
+    // Skip if user and essential data haven't changed
+    if (currentUser.value?.id === user.id && 
+        currentUser.value?.email === user.email &&
+        currentTeam.value && 
+        currentRole.value) {
       return
     }
     

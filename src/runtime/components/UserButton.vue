@@ -68,8 +68,8 @@ const emit = defineEmits<{
 }>()
 
 // Get auth state
-const { currentUser, currentProfile, currentRole, signOut, isImpersonating, stopImpersonation, getAvatarFallback } = useTeamAuth()
-const { justStartedImpersonation, clearSuccessFlag } = useImpersonation()
+const { currentUser, currentProfile, currentRole, signOut, isImpersonating, getAvatarFallback } = useTeamAuth()
+const { justStartedImpersonation, clearSuccessFlag, stopImpersonation } = useImpersonation()
 
 // Modal state
 const showSettingsModal = ref(false)
@@ -179,7 +179,6 @@ const dropdownItems = computed(() => {
         label: 'Stop Impersonation',
         icon: 'i-lucide-arrow-left',
         onSelect: () => {
-          console.log('Stop Impersonation clicked')
           stopImpersonation()
         },
       })
