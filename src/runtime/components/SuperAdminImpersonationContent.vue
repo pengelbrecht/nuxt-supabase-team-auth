@@ -31,7 +31,7 @@
           label="Reason for Impersonation"
           name="reason"
           required
-          description="Please provide a business justification for this impersonation session."
+          description="Required for audit trail"
           class="flex items-center justify-between mb-4 gap-2"
         >
           <UInput
