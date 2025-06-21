@@ -3,6 +3,18 @@ import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import TeamAuthConfirmation from '../../src/runtime/components/TeamAuthConfirmation.vue'
 
+// Mock Nuxt UI components
+const MockUCard = {
+  name: 'UCard',
+  template: '<div class="u-card"><div v-if="$slots.header" class="u-card-header"><slot name="header" /></div><div class="u-card-body"><slot /></div></div>',
+}
+
+const MockUButton = {
+  name: 'UButton',
+  template: '<button class="u-button" @click="$emit(\'click\')"><slot /></button>',
+  emits: ['click'],
+}
+
 // Mock route and router
 const mockRoute = {
   query: {},
@@ -31,12 +43,41 @@ const mockNuxtApp = {
   },
 }
 
+// Mock multiple Nuxt import paths
 vi.mock('#app', () => ({
   useNuxtApp: () => mockNuxtApp,
 }))
 
+vi.mock('nuxt/app', () => ({
+  useNuxtApp: () => mockNuxtApp,
+}))
+
+vi.mock('@nuxt/app', () => ({
+  useNuxtApp: () => mockNuxtApp,
+}))
+
+// Global mock for useNuxtApp
+global.useNuxtApp = vi.fn(() => mockNuxtApp)
+
 describe('TeamAuthConfirmation', () => {
-  let mockSupabaseClient: any
+  const globalMountOptions = {
+    global: {
+      components: {
+        UCard: MockUCard,
+        UButton: MockUButton,
+      },
+      stubs: {
+        UCard: MockUCard,
+        UButton: MockUButton,
+      },
+      provide: {
+        $teamAuthClient: mockNuxtApp.$teamAuthClient,
+      },
+      mocks: {
+        useNuxtApp: () => mockNuxtApp,
+      },
+    },
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -61,48 +102,48 @@ describe('TeamAuthConfirmation', () => {
     it('should show loading state initially', async () => {
       mockRoute.query = { token: 'test-token', type: 'email' }
 
-      const wrapper = mount(TeamAuthConfirmation)
+      const _wrapper = mount(TeamAuthConfirmation, globalMountOptions)
 
-      expect(wrapper.text()).toContain('Processing confirmation')
-      expect(wrapper.find('.loading-spinner')).toBeTruthy()
+      expect(_wrapper.text()).toContain('Processing confirmation')
+      expect(_wrapper.find('.loading-spinner')).toBeTruthy()
     })
 
     it('should successfully confirm email', async () => {
       mockRoute.query = { token: 'test-token', type: 'email' }
 
-      mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
+      mockNuxtApp.$teamAuthClient.auth.verifyOtp.mockResolvedValue({
         error: null,
       })
 
-      const wrapper = mount(TeamAuthConfirmation)
+      const _wrapper = mount(TeamAuthConfirmation, globalMountOptions)
 
       await nextTick()
       await nextTick() // Wait for async confirmation
 
-      expect(mockSupabaseClient.auth.verifyOtp).toHaveBeenCalledWith({
+      expect(mockNuxtApp.$teamAuthClient.auth.verifyOtp).toHaveBeenCalledWith({
         token_hash: 'test-token',
         type: 'email',
       })
 
-      expect(wrapper.text()).toContain('Email Confirmed!')
-      expect(wrapper.text()).toContain('Your email has been confirmed')
+      expect(_wrapper.text()).toContain('Email Confirmed!')
+      expect(_wrapper.text()).toContain('Your email has been confirmed')
     })
 
     it('should handle email confirmation error', async () => {
       mockRoute.query = { token: 'invalid-token', type: 'email' }
 
-      mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
+      mockNuxtApp.$teamAuthClient.auth.verifyOtp.mockResolvedValue({
         error: { message: 'Invalid token' },
       })
 
-      const wrapper = mount(TeamAuthConfirmation)
+      const _wrapper = mount(TeamAuthConfirmation, globalMountOptions)
 
       await nextTick()
       await nextTick()
 
-      expect(wrapper.text()).toContain('Email Confirmation Failed')
-      expect(wrapper.text()).toContain('Invalid token')
-      expect(wrapper.find('button').text()).toContain('Try Again')
+      expect(_wrapper.text()).toContain('Email Confirmation Failed')
+      expect(_wrapper.text()).toContain('Invalid token')
+      expect(_wrapper.find('button').text()).toContain('Try Again')
     })
   })
 
@@ -114,25 +155,25 @@ describe('TeamAuthConfirmation', () => {
         type: 'invite',
       }
 
-      mockSupabaseClient.functions.invoke.mockResolvedValue({
+      mockNuxtApp.$teamAuthClient.functions.invoke.mockResolvedValue({
         data: { success: true },
         error: null,
       })
 
-      const wrapper = mount(TeamAuthConfirmation)
+      const _wrapper = mount(TeamAuthConfirmation, globalMountOptions)
 
       await nextTick()
       await nextTick()
 
-      expect(mockSupabaseClient.functions.invoke).toHaveBeenCalledWith('accept-invite', {
+      expect(mockNuxtApp.$teamAuthClient.functions.invoke).toHaveBeenCalledWith('accept-invite', {
         body: {
           team_id: 'team-123',
           email: 'user@example.com',
         },
       })
 
-      expect(wrapper.text()).toContain('Invitation Accepted!')
-      expect(wrapper.text()).toContain('You have successfully joined the team')
+      expect(_wrapper.text()).toContain('Invitation Accepted!')
+      expect(_wrapper.text()).toContain('You have successfully joined the team')
     })
 
     it('should handle invitation acceptance error', async () => {
@@ -142,18 +183,18 @@ describe('TeamAuthConfirmation', () => {
         type: 'invite',
       }
 
-      mockSupabaseClient.functions.invoke.mockResolvedValue({
+      mockNuxtApp.$teamAuthClient.functions.invoke.mockResolvedValue({
         data: null,
         error: { message: 'Invitation expired' },
       })
 
-      const wrapper = mount(TeamAuthConfirmation)
+      const _wrapper = mount(TeamAuthConfirmation, globalMountOptions)
 
       await nextTick()
       await nextTick()
 
-      expect(wrapper.text()).toContain('Invitation Acceptance Failed')
-      expect(wrapper.text()).toContain('Invitation expired')
+      expect(_wrapper.text()).toContain('Invitation Acceptance Failed')
+      expect(_wrapper.text()).toContain('Invitation expired')
     })
 
     it('should handle missing team_id for invitation', async () => {
@@ -162,13 +203,13 @@ describe('TeamAuthConfirmation', () => {
         type: 'invite',
       }
 
-      const wrapper = mount(TeamAuthConfirmation)
+      const _wrapper = mount(TeamAuthConfirmation, globalMountOptions)
 
       await nextTick()
       await nextTick()
 
-      expect(wrapper.text()).toContain('Invitation Acceptance Failed')
-      expect(wrapper.text()).toContain('Missing team information')
+      expect(_wrapper.text()).toContain('Invitation Acceptance Failed')
+      expect(_wrapper.text()).toContain('Missing team information')
     })
   })
 
@@ -177,16 +218,16 @@ describe('TeamAuthConfirmation', () => {
       mockRoute.query = {}
       window.location.hash = '#token=hash-token&type=email'
 
-      mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
+      mockNuxtApp.$teamAuthClient.auth.verifyOtp.mockResolvedValue({
         error: null,
       })
 
-      const wrapper = mount(TeamAuthConfirmation)
+      const _wrapper = mount(TeamAuthConfirmation, globalMountOptions)
 
       await nextTick()
       await nextTick()
 
-      expect(mockSupabaseClient.auth.verifyOtp).toHaveBeenCalledWith({
+      expect(mockNuxtApp.$teamAuthClient.auth.verifyOtp).toHaveBeenCalledWith({
         token_hash: 'hash-token',
         type: 'email',
       })
@@ -196,16 +237,16 @@ describe('TeamAuthConfirmation', () => {
       mockRoute.query = { token: 'query-token', type: 'email' }
       window.location.hash = '#token=hash-token&type=signup'
 
-      mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
+      mockNuxtApp.$teamAuthClient.auth.verifyOtp.mockResolvedValue({
         error: null,
       })
 
-      const wrapper = mount(TeamAuthConfirmation)
+      const _wrapper = mount(TeamAuthConfirmation, globalMountOptions)
 
       await nextTick()
       await nextTick()
 
-      expect(mockSupabaseClient.auth.verifyOtp).toHaveBeenCalledWith({
+      expect(mockNuxtApp.$teamAuthClient.auth.verifyOtp).toHaveBeenCalledWith({
         token_hash: 'query-token',
         type: 'email',
       })
@@ -217,24 +258,24 @@ describe('TeamAuthConfirmation', () => {
       mockRoute.query = {}
       window.location.hash = ''
 
-      const wrapper = mount(TeamAuthConfirmation)
+      const _wrapper = mount(TeamAuthConfirmation, globalMountOptions)
 
       await nextTick()
       await nextTick()
 
-      expect(wrapper.text()).toContain('Invalid Confirmation Link')
-      expect(wrapper.text()).toContain('appears to be invalid or has expired')
+      expect(_wrapper.text()).toContain('Invalid Confirmation Link')
+      expect(_wrapper.text()).toContain('appears to be invalid or has expired')
     })
 
     it('should show invalid link for unrecognized type', async () => {
       mockRoute.query = { token: 'test-token', type: 'unknown' }
 
-      const wrapper = mount(TeamAuthConfirmation)
+      const _wrapper = mount(TeamAuthConfirmation, globalMountOptions)
 
       await nextTick()
       await nextTick()
 
-      expect(wrapper.text()).toContain('Unable to determine confirmation type')
+      expect(_wrapper.text()).toContain('Unable to determine confirmation type')
     })
   })
 
@@ -242,24 +283,24 @@ describe('TeamAuthConfirmation', () => {
     it('should retry confirmation on button click', async () => {
       mockRoute.query = { token: 'test-token', type: 'email' }
 
-      mockSupabaseClient.auth.verifyOtp
+      mockNuxtApp.$teamAuthClient.auth.verifyOtp
         .mockResolvedValueOnce({ error: { message: 'Network error' } })
         .mockResolvedValueOnce({ error: null })
 
-      const wrapper = mount(TeamAuthConfirmation)
+      const _wrapper = mount(TeamAuthConfirmation, globalMountOptions)
 
       await nextTick()
       await nextTick()
 
       // Should show error first
-      expect(wrapper.text()).toContain('Network error')
+      expect(_wrapper.text()).toContain('Network error')
 
       // Click retry button
-      await wrapper.find('button').trigger('click')
+      await _wrapper.find('button').trigger('click')
       await nextTick()
 
       // Should show success after retry
-      expect(wrapper.text()).toContain('Email Confirmed!')
+      expect(_wrapper.text()).toContain('Email Confirmed!')
     })
   })
 
@@ -271,11 +312,12 @@ describe('TeamAuthConfirmation', () => {
         redirect_to: '/dashboard',
       }
 
-      mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
+      mockNuxtApp.$teamAuthClient.auth.verifyOtp.mockResolvedValue({
         error: null,
       })
 
-      const wrapper = mount(TeamAuthConfirmation, {
+      const _wrapper = mount(TeamAuthConfirmation, {
+        ...globalMountOptions,
         props: { redirectUrl: '/default' },
       })
 
@@ -283,7 +325,7 @@ describe('TeamAuthConfirmation', () => {
       await nextTick()
 
       // Click continue button
-      await wrapper.find('button').trigger('click')
+      await _wrapper.find('button').trigger('click')
 
       expect(mockRouter.push).toHaveBeenCalledWith('/dashboard')
     })
@@ -291,11 +333,12 @@ describe('TeamAuthConfirmation', () => {
     it('should use default redirect URL when none provided', async () => {
       mockRoute.query = { token: 'test-token', type: 'email' }
 
-      mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
+      mockNuxtApp.$teamAuthClient.auth.verifyOtp.mockResolvedValue({
         error: null,
       })
 
-      const wrapper = mount(TeamAuthConfirmation, {
+      const _wrapper = mount(TeamAuthConfirmation, {
+        ...globalMountOptions,
         props: { redirectUrl: '/default-page' },
       })
 
@@ -303,7 +346,7 @@ describe('TeamAuthConfirmation', () => {
       await nextTick()
 
       // Click continue button
-      await wrapper.find('button').trigger('click')
+      await _wrapper.find('button').trigger('click')
 
       expect(mockRouter.push).toHaveBeenCalledWith('/default-page')
     })
@@ -315,7 +358,8 @@ describe('TeamAuthConfirmation', () => {
 
       mockRoute.query = { token: 'test-token', type: 'email' }
 
-      mount(TeamAuthConfirmation, {
+      const _wrapper = mount(TeamAuthConfirmation, {
+        ...globalMountOptions,
         props: { debug: true },
       })
 

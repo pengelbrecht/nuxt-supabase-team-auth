@@ -1,7 +1,7 @@
 # Task ID: 15
 # Title: Create Comprehensive Test Suite and CI/CD Pipeline
 # Status: pending
-# Dependencies: 11, 12, 13, 14
+# Dependencies: 11 (Not found), 12, 13 (Not found), 14 (Not found)
 # Priority: high
 # Description: Build complete testing infrastructure with unit, integration, and E2E tests achieving ≥90% coverage
 # Details:

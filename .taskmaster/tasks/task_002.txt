@@ -27,25 +27,25 @@ Database tests for schema creation, RLS policy enforcement, foreign key constrai
 ### Details:
 Create the following PostgreSQL enum types: 'team_role' (owner, admin, member, super_admin) and 'invite_status' (pending, accepted, revoked). Then create the four tables with proper constraints: teams (with primary key id), team_members (with composite primary key of team_id and user_id), invites (with primary key id), and impersonation_sessions (with primary key id). Ensure all foreign key relationships are properly established.
 
-## 2. Implement RLS Policies for Teams Table [pending]
+## 2. Implement RLS Policies for Teams Table [done]
 ### Dependencies: 2.1
 ### Description: Create Row Level Security policies for the teams table to enforce proper access control.
 ### Details:
 Enable RLS on the teams table with 'ALTER TABLE teams ENABLE ROW LEVEL SECURITY'. Create policies that allow: 1) SELECT access for all team members (by joining with team_members table), 2) UPDATE access only for team owners, 3) INSERT/DELETE access for service role only. Ensure the policies use the current user context via auth.uid() for user identification.
 
-## 3. Implement RLS Policies for Team Members Table [pending]
+## 3. Implement RLS Policies for Team Members Table [done]
 ### Dependencies: 2.1
 ### Description: Create Row Level Security policies for the team_members table to control membership management.
 ### Details:
 Enable RLS on the team_members table. Create policies that allow: 1) SELECT access for members of the same team, 2) INSERT/DELETE access for admins and owners within their team, 3) Full access for super_admins across all teams. Use auth.uid() to identify the current user and join with team_members to determine their role within each team.
 
-## 4. Implement RLS Policies for Invites Table [pending]
+## 4. Implement RLS Policies for Invites Table [done]
 ### Dependencies: 2.1
 ### Description: Create Row Level Security policies for the invites table to manage team invitation access.
 ### Details:
 Enable RLS on the invites table. Create policies that allow: 1) Full CRUD operations for admins and owners within their team, 2) SELECT access for invitees based on their email and token, 3) No access for regular team members. Include a policy for service role access for system-level operations. Ensure proper joins with team_members to verify admin/owner status.
 
-## 5. Implement RLS Policies for Impersonation Sessions Table [pending]
+## 5. Implement RLS Policies for Impersonation Sessions Table [done]
 ### Dependencies: 2.1
 ### Description: Create Row Level Security policies for the impersonation_sessions table to enforce strict access control for this sensitive feature.
 ### Details:

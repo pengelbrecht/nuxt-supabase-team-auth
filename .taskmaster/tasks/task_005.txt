@@ -1,6 +1,6 @@
 # Task ID: 5
 # Title: Build Vue 3 UI Components Using Nuxt UI Primitives
-# Status: in-progress
+# Status: done
 # Dependencies: 4
 # Priority: medium
 # Description: Create all required Vue 3 components using only Nuxt UI open-source primitives as specified in the component mapping.
@@ -64,13 +64,16 @@ Both components are production-ready and follow all PRD requirements (FR-5, FR-6
 ### Details:
 For <TeamMembersTable>: Implement UTable with columns for user details, role (using UBadge with appropriate colors), and actions. Include pagination, sorting, and filtering capabilities. Add row actions for role changes and member removal. For <TeamSettingsModal>: Create a modal using UModal with tabs for general settings, billing, and permissions. Use UFormField and UInput for form fields. Implement save/cancel actions with UButton. Ensure proper focus trapping within the modal and restore focus on close.
 
-## 4. Implement Authentication State Components [in-progress]
+## 4. Implement Authentication State Components [done]
 ### Dependencies: None
 ### Description: Create the <SignedIn> and <SignedOut> wrapper components and the impersonation banner with countdown timer.
 ### Details:
 For <SignedIn> and <SignedOut>: Create thin wrapper components that conditionally render their slots based on authentication state from useTeamAuth. For the impersonation banner: Create a fixed position banner that appears when a user is being impersonated. Include user details, a countdown timer showing remaining session time, and an 'End Session' button. Use UButton and implement a reactive countdown timer. Ensure the banner is announced to screen readers appropriately.
+<info added on 2025-06-18T17:57:25.008Z>
+Completed the implementation of `<SignedIn>` and `<SignedOut>` components. These components are thin wrappers that conditionally render their slot content based on the `currentUser` from the `useTeamAuth` composable. They are available via auto-import and have been tested in the playground. The impersonation banner will be addressed separately in Task 6.
+</info added on 2025-06-18T17:57:25.008Z>
 
-## 5. Ensure Accessibility and Component Customization [in-progress]
+## 5. Ensure Accessibility and Component Customization [done]
 ### Dependencies: None
 ### Description: Review and enhance all components for WCAG 2.1 AA compliance and implement customization options through props and slots.
 ### Details:
