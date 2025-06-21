@@ -1,10 +1,8 @@
-import { ref, reactive, computed, watch, onMounted, onUnmounted, getCurrentInstance, triggerRef } from 'vue'
-import type { Ref } from 'vue'
-import type { SupabaseClient, AuthSession, User as SupabaseUser, AuthChangeEvent } from '@supabase/supabase-js'
-import type { User, Profile, Team, TeamMember, TeamAuth, TeamAuthState } from '../types'
-import { useSessionSync } from './useSessionSync'
+import { computed } from 'vue'
+import type { SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js'
+import type { TeamAuth } from '../types'
 
-interface TeamAuthError {
+interface _TeamAuthError {
   code: string
   message: string
 }
@@ -206,7 +204,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     try {
       return useImpersonation()
     }
-    catch (error) {
+    catch {
       // Return mock if not available
       return {
         startImpersonation: async () => { throw new Error('Impersonation not available') },
@@ -270,7 +268,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       try {
         authState.value = { ...authState.value, loading: true }
 
-        const { data, error } = await getClient().auth.signInWithPassword({
+        const { data: _data, error } = await getClient().auth.signInWithPassword({
           email,
           password,
         })
@@ -568,7 +566,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       try {
         authState.value = { ...authState.value, loading: true }
 
-        const { data, error } = await getClient()
+        const { data: _data, error } = await getClient()
           .from('teams')
           .update({ name })
           .eq('id', currentTeam.value.id)

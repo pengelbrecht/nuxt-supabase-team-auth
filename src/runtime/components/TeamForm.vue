@@ -416,7 +416,7 @@ interface Props {
   class?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {})
+const _props = withDefaults(defineProps<Props>(), {})
 
 // Emits
 const emit = defineEmits<{
@@ -425,7 +425,7 @@ const emit = defineEmits<{
 }>()
 
 // Get auth state and composable functions
-const { currentUser, currentTeam, currentRole, teamMembers, renameTeam, updateTeam, deleteTeam, inviteMember, getAvatarFallback, getTeamMembers, updateMemberRole, removeMember } = useTeamAuth()
+const { currentUser, currentTeam, currentRole, teamMembers, updateTeam, inviteMember, getAvatarFallback, getTeamMembers, updateMemberRole, removeMember } = useTeamAuth()
 
 // Component state
 const isTeamLoading = ref(false)
@@ -498,7 +498,7 @@ const canInviteMembers = computed(() => {
   return ['admin', 'owner', 'super_admin'].includes(currentRole.value || '')
 })
 
-const roleOptions = computed(() => {
+const _roleOptions = computed(() => {
   const options = [
     { label: 'Member', value: 'member' },
     { label: 'Admin', value: 'admin' },
@@ -826,7 +826,7 @@ const handleEditUserModalClose = () => {
 }
 
 // Handle user saved from edit modal
-const handleUserSaved = (profile: any) => {
+const handleUserSaved = (_profile: any) => {
   // Find the member to get their name for the toast
   const member = teamMembers.value.find(m => m.user_id === editingUserId.value)
   const memberName = member?.profile?.full_name || member?.profile?.email || 'User'

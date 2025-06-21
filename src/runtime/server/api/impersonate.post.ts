@@ -1,5 +1,4 @@
 import { createError } from 'h3'
-import type { AuthSession } from '@supabase/supabase-js'
 import { createServiceRoleClient, getCurrentUser } from '../utils/supabase'
 
 export default defineEventHandler(async (event) => {

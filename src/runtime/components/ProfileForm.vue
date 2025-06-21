@@ -67,7 +67,7 @@ interface Props {
   class?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {})
+const _props = withDefaults(defineProps<Props>(), {})
 
 // Emits
 const emit = defineEmits<{

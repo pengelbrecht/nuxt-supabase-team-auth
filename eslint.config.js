@@ -13,4 +13,8 @@ export default createConfigForNuxt({
       './src',
     ],
   },
+}).override('nuxt/typescript/rules', {
+  rules: {
+    '@typescript-eslint/no-explicit-any': 'warn',
+  },
 })

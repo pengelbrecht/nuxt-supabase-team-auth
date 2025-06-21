@@ -130,8 +130,6 @@ onUnmounted(() => {
   }
 })
 
-// Toast notifications (available but not used directly here)
-const _toast = useToast()
 
 // Computed properties
 const timeRemaining = computed(() => {

@@ -97,7 +97,7 @@ export const requireSuperAdminForImpersonation = defineNuxtRouteMiddleware(async
 /**
  * Middleware to block access during impersonation
  */
-export const blockDuringImpersonation = defineNuxtRouteMiddleware(async (to) => {
+export const blockDuringImpersonation = defineNuxtRouteMiddleware(async (_to) => {
   const { isImpersonating, isLoading } = useTeamAuth()
 
   // Wait for auth state to load

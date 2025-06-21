@@ -59,13 +59,6 @@ const props = withDefaults(defineProps<Props>(), {
   showName: false,
 })
 
-// Emits
-const emit = defineEmits<{
-  profile: []
-  teamSettings: []
-  impersonation: []
-}>()
-
 // Get unified auth state including impersonation
 const {
   currentUser,
@@ -119,7 +112,7 @@ const openImpersonationSettings = () => {
   showSettingsModal.value = true
 }
 
-const handleSettingsSaved = (data: any) => {
+const handleSettingsSaved = (_data: any) => {
   // Profile updates automatically via reactive state in composable
 }
 
@@ -222,7 +215,7 @@ const dropdownItems = computed(() => {
 })
 
 // Watch for successful impersonation to close modal
-watch(justStartedImpersonation, (newValue, oldValue) => {
+watch(justStartedImpersonation, (newValue, _oldValue) => {
   if (newValue) {
     showSettingsModal.value = false
     clearSuccessFlag()

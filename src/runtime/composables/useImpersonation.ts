@@ -1,4 +1,4 @@
-import { ref, computed, readonly, watch, onUnmounted, getCurrentInstance } from 'vue'
+import { ref, computed, readonly, onUnmounted, getCurrentInstance } from 'vue'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const IMPERSONATION_STORAGE_KEY = 'team_auth_impersonation'
@@ -126,7 +126,7 @@ export function useImpersonation() {
         sessionPromise,
         new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 8000)),
       ]).then(
-        (result: any) => {
+        (_result: any) => {
           // Session set successfully - auth listener will handle state update
         },
         (error) => {

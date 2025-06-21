@@ -198,7 +198,6 @@ const handleEmailConfirmation = async (params: any) => {
 
   try {
     // Use Supabase auth to verify the token
-    const { useTeamAuth } = await import('../composables/useTeamAuth')
     const { $teamAuthClient } = useNuxtApp()
 
     if (!params.token) {

@@ -187,7 +187,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useTeamAuth } from '../composables/useTeamAuth'
@@ -266,7 +266,7 @@ const isGithubLoading = ref(false)
 const showPassword = ref(false)
 
 // Form validation
-const isFormValid = computed(() => {
+const _isFormValid = computed(() => {
   try {
     v.parse(authSchema, form)
     return true

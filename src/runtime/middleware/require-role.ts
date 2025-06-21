@@ -27,7 +27,7 @@ export function createRequireRoleMiddleware(
   } = {},
 ) {
   return defineNuxtRouteMiddleware(async (to) => {
-    const { currentUser, currentRole, currentTeam, isLoading } = useTeamAuth()
+    const { currentUser, currentRole, isLoading } = useTeamAuth()
 
     // Wait for auth state to load
     if (isLoading.value) {
@@ -90,7 +90,7 @@ export const requireSuperAdminOnly = createRequireRoleMiddleware('super_admin', 
 /**
  * Default export for dynamic role checking
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineNuxtRouteMiddleware(async (to, _from) => {
   // This middleware can be used with route meta to specify required role
   const requiredRole = to.meta.requireRole as TeamRole
 
@@ -100,5 +100,5 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   const middleware = createRequireRoleMiddleware(requiredRole)
-  return middleware(to)
+  return middleware(to, _from)
 })

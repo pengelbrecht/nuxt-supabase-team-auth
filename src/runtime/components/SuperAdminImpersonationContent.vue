@@ -168,8 +168,6 @@ const {
   getAvatarFallback,
   startImpersonation,
   isLoading,
-  justStartedImpersonation,
-  clearSuccessFlag,
 } = useTeamAuth()
 
 // Local loading state for impersonation
