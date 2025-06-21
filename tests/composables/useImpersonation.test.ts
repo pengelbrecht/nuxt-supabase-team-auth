@@ -1,15 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { ref } from 'vue'
 
 // Mock Nuxt auto-imports by assigning to global
 const mockUseNuxtApp = vi.fn()
 const mockUseToast = vi.fn()
 const mockNavigateTo = vi.fn()
+const mockUseRuntimeConfig = vi.fn()
 
 Object.assign(global, {
   useNuxtApp: mockUseNuxtApp,
   useToast: mockUseToast,
   navigateTo: mockNavigateTo,
+  useRuntimeConfig: mockUseRuntimeConfig,
   $fetch: vi.fn(),
 })
 
@@ -50,6 +51,13 @@ describe('useImpersonation Composable - Security Tests', () => {
 
     mockUseToast.mockReturnValue(mockToast)
     mockNavigateTo.mockResolvedValue()
+    mockUseRuntimeConfig.mockReturnValue({
+      public: {
+        teamAuth: {
+          loginPage: '/signin',
+        },
+      },
+    })
 
     // Clear localStorage
     localStorageMock.getItem.mockReturnValue(null)

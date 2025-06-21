@@ -751,7 +751,7 @@ describe('RLS Policies', () => {
       console.log('Owner trying to degrade themselves:', { data, error })
 
       expect(error).not.toBeNull()
-      expect(error?.code).toBe('42501') // Insufficient privilege (cannot modify own role)
+      expect(error?.code).toBe('P0001') // Cannot remove the last owner from team
 
       await testClient.auth.signOut()
     })
