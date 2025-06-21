@@ -31,8 +31,8 @@
           label="Reason for Impersonation"
           name="reason"
           required
-          description="Please provide reason for impersonation."
-          class="mb-4"
+          description="Please provide a business justification for this impersonation session."
+          class="flex items-center justify-between mb-4 gap-2"
         >
           <UInput
             v-model="impersonationReason"
