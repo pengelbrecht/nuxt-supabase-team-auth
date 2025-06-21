@@ -1,4 +1,4 @@
-import { defineNuxtModule, addPlugin, createResolver, addImports, addComponentsDir, installModule } from '@nuxt/kit'
+import { defineNuxtModule, addPlugin, createResolver, addImports, addComponentsDir } from '@nuxt/kit'
 import { defu } from 'defu'
 
 export interface ModuleOptions {
@@ -42,7 +42,6 @@ export default defineNuxtModule<ModuleOptions>({
   },
   async setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
-
 
     // Merge options with runtime config
     nuxt.options.runtimeConfig.public.teamAuth = defu(
@@ -96,14 +95,14 @@ export default defineNuxtModule<ModuleOptions>({
     // Add server API routes
     nuxt.hook('nitro:config', (nitroConfig) => {
       nitroConfig.handlers = nitroConfig.handlers || []
-      
+
       // Add impersonation API endpoints
       nitroConfig.handlers.push({
         route: '/api/impersonate',
         method: 'post',
         handler: resolver.resolve('./runtime/server/api/impersonate.post.ts'),
       })
-      
+
       nitroConfig.handlers.push({
         route: '/api/stop-impersonation',
         method: 'post',

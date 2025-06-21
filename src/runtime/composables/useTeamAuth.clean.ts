@@ -19,13 +19,13 @@ const authState = useState('team-auth', () => ({
   loading: true,
   impersonating: false,
   impersonationExpiresAt: null as Date | null,
-  initialized: false
+  initialized: false,
 }))
 
 export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   // Extract reactive refs from state for compatibility
   const currentUser = computed(() => authState.value.user)
-  const currentProfile = computed(() => authState.value.profile) 
+  const currentProfile = computed(() => authState.value.profile)
   const currentTeam = computed(() => authState.value.team)
   const currentRole = computed(() => authState.value.role)
   const teamMembers = computed(() => authState.value.teamMembers)
@@ -46,7 +46,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
   // Lazy client access - only get when needed and only on client
   const getClient = () => {
-    if (process.server) {
+    if (import.meta.server) {
       throw new Error('Supabase client not available during SSR')
     }
     return getSupabaseClient()
@@ -55,7 +55,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   // Update complete auth state atomically
   const updateCompleteAuthState = async (user: SupabaseUser) => {
     console.log(`🔥 Updating complete auth state for: ${user.email}`)
-    
+
     try {
       // Fetch all data in parallel
       const [profileResult, teamResult] = await Promise.all([
@@ -65,8 +65,8 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           .select('*')
           .eq('id', user.id)
           .single(),
-        
-        // Fetch team membership  
+
+        // Fetch team membership
         getClient()
           .from('team_members')
           .select(`
@@ -79,7 +79,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
             )
           `)
           .eq('user_id', user.id)
-          .single()
+          .single(),
       ])
 
       // Update entire state atomically
@@ -91,26 +91,28 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           user_metadata: user.user_metadata,
         },
         profile: profileResult.data || null,
-        team: teamResult.data ? {
-          id: teamResult.data.teams.id,
-          name: teamResult.data.teams.name,
-          created_at: teamResult.data.teams.created_at,
-          company_name: teamResult.data.teams.company_name,
-          company_address_line1: teamResult.data.teams.company_address_line1,
-          company_address_line2: teamResult.data.teams.company_address_line2,
-          company_city: teamResult.data.teams.company_city,
-          company_state: teamResult.data.teams.company_state,
-          company_postal_code: teamResult.data.teams.company_postal_code,
-          company_country: teamResult.data.teams.company_country,
-          company_vat_number: teamResult.data.teams.company_vat_number,
-        } : null,
+        team: teamResult.data
+          ? {
+              id: teamResult.data.teams.id,
+              name: teamResult.data.teams.name,
+              created_at: teamResult.data.teams.created_at,
+              company_name: teamResult.data.teams.company_name,
+              company_address_line1: teamResult.data.teams.company_address_line1,
+              company_address_line2: teamResult.data.teams.company_address_line2,
+              company_city: teamResult.data.teams.company_city,
+              company_state: teamResult.data.teams.company_state,
+              company_postal_code: teamResult.data.teams.company_postal_code,
+              company_country: teamResult.data.teams.company_country,
+              company_vat_number: teamResult.data.teams.company_vat_number,
+            }
+          : null,
         role: teamResult.data?.role || null,
-        loading: false
+        loading: false,
       }
-      
+
       console.log(`🔥 Auth state updated - User: ${user.email}, Team: ${authState.value.team?.name}, Role: ${authState.value.role}`)
-      
-    } catch (error) {
+    }
+    catch (error) {
       console.error('🔥 Failed to update auth state:', error)
       // Update with partial data
       authState.value = {
@@ -123,7 +125,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         profile: null,
         team: null,
         role: null,
-        loading: false
+        loading: false,
       }
     }
   }
@@ -139,7 +141,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       role: null,
       impersonating: false,
       impersonationExpiresAt: null,
-      loading: false
+      loading: false,
     }
   }
 
@@ -149,23 +151,24 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       console.log('🔥 Auth already initialized, skipping')
       return
     }
-    
+
     console.log('🔥 Initializing auth state')
-    
+
     try {
       // Get initial session
       const { data: { session } } = await getClient().auth.getSession()
-      
+
       if (session?.user) {
         await updateCompleteAuthState(session.user)
-      } else {
+      }
+      else {
         authState.value = { ...authState.value, loading: false }
       }
-      
+
       // Setup auth listener once
       getClient().auth.onAuthStateChange(async (event, session) => {
         console.log(`🔥 Auth event: ${event} | User: ${session?.user?.email || 'none'}`)
-        
+
         switch (event) {
           case 'SIGNED_IN':
           case 'TOKEN_REFRESHED':
@@ -174,24 +177,24 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
               await updateCompleteAuthState(session.user)
             }
             break
-            
+
           case 'SIGNED_OUT':
             resetAuthState()
             break
         }
       })
-      
+
       authState.value.initialized = true
       console.log('🔥 Auth initialization complete')
-      
-    } catch (error) {
+    }
+    catch (error) {
       console.error('🔥 Auth initialization failed:', error)
       authState.value = { ...authState.value, loading: false }
     }
   }
 
   // Initialize on client-side only
-  if (process.client && !authState.value.initialized) {
+  if (import.meta.client && !authState.value.initialized) {
     initializeAuth()
   }
 
@@ -213,7 +216,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     signOut: async () => {
       await getClient().auth.signOut()
     },
-    
+
     getProfile: async () => {
       if (!currentUser.value) return null
       const { data } = await getClient()

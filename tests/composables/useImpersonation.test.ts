@@ -30,7 +30,7 @@ describe('useImpersonation Composable - Security Tests', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
+
     // Setup mock Supabase client
     mockSupabaseClient = {
       auth: {
@@ -39,18 +39,18 @@ describe('useImpersonation Composable - Security Tests', () => {
         signOut: vi.fn(),
       },
     }
-    
+
     mockToast = {
       add: vi.fn(),
     }
-    
+
     mockUseNuxtApp.mockReturnValue({
       $teamAuthClient: mockSupabaseClient,
     } as any)
-    
+
     mockUseToast.mockReturnValue(mockToast)
     mockNavigateTo.mockResolvedValue()
-    
+
     // Clear localStorage
     localStorageMock.getItem.mockReturnValue(null)
     localStorageMock.setItem.mockClear()
@@ -110,13 +110,13 @@ describe('useImpersonation Composable - Security Tests', () => {
 
       // First start an impersonation
       await startImpersonation('target-id', 'valid reason for impersonation')
-      
+
       // Reset fetch mock to verify second call doesn't happen
       vi.mocked($fetch).mockClear()
 
       // Now try to start another impersonation - should be blocked
       await startImpersonation('new-target-id', 'another reason for impersonation')
-      
+
       // Should not make another server request
       expect($fetch).not.toHaveBeenCalled()
     })
@@ -135,7 +135,7 @@ describe('useImpersonation Composable - Security Tests', () => {
 
       // Should exit early if not impersonating
       await stopImpersonation()
-      
+
       expect($fetch).not.toHaveBeenCalled()
     })
 

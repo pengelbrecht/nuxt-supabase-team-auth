@@ -114,7 +114,7 @@ export function useImpersonation() {
 
       // Clear the loading state immediately since we got a successful response
       isStarting.value = false
-      
+
       // Try to set the session, but don't let it block the UI
       const sessionPromise = supabase.auth.setSession({
         access_token: response.session.access_token,
@@ -124,7 +124,7 @@ export function useImpersonation() {
       // Add timeout to prevent hanging (longer timeout for impersonation)
       Promise.race([
         sessionPromise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 8000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 8000)),
       ]).then(
         (result: any) => {
           // Session set successfully - auth listener will handle state update
@@ -135,9 +135,9 @@ export function useImpersonation() {
             console.warn('Session setting failed:', error)
           }
           // The auth state will be updated by the auth listener when the session is ready
-        }
+        },
       )
-      
+
       toast.add({
         title: 'Impersonation Started',
         description: `Now impersonating ${data.targetUser.full_name || data.targetUser.email}`,
@@ -147,7 +147,7 @@ export function useImpersonation() {
 
       // Signal successful impersonation for UI components to react
       justStartedImpersonation.value = true
-      
+
       // Let the auth listener handle the state update naturally
     }
     catch (error: unknown) {
@@ -220,7 +220,8 @@ export function useImpersonation() {
       // Reload to clean state
       try {
         await navigateTo('/dashboard', { external: true })
-      } catch (navError) {
+      }
+      catch (navError) {
         // navigateTo might throw but that's expected during page reload
         console.log('Navigation during impersonation stop (expected):', navError)
       }

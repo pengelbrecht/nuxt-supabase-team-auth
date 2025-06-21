@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execSync } from 'node:child_process'
@@ -21,7 +21,7 @@ program
   .command('init')
   .description('Initialize team-auth in your Supabase project')
   .option('--force', 'Overwrite existing files')
-  .action(async (options) => {
+  .action(async (_options) => {
     try {
       console.log('🚀 Initializing team-auth module...')
 
@@ -83,7 +83,7 @@ program
           console.log('✅ Migrations applied')
         }
       }
-      catch (error) {
+      catch (_error) {
         console.warn('⚠️  Supabase CLI not available or project not linked')
         console.log('   Run `supabase db push` manually after linking your project')
       }

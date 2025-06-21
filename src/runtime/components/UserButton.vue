@@ -67,16 +67,16 @@ const emit = defineEmits<{
 }>()
 
 // Get unified auth state including impersonation
-const { 
-  currentUser, 
-  currentProfile, 
-  currentRole, 
-  signOut, 
-  isImpersonating, 
+const {
+  currentUser,
+  currentProfile,
+  currentRole,
+  signOut,
+  isImpersonating,
   getAvatarFallback,
   justStartedImpersonation,
   clearSuccessFlag,
-  stopImpersonation
+  stopImpersonation,
 } = useTeamAuth()
 
 // Modal state

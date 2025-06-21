@@ -144,7 +144,8 @@ async function checkUserPermissions(user: any, adminClient: any) {
     }
 
     return { allowed: true }
-  } catch (error) {
+  }
+  catch (error) {
     return { allowed: false, error: 'Database error' }
   }
 }
@@ -178,7 +179,8 @@ async function validateTargetUser(targetUserId: string, adminClient: any) {
     }
 
     return { valid: true, targetUser: targetMember }
-  } catch (error) {
+  }
+  catch (error) {
     return { valid: false, error: 'Database error' }
   }
 }

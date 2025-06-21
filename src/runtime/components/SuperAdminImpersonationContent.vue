@@ -31,13 +31,12 @@
           label="Reason for Impersonation"
           name="reason"
           required
-          description="Please provide a business justification for this impersonation session."
+          description="Please provide reason for impersonation."
           class="mb-4"
         >
-          <UTextarea
+          <UInput
             v-model="impersonationReason"
             placeholder="e.g., Customer support ticket #12345 - investigating login issues"
-            :rows="3"
             :disabled="isLoading"
             size="md"
           />
@@ -163,10 +162,10 @@ import SettingsTabContainer from './SettingsTabContainer.vue'
 import RoleBadge from './RoleBadge.vue'
 
 // Get unified auth and impersonation functionality
-const { 
-  currentUser, 
-  currentRole, 
-  getAvatarFallback, 
+const {
+  currentUser,
+  currentRole,
+  getAvatarFallback,
   startImpersonation,
   isLoading,
   justStartedImpersonation,

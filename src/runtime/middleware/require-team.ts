@@ -63,8 +63,8 @@ export function createTeamAccessMiddleware(options: {
     if (!currentUser.value) {
       const redirectUrl = `${to.path}${to.search ? `?${new URLSearchParams(to.query).toString()}` : ''}`
       const config = useRuntimeConfig()
-    const loginPage = config.public.teamAuth?.loginPage || '/signin'
-    return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
+      const loginPage = config.public.teamAuth?.loginPage || '/signin'
+      return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
     }
 
     // Check team membership requirement
