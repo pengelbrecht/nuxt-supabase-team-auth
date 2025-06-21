@@ -463,13 +463,13 @@
         "id": 8,
         "title": "Implement Email System with Magic Link Strategy",
         "description": "Build robust email delivery system with magic link authentication and configurable SMTP options",
-        "details": "Implement email system:\n- Single pre-selected email retrieval strategy for reliability (no configuration required)\n- Magic link generation for invitations with 7-day expiry\n- Magic link impersonation flow: generate without sending, immediate OTP verification\n- Integration with Supabase SMTP or custom transporter option\n- Email templates for invitations, role changes, team updates\n- Graceful degradation with cascading fallbacks for auth errors\n- User-friendly error messages and partial success handling\n- Secure token hashing for invite links",
-        "testStrategy": "Email delivery tests with test SMTP server, magic link validation tests, token security tests, template rendering tests, fallback mechanism tests.",
-        "priority": "medium",
+        "status": "pending",
         "dependencies": [
           3
         ],
-        "status": "done",
+        "priority": "medium",
+        "details": "Implement email system:\n- Single pre-selected email retrieval strategy for reliability (no configuration required)\n- Magic link generation for invitations with 7-day expiry\n- Magic link impersonation flow: generate without sending, immediate OTP verification\n- Integration with Supabase SMTP or custom transporter option\n- Email templates for invitations, role changes, team updates\n- Graceful degradation with cascading fallbacks for auth errors\n- User-friendly error messages and partial success handling\n- Secure token hashing for invite links\n- Complete invitation backend using Supabase's auth.admin.inviteUserByEmail()\n- Admin UI for managing pending invitations in TeamForm.vue\n- Display table for pending invitations with status\n- Revoke and resend invitation functionality",
+        "testStrategy": "Email delivery tests with test SMTP server, magic link validation tests, token security tests, template rendering tests, fallback mechanism tests. Test complete invitation flow from sending invite to team membership completion. Verify UI functionality for managing pending invitations, including display, revoke, and resend features.",
         "subtasks": [
           {
             "id": 1,
@@ -524,6 +524,50 @@
             "details": "Implement a centralized error handling system for all email operations. Create user-friendly error messages for common failure scenarios. Add detailed logging for debugging purposes. Implement metrics collection for monitoring email delivery success rates, timing, and error frequencies. Create an admin dashboard component to display system health and recent email activity.",
             "status": "done",
             "testStrategy": "Test error scenarios including network failures, invalid email addresses, and template rendering issues. Verify logs contain appropriate debugging information and error messages are user-friendly."
+          },
+          {
+            "id": 6,
+            "title": "Create /accept-invite Page and Route",
+            "description": "Develop the frontend page and route for accepting invitations using the existing TeamAuthConfirmation component",
+            "dependencies": [
+              4
+            ],
+            "details": "Implement the /accept-invite page using the TeamAuthConfirmation component. Ensure the page is styled consistently with the rest of the application and handles all necessary user interactions for accepting an invitation.",
+            "status": "pending",
+            "testStrategy": "Test the page rendering and user interactions in various browsers. Verify that the page correctly integrates with the backend to complete the invitation acceptance process."
+          },
+          {
+            "id": 7,
+            "title": "Wire up acceptInvite() Method",
+            "description": "Integrate the acceptInvite() method from useTeamAuth into the /accept-invite page",
+            "dependencies": [
+              6
+            ],
+            "details": "Ensure that the acceptInvite() method is correctly called when a user accepts an invitation on the /accept-invite page. Handle any errors and provide user feedback as necessary.",
+            "status": "pending",
+            "testStrategy": "Test the integration by simulating invitation acceptance and verifying that the user is correctly added to the team. Check for proper error handling and user feedback."
+          },
+          {
+            "id": 8,
+            "title": "Test Complete Invitation Flow",
+            "description": "Conduct comprehensive testing of the invitation flow from sending an invite to team membership completion",
+            "dependencies": [
+              7
+            ],
+            "details": "Perform end-to-end testing of the entire invitation process, including sending invitations, accepting them via the /accept-invite page, and verifying team membership completion.",
+            "status": "pending",
+            "testStrategy": "Use a test environment to simulate the entire invitation flow. Verify that all steps function correctly and that users are successfully added to teams. Check for any issues in the flow and ensure all components work together seamlessly."
+          },
+          {
+            "id": 9,
+            "title": "Add Pending Invitation Management to Admin UI",
+            "description": "Enhance the TeamForm.vue component to manage pending invitations",
+            "dependencies": [
+              4
+            ],
+            "details": "Implement a display table in TeamForm.vue to show pending invitations with their current status. Add functionality to revoke or resend invitations directly from the UI. Ensure the UI is intuitive and provides real-time updates on invitation status.",
+            "status": "pending",
+            "testStrategy": "Test the UI for displaying pending invitations, revoking, and resending functionality. Verify that actions are correctly reflected in the backend and that the UI updates in real-time."
           }
         ]
       },
@@ -1168,6 +1212,15 @@
             ],
             "details": "Set up the GitHub repository infrastructure for the project:\n\n1. **Repository Creation with gh CLI:**\n   - Use `gh repo create nuxt-supabase-team-auth --public --clone` to create and clone repository\n   - Configure repository description: \"A Nuxt 3 module for team-based authentication with Supabase\"\n   - Set repository topics: nuxt, supabase, authentication, team-management, typescript\n\n2. **Repository Configuration:**\n   - Enable GitHub Pages for documentation hosting\n   - Configure branch protection rules for main branch\n   - Set up issue and PR templates in .github/ directory\n   - Configure repository settings for security and collaboration\n\n3. **Documentation Setup:**\n   - Create comprehensive README.md with project overview, installation, usage examples\n   - Include badges for build status, npm version, license\n   - Add getting started guide and API documentation structure\n   - Create CONTRIBUTING.md with development guidelines\n\n4. **License and Legal:**\n   - Add MIT license file using `gh repo edit --add-license mit`\n   - Create CODE_OF_CONDUCT.md for community guidelines\n   - Add SECURITY.md for vulnerability reporting\n\n5. **Initial Repository Structure:**\n   - Set up .gitignore for Node.js, Nuxt, and IDE files\n   - Configure .github/workflows/ directory for future CI/CD\n   - Add package.json validation and sync with repository metadata\n   - Create initial directory structure aligned with Nuxt 3 module standards\n\n6. **Repository Metadata:**\n   - Configure repository homepage URL\n   - Set up repository social preview image\n   - Add relevant keywords and description for discoverability",
             "testStrategy": "Verify repository setup completion:\n\n1. **Repository Verification:**\n   - Confirm repository exists and is publicly accessible on GitHub\n   - Verify repository description, topics, and metadata are correctly set\n   - Check that repository homepage and social preview are configured\n\n2. **Documentation Quality Check:**\n   - Validate README.md renders correctly with all sections and badges\n   - Ensure all links in documentation are functional\n   - Verify license file is properly recognized by GitHub\n   - Check that CONTRIBUTING.md and CODE_OF_CONDUCT.md are accessible\n\n3. **Repository Configuration Testing:**\n   - Test branch protection rules are active on main branch\n   - Verify issue and PR templates are available when creating new issues/PRs\n   - Confirm GitHub Pages is enabled and accessible\n   - Check repository settings match security and collaboration requirements\n\n4. **Local Development Setup:**\n   - Clone repository locally and verify all files are present\n   - Ensure .gitignore properly excludes intended files\n   - Validate package.json metadata matches repository information\n   - Test that repository structure aligns with Nuxt 3 module conventions\n\n5. **Integration Verification:**\n   - Confirm gh CLI commands work correctly with the repository\n   - Verify repository can be found through GitHub search with configured topics\n   - Test that repository is ready for future CI/CD pipeline integration"
+          },
+          {
+            "id": 7,
+            "title": "Implement End-to-End Testing with Playwright",
+            "description": "Set up Playwright E2E testing framework for complete user journey testing including signup, team management, impersonation workflows, and cross-browser compatibility. Include test data seeding, cleanup, and CI/CD integration.",
+            "details": "",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 37
           }
         ]
       },
@@ -1189,7 +1242,7 @@
     ],
     "metadata": {
       "created": "2025-06-18T17:53:26.166Z",
-      "updated": "2025-06-21T11:01:21.973Z",
+      "updated": "2025-06-21T11:06:24.106Z",
       "description": "Tasks for master context"
     }
   }
