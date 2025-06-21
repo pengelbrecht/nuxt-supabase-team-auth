@@ -130,7 +130,6 @@ onUnmounted(() => {
   }
 })
 
-
 // Computed properties
 const timeRemaining = computed(() => {
   if (!impersonationExpiresAt.value) return null

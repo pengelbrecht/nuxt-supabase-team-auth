@@ -83,7 +83,7 @@ program
           console.log('✅ Migrations applied')
         }
       }
-      catch (_error) {
+      catch {
         console.warn('⚠️  Supabase CLI not available or project not linked')
         console.log('   Run `supabase db push` manually after linking your project')
       }
