@@ -1,33 +1,15 @@
 <template>
-  <UModal
-    v-model:open="isOpen"
+  <ConfirmDialog
+    v-model="isOpen"
     :title="title"
-  >
-    <template #body>
-      <div class="p-6 space-y-4">
-        <div class="text-sm text-gray-600 dark:text-gray-400">
-          {{ message }}
-        </div>
-
-        <div class="flex justify-end gap-3 pt-4">
-          <UButton
-            variant="ghost"
-            :disabled="isLoading"
-            @click="handleCancel"
-          >
-            {{ cancelText }}
-          </UButton>
-          <UButton
-            :color="confirmColor"
-            :loading="isLoading"
-            @click="handleConfirm"
-          >
-            {{ confirmText }}
-          </UButton>
-        </div>
-      </div>
-    </template>
-  </UModal>
+    :message="message"
+    :cancel-text="cancelText"
+    :confirm-text="confirmText"
+    :confirm-color="confirmColor"
+    :loading="isLoading"
+    @confirm="handleConfirm"
+    @cancel="handleCancel"
+  />
 </template>
 
 <script setup lang="ts">
@@ -74,7 +56,6 @@ const handleConfirm = () => {
 }
 
 const handleCancel = () => {
-  isOpen.value = false
   emit('cancel')
 }
 </script>

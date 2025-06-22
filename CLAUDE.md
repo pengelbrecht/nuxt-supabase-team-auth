@@ -175,42 +175,99 @@ Use this battle-tested hierarchy based on ProfileForm implementation:
 4. **Independent actions** - Separate buttons for different operations
 5. **Inline spacers** - Use `<div style="width: 1rem; flex-shrink: 0;"></div>` for precise spacing
 
-## UModal Patterns (Critical for Nested Modals)
+## DialogBox Component System
 
-### Correct UModal Slot Usage
-UModal components MUST use the proper slot structure for content to render inside the modal:
+### Overview
+We use a custom DialogBox component system instead of raw UModal to ensure consistency and reduce boilerplate. The system provides three main variants:
+
+- **DialogBox** - Base component for custom dialogs
+- **FormDialog** - For forms with save/cancel functionality
+- **ConfirmDialog** - For confirmation prompts
+
+### FormDialog - Most Common Pattern
+Use FormDialog for forms with automatic save button and change detection:
 
 ```vue
-<UModal v-model:open="modalOpen" :ui="{ width: 'sm:max-w-2xl' }">
-  <template #header>
-    <div class="flex justify-between items-center">
-      <div>
-        <h2>Modal Title</h2>
-        <p>Optional subtitle</p>
-      </div>
-      <div class="flex items-center gap-2">
-        <UButton>Save Changes</UButton>
-        <UButton variant="ghost" icon="i-heroicons-x-mark-20-solid" @click="close" />
-      </div>
-    </div>
-  </template>
+<FormDialog
+  v-model="showDialog"
+  title="Edit User Profile"
+  subtitle="Update user information and preferences"
+  :has-changes="formHasChanges"
+  :loading="isSaving"
+  @save="handleSave"
+  @close="handleClose"
+>
+  <!-- Form content without wrapper cards -->
+  <UFormField label="Full Name" name="fullName" class="mb-4">
+    <UInput v-model="form.fullName" />
+  </UFormField>
+  
+  <UFormField label="Email" name="email" class="mb-4">
+    <UInput v-model="form.email" type="email" />
+  </UFormField>
+</FormDialog>
+```
 
+### ConfirmDialog - For Confirmations
+Use ConfirmDialog for simple confirm/cancel prompts:
+
+```vue
+<ConfirmDialog
+  v-model="showConfirm"
+  title="Delete User Account"
+  message="Are you sure? This action cannot be undone."
+  confirm-text="Delete Account"
+  confirm-color="red"
+  :loading="isDeleting"
+  @confirm="handleDelete"
+  @cancel="handleCancel"
+/>
+```
+
+### DialogBox - For Custom Content
+Use DialogBox when you need full control over the content and actions:
+
+```vue
+<DialogBox
+  v-model="showDialog"
+  title="Custom Dialog"
+  subtitle="With custom actions"
+  :loading="isLoading"
+>
+  <template #actions>
+    <UButton @click="customAction">Custom Action</UButton>
+  </template>
+  
+  <!-- Any custom content -->
+  <div class="space-y-4">
+    <p>Custom content here</p>
+  </div>
+</DialogBox>
+```
+
+### Form Component Integration
+When using forms in modals, pass `isModal="true"` to avoid duplicate headers:
+
+```vue
+<!-- In SettingsModal -->
+<UModal v-model:open="isOpen" title="Settings">
   <template #body>
-    <div class="p-6">
-      <!-- Modal content goes here -->
-    </div>
+    <ProfileForm :is-modal="true" @saved="handleSaved" />
   </template>
 </UModal>
 ```
 
-### Critical UModal Rules
-1. **Use #body slot** - Content MUST be in `<template #body>` or it will render outside the modal
-2. **No UCard inside UModal** - UModal handles its own structure, don't wrap in UCard
-3. **Nested modals work** - Use `v-model:open` syntax for proper nesting (SettingsModal > TeamForm > EditUserModal)
-4. **Header slot for actions** - Put Save/Close buttons in `#header` slot for consistent layout
+### Key Benefits Over Raw UModal
+1. **Consistent styling** - Automatic header layout with title/subtitle/actions
+2. **Change detection** - Built-in "unsaved changes" indicator
+3. **Loading states** - Automatic disable/loading behavior
+4. **Accessibility** - Proper ARIA attributes and keyboard handling
+5. **Less boilerplate** - 70% less code than raw UModal
+6. **Type safety** - TypeScript props for common patterns
 
-### Common UModal Mistakes
-- ❌ Putting content directly inside UModal without #body slot
-- ❌ Wrapping UModal content in UCard
-- ❌ Using `v-model` instead of `v-model:open`
-- ❌ Not using template slots for header/body
+### Critical Rules
+1. **No UCard wrapper** - DialogBox components handle their own structure
+2. **Use v-model** - All dialogs use `v-model` not `v-model:open`
+3. **Section cards only** - Use `UCard variant="subtle"` for field grouping inside dialogs
+4. **Form integration** - Always pass `isModal=true` to form components in modals
+5. **Responsive by default** - Dialogs automatically adjust to screen size

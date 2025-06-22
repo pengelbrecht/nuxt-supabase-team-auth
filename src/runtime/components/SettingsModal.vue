@@ -10,6 +10,7 @@
       <!-- Profile Settings -->
       <div v-if="activeTab === 'profile'">
         <ProfileForm
+          :is-modal="true"
           @saved="handleProfileSaved"
           @error="handleError"
         />
@@ -18,6 +19,7 @@
       <!-- Team Settings -->
       <div v-else-if="activeTab === 'team'">
         <TeamForm
+          :is-modal="true"
           @saved="handleSettingsSaved"
           @error="handleError"
         />

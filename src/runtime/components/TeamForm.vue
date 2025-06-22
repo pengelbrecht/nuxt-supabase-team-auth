@@ -1,5 +1,162 @@
 <template>
-  <SettingsTabContainer>
+  <div v-if="isModal" class="space-y-6">
+    <!-- Company Settings for Modal -->
+    <UForm
+      :schema="teamSchema"
+      :state="form"
+      class="space-y-6"
+      @submit="handleSubmit"
+    >
+      <UCard
+        variant="subtle"
+        class="mb-6"
+      >
+        <template #header>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Basic Information
+          </h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Team and company details for your organization.
+          </p>
+        </template>
+
+        <UFormField
+          label="Team Name"
+          name="name"
+          required
+          class="mb-4"
+        >
+          <UInput
+            v-model="form.name"
+            placeholder="Enter team name"
+            :disabled="isTeamLoading"
+            size="md"
+          />
+        </UFormField>
+
+        <UFormField
+          label="Company Name"
+          name="company_name"
+          class="mb-4"
+        >
+          <UInput
+            v-model="form.company_name"
+            placeholder="Legal company name"
+            :disabled="isTeamLoading"
+            size="md"
+          />
+        </UFormField>
+      </UCard>
+
+      <!-- Company Address Section for Modal -->
+      <UCard
+        variant="subtle"
+        class="mb-6"
+      >
+        <template #header>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Company Address
+          </h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Address information for invoicing and legal purposes.
+          </p>
+        </template>
+
+        <UFormField
+          label="Address Line 1"
+          name="company_address_line1"
+          class="mb-4"
+        >
+          <UInput
+            v-model="form.company_address_line1"
+            placeholder="Street address"
+            :disabled="isTeamLoading"
+            size="md"
+          />
+        </UFormField>
+
+        <UFormField
+          label="Address Line 2"
+          name="company_address_line2"
+          class="mb-4"
+        >
+          <UInput
+            v-model="form.company_address_line2"
+            placeholder="Apartment, suite, etc. (optional)"
+            :disabled="isTeamLoading"
+            size="md"
+          />
+        </UFormField>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <UFormField
+            label="City"
+            name="company_city"
+          >
+            <UInput
+              v-model="form.company_city"
+              placeholder="City"
+              :disabled="isTeamLoading"
+              size="md"
+            />
+          </UFormField>
+
+          <UFormField
+            label="State/Province"
+            name="company_state"
+          >
+            <UInput
+              v-model="form.company_state"
+              placeholder="State or Province"
+              :disabled="isTeamLoading"
+              size="md"
+            />
+          </UFormField>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <UFormField
+            label="Postal Code"
+            name="company_postal_code"
+          >
+            <UInput
+              v-model="form.company_postal_code"
+              placeholder="ZIP or Postal Code"
+              :disabled="isTeamLoading"
+              size="md"
+            />
+          </UFormField>
+
+          <UFormField
+            label="Country"
+            name="company_country"
+          >
+            <UInput
+              v-model="form.company_country"
+              placeholder="Country"
+              :disabled="isTeamLoading"
+              size="md"
+            />
+          </UFormField>
+        </div>
+
+        <UFormField
+          label="VAT Number"
+          name="company_vat_number"
+          class="mb-4"
+        >
+          <UInput
+            v-model="form.company_vat_number"
+            placeholder="Tax/VAT identification number"
+            :disabled="isTeamLoading"
+            size="md"
+          />
+        </UFormField>
+      </UCard>
+    </UForm>
+  </div>
+
+  <SettingsTabContainer v-else>
     <!-- Tabs -->
     <UTabs
       v-model="activeTab"
@@ -318,53 +475,40 @@
   </SettingsTabContainer>
 
   <!-- Invite Member Modal -->
-  <UModal
-    v-model:open="showInviteModal"
+  <FormDialog
+    v-model="showInviteModal"
     title="Invite Team Member"
+    subtitle="Send an invitation to join your team"
+    :loading="isInviteLoading"
+    :has-changes="!!inviteEmail"
+    save-text="Send Invitation"
+    :require-changes="false"
+    @save="handleInviteMember"
+    @close="handleInviteModalClose"
   >
-    <template #body>
-      <div class="p-6 space-y-4">
-        <UFormField
-          label="Email Address"
-          required
-        >
-          <UInput
-            v-model="inviteEmail"
-            type="email"
-            placeholder="member@company.com"
-            :disabled="isInviteLoading"
-            size="md"
-          />
-        </UFormField>
+    <UFormField
+      label="Email Address"
+      required
+      class="mb-4"
+    >
+      <UInput
+        v-model="inviteEmail"
+        type="email"
+        placeholder="member@company.com"
+        :disabled="isInviteLoading"
+        size="md"
+      />
+    </UFormField>
 
-        <UFormField label="Role">
-          <USelect
-            v-model="inviteRole"
-            :items="getInviteRoleOptions"
-            :disabled="isInviteLoading"
-            size="md"
-          />
-        </UFormField>
-
-        <div class="flex justify-end gap-3 pt-4">
-          <UButton
-            variant="ghost"
-            :disabled="isInviteLoading"
-            @click="showInviteModal = false"
-          >
-            Cancel
-          </UButton>
-          <UButton
-            :loading="isInviteLoading"
-            :disabled="!inviteEmail || !inviteRole"
-            @click="handleInviteMember"
-          >
-            Send Invitation
-          </UButton>
-        </div>
-      </div>
-    </template>
-  </UModal>
+    <UFormField label="Role">
+      <USelect
+        v-model="inviteRole"
+        :items="getInviteRoleOptions"
+        :disabled="isInviteLoading"
+        size="md"
+      />
+    </UFormField>
+  </FormDialog>
 
   <!-- Confirmation Modal for Member Deletion -->
   <ConfirmationModal
@@ -414,9 +558,13 @@ const teamSchema = v.object({
 interface Props {
   /** Custom card class */
   class?: string
+  /** Whether shown in a modal (affects layout) */
+  isModal?: boolean
 }
 
-const _props = withDefaults(defineProps<Props>(), {})
+const props = withDefaults(defineProps<Props>(), {
+  isModal: false,
+})
 
 // Emits
 const emit = defineEmits<{
@@ -763,6 +911,15 @@ const handleInviteMember = async () => {
   }
   finally {
     isInviteLoading.value = false
+  }
+}
+
+// Handle invite modal close
+const handleInviteModalClose = () => {
+  // Reset form if needed
+  if (inviteEmail.value || inviteRole.value !== 'member') {
+    inviteEmail.value = ''
+    inviteRole.value = 'member'
   }
 }
 

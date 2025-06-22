@@ -1,5 +1,29 @@
 <template>
-  <SettingsTabContainer>
+  <div v-if="isModal" class="space-y-6">
+    <!-- Error Messages Only - Success shown in button -->
+    <div
+      v-if="message?.type === 'error'"
+      class="mb-6"
+    >
+      <UAlert
+        color="red"
+        title="Error"
+        :description="message.text"
+        @close="message = null"
+      />
+    </div>
+
+    <!-- Use UserProfileForm component -->
+    <UserProfileForm
+      ref="userProfileFormRef"
+      :is-modal="true"
+      :loading="isProfileLoading"
+      @saved="handleFormSaved"
+      @error="handleFormError"
+    />
+  </div>
+
+  <SettingsTabContainer v-else>
     <!-- Error Messages Only - Success shown in button -->
     <div
       v-if="message?.type === 'error'"
@@ -65,9 +89,13 @@ import SettingsTabContainer from './SettingsTabContainer.vue'
 interface Props {
   /** Custom card class */
   class?: string
+  /** Whether shown in a modal (skips outer card wrapper) */
+  isModal?: boolean
 }
 
-const _props = withDefaults(defineProps<Props>(), {})
+const props = withDefaults(defineProps<Props>(), {
+  isModal: false,
+})
 
 // Emits
 const emit = defineEmits<{

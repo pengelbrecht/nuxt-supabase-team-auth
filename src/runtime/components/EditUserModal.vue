@@ -1,84 +1,41 @@
 <template>
-  <UModal
-    v-model:open="modalOpen"
-    :ui="{ width: 'sm:max-w-2xl' }"
+  <FormDialog
+    v-model="modalOpen"
+    :title="`Edit User: ${displayName}`"
+    :subtitle="isLoading ? 'Loading user information...' : undefined"
+    :has-changes="hasChanges"
+    :loading="isSaving"
+    @save="handleSave"
+    @close="handleClose"
   >
-    <template #header>
-      <div class="flex justify-between items-center w-full">
-        <div class="flex-1">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Edit User: {{ displayName }}
-          </h2>
-          <p
-            v-if="isLoading"
-            class="text-sm text-gray-600 dark:text-gray-400 mt-1"
-          >
-            Loading user information...
-          </p>
-        </div>
-        <div class="flex items-center gap-3 ml-4">
-          <span
-            v-if="hasChanges"
-            class="text-sm text-amber-600 dark:text-amber-400 font-medium"
-          >
-            You have unsaved changes
-          </span>
-          <UButton
-            color="primary"
-            variant="solid"
-            size="md"
-            :loading="isSaving"
-            :disabled="isLoading || !hasChanges"
-            class="min-w-[120px]"
-            @click="handleSave"
-          >
-            Save Changes
-          </UButton>
-          <UButton
-            color="gray"
-            variant="ghost"
-            size="md"
-            icon="i-heroicons-x-mark-20-solid"
-            :disabled="isSaving"
-            @click="handleClose"
-          />
-        </div>
-      </div>
-    </template>
-
-    <template #body>
-      <div class="p-6">
-        <div
-          v-if="!userId"
-          class="text-center py-8 text-gray-500"
-        >
-          No user selected
-        </div>
-        <div
-          v-else-if="isLoading"
-          class="text-center py-8 text-gray-500"
-        >
-          Loading user information...
-        </div>
-        <UserProfileForm
-          v-else
-          ref="formRef"
-          :user-id="userId"
-          :is-modal="true"
-          :loading="isSaving"
-          @saved="handleSaved"
-          @error="handleError"
-        />
-      </div>
-    </template>
-  </UModal>
+    <div
+      v-if="!userId"
+      class="text-center py-8 text-gray-500"
+    >
+      No user selected
+    </div>
+    <div
+      v-else-if="isLoading"
+      class="text-center py-8 text-gray-500"
+    >
+      Loading user information...
+    </div>
+    <UserProfileForm
+      v-else
+      ref="formRef"
+      :user-id="userId"
+      :is-modal="true"
+      :loading="isSaving"
+      @saved="handleSaved"
+      @error="handleError"
+    />
+  </FormDialog>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import type { Profile } from '../types'
-import UserProfileForm from './UserProfileForm.vue'
 
 // Props
 interface Props {
