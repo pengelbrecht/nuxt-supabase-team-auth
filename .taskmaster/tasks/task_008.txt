@@ -1,6 +1,6 @@
 # Task ID: 8
 # Title: Implement Email System with Magic Link Strategy
-# Status: done
+# Status: pending
 # Dependencies: 3
 # Priority: medium
 # Description: Build robust email delivery system with magic link authentication and configurable SMTP options
@@ -14,9 +14,13 @@ Implement email system:
 - Graceful degradation with cascading fallbacks for auth errors
 - User-friendly error messages and partial success handling
 - Secure token hashing for invite links
+- Complete invitation backend using Supabase's auth.admin.inviteUserByEmail()
+- Admin UI for managing pending invitations in TeamForm.vue
+- Display table for pending invitations with status
+- Revoke and resend invitation functionality
 
 # Test Strategy:
-Email delivery tests with test SMTP server, magic link validation tests, token security tests, template rendering tests, fallback mechanism tests.
+Email delivery tests with test SMTP server, magic link validation tests, token security tests, template rendering tests, fallback mechanism tests. Test complete invitation flow from sending invite to team membership completion. Verify UI functionality for managing pending invitations, including display, revoke, and resend features.
 
 # Subtasks:
 ## 1. Implement SMTP Configuration and Email Transport Layer [done]
@@ -48,4 +52,28 @@ Create an InvitationService that generates magic links using the TokenService. I
 ### Description: Create comprehensive error handling for the email system with user-friendly messages and monitoring
 ### Details:
 Implement a centralized error handling system for all email operations. Create user-friendly error messages for common failure scenarios. Add detailed logging for debugging purposes. Implement metrics collection for monitoring email delivery success rates, timing, and error frequencies. Create an admin dashboard component to display system health and recent email activity.
+
+## 6. Create /accept-invite Page and Route [pending]
+### Dependencies: 8.4
+### Description: Develop the frontend page and route for accepting invitations using the existing TeamAuthConfirmation component
+### Details:
+Implement the /accept-invite page using the TeamAuthConfirmation component. Ensure the page is styled consistently with the rest of the application and handles all necessary user interactions for accepting an invitation.
+
+## 7. Wire up acceptInvite() Method [pending]
+### Dependencies: 8.6
+### Description: Integrate the acceptInvite() method from useTeamAuth into the /accept-invite page
+### Details:
+Ensure that the acceptInvite() method is correctly called when a user accepts an invitation on the /accept-invite page. Handle any errors and provide user feedback as necessary.
+
+## 8. Test Complete Invitation Flow [pending]
+### Dependencies: 8.7
+### Description: Conduct comprehensive testing of the invitation flow from sending an invite to team membership completion
+### Details:
+Perform end-to-end testing of the entire invitation process, including sending invitations, accepting them via the /accept-invite page, and verifying team membership completion.
+
+## 9. Add Pending Invitation Management to Admin UI [pending]
+### Dependencies: 8.4
+### Description: Enhance the TeamForm.vue component to manage pending invitations
+### Details:
+Implement a display table in TeamForm.vue to show pending invitations with their current status. Add functionality to revoke or resend invitations directly from the UI. Ensure the UI is intuitive and provides real-time updates on invitation status.
 

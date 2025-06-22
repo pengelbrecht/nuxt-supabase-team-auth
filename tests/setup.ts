@@ -1,8 +1,29 @@
 import { vi } from 'vitest'
 import { config } from '@vue/test-utils'
 
+// Mock Nuxt route middleware function globally
+Object.assign(globalThis, {
+  defineNuxtRouteMiddleware: (fn: any) => fn,
+  navigateTo: vi.fn(),
+  useRuntimeConfig: () => ({
+    public: {
+      teamAuth: {
+        loginPage: '/signin',
+      },
+    },
+  }),
+})
+
 // Mock Nuxt composables and plugins
 vi.mock('#app', () => ({
+  navigateTo: vi.fn(),
+  useRuntimeConfig: () => ({
+    public: {
+      teamAuth: {
+        loginPage: '/signin',
+      },
+    },
+  }),
   useNuxtApp: () => ({
     $teamAuthClient: {
       auth: {

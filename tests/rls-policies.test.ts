@@ -17,6 +17,50 @@ describe('RLS Policies', () => {
     })
   })
 
+  afterEach(async () => {
+    // Clean up any test data that was inserted during tests
+    // Remove any members from Alpha team that aren't part of the original seed data
+    const originalAlphaMembers = [
+      '11111111-1111-1111-1111-111111111111', // Super Admin (super@a.test)
+      '22222222-2222-2222-2222-222222222222', // Alpha Owner (owner@a.test) 
+      '33333333-3333-3333-3333-333333333333', // Alpha Admin (admin@a.test)
+      '44444444-4444-4444-4444-444444444444', // Alpha Member (member@a.test)
+    ]
+
+    // Remove any additional members that were added during tests
+    await serviceClient
+      .from('team_members')
+      .delete()
+      .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+      .not('user_id', 'in', `(${originalAlphaMembers.map(id => `"${id}"`).join(',')})`)
+
+    // Clean up any test data from Beta team as well if needed
+    const originalBetaMembers = [
+      '55555555-5555-5555-5555-555555555555', // Beta Owner (owner@b.test)
+      '66666666-6666-6666-6666-666666666666', // Beta Admin (admin@b.test)
+      '77777777-7777-7777-7777-777777777777', // Beta Member (member@b.test)
+    ]
+
+    await serviceClient
+      .from('team_members')
+      .delete()
+      .eq('team_id', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')
+      .not('user_id', 'in', `(${originalBetaMembers.map(id => `"${id}"`).join(',')})`)
+
+    // Reset any modified roles back to their original state
+    await serviceClient
+      .from('team_members')
+      .update({ role: 'member' })
+      .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+      .eq('user_id', '44444444-4444-4444-4444-444444444444') // Alpha Member back to member role
+
+    await serviceClient
+      .from('team_members')
+      .update({ role: 'admin' })
+      .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+      .eq('user_id', '33333333-3333-3333-3333-333333333333') // Alpha Admin back to admin role
+  })
+
   describe('Data Verification (Service Role)', () => {
     it('should have seed data in database', async () => {
       // Verify data exists using service role (bypasses RLS)
@@ -28,7 +72,7 @@ describe('RLS Policies', () => {
       console.log('Service role team members query:', { members, error })
 
       expect(error).toBeNull()
-      expect(members).toHaveLength(5) // Adjusted to match actual seed data (includes test leftovers)
+      expect(members).toHaveLength(4) // Original seed data: super_admin, owner, admin, member
     })
 
     it('should have security definer functions working', async () => {
@@ -79,7 +123,7 @@ describe('RLS Policies', () => {
       })
 
       expect(error).toBeNull()
-      expect(members).toHaveLength(5) // Adjusted for test data leftovers
+      expect(members).toHaveLength(4) // Original seed data: super_admin, owner, admin, member
 
       // Clean up
       await testClient.auth.signOut()
@@ -114,7 +158,7 @@ describe('RLS Policies', () => {
       })
 
       expect(error).toBeNull()
-      expect(members).toHaveLength(5) // Adjusted for test data leftovers
+      expect(members).toHaveLength(4) // Original seed data: super_admin, owner, admin, member
 
       // Clean up
       await testClient.auth.signOut()
@@ -467,19 +511,29 @@ describe('RLS Policies', () => {
         password: 'password123',
       })
 
+      // Use Beta Owner (55555555-5555-5555-5555-555555555555) who should NOT be in Alpha team
+      const targetUserId = '55555555-5555-5555-5555-555555555555'
+
+      // Clean up any existing test data first (in case previous test failed)
+      await testClient
+        .from('team_members')
+        .delete()
+        .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+        .eq('user_id', targetUserId)
+
       // Count team members before insert
       const { data: beforeCount } = await testClient
         .from('team_members')
         .select('*', { count: 'exact' })
         .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
 
-      // Try to add Beta team owner as admin to Alpha team (should succeed with new RLS policy)
+      // Try to add Beta owner as admin to Alpha team (should succeed with new RLS policy)
       // Using owner@b.test user who exists but isn't in Alpha team
       const { data, error } = await testClient
         .from('team_members')
         .insert({
           team_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-          user_id: '77777777-7777-7777-7777-777777777777', // owner@b.test from seed data
+          user_id: targetUserId, // owner@b.test from seed data
           role: 'admin',
         })
 
@@ -500,7 +554,7 @@ describe('RLS Policies', () => {
         .from('team_members')
         .delete()
         .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
-        .eq('user_id', '77777777-7777-7777-7777-777777777777')
+        .eq('user_id', targetUserId)
 
       await testClient.auth.signOut()
     })
@@ -872,7 +926,7 @@ describe('RLS Policies', () => {
       console.log('Super admin all members query:', { members, error, count: members?.length })
 
       expect(error).toBeNull()
-      expect(members).toHaveLength(8) // 5 Alpha + 3 Beta (adjusted for test data leftovers)
+      expect(members).toHaveLength(7) // 4 Alpha + 3 Beta (original seed data)
 
       await testClient.auth.signOut()
     })
@@ -895,7 +949,7 @@ describe('RLS Policies', () => {
       console.log('Super admin all profiles query:', { profiles, error, count: profiles?.length })
 
       expect(error).toBeNull()
-      expect(profiles).toHaveLength(8) // All users (adjusted for test data leftovers)
+      expect(profiles).toHaveLength(7) // All 7 users from seed data
 
       await testClient.auth.signOut()
     })

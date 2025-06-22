@@ -641,135 +641,6 @@
         ]
       },
       {
-        "id": 12,
-        "title": "Implement Security Hardening and Audit Logging",
-        "description": "Add comprehensive security measures, audit logging, and vulnerability prevention mechanisms",
-        "details": "Security Hardening:\n- JWT signature validation with custom claims verification\n- Rate limiting for sensitive operations (invites, role changes)\n- CSRF protection for state-changing operations\n- Input validation and sanitization\n- SQL injection prevention in custom queries\n- Secure token generation and hashing\n- Session fixation prevention\n- Privilege escalation detection and prevention\n\nAudit Logging:\n- Immutable audit trail for all team operations\n- 1-year retention policy for impersonation sessions\n- Comprehensive logging for role changes, invitations, deletions\n- Security event logging (failed auth, suspicious activity)\n- Log integrity verification\n- GDPR-compliant data handling",
-        "testStrategy": "Security penetration testing, audit log integrity tests, privilege escalation prevention tests, rate limiting validation, input sanitization tests, session security tests.",
-        "priority": "high",
-        "dependencies": [
-          6,
-          10
-        ],
-        "status": "pending",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Implement JWT Validation and Token Security",
-            "description": "Set up JWT signature validation with custom claims verification and implement secure token generation and hashing mechanisms",
-            "dependencies": [],
-            "details": "Create a JWT validation middleware that verifies signatures using a secure algorithm (RS256 recommended). Implement custom claims verification to check user roles, permissions, and token expiration. Set up secure token generation for authentication flows with proper entropy sources. Implement password hashing using bcrypt or Argon2 with appropriate work factors. Add session fixation prevention by regenerating session IDs after authentication.",
-            "status": "pending",
-            "testStrategy": "Unit tests for JWT validation with valid/invalid tokens. Integration tests for token generation and verification flows. Security tests with deliberately tampered tokens to ensure rejection."
-          },
-          {
-            "id": 2,
-            "title": "Implement Rate Limiting and CSRF Protection",
-            "description": "Add rate limiting for sensitive operations and implement CSRF protection for all state-changing operations",
-            "dependencies": [
-              1
-            ],
-            "details": "Implement rate limiting middleware using a token bucket or sliding window algorithm. Configure stricter limits for authentication endpoints, role changes, and team invitations. Store rate limit data in Redis for distributed environments. Add CSRF protection using double-submit cookie pattern or synchronizer token pattern. Generate CSRF tokens for forms and validate them on submission. Include proper CSRF headers for AJAX requests.",
-            "status": "pending",
-            "testStrategy": "Load tests to verify rate limiting effectiveness. Integration tests for CSRF token validation. Security tests attempting to bypass CSRF protection with forged requests."
-          },
-          {
-            "id": 3,
-            "title": "Implement Input Validation and SQL Injection Prevention",
-            "description": "Add comprehensive input validation, sanitization, and SQL injection prevention mechanisms",
-            "dependencies": [],
-            "details": "Create validation middleware using a schema validation library (Joi, Yup, or Zod). Implement input sanitization for user-provided content to prevent XSS. Use parameterized queries or an ORM with proper escaping for all database operations. Review and secure any custom SQL queries. Implement content security policy headers. Add validation for file uploads including type checking and size limits.",
-            "status": "pending",
-            "testStrategy": "Unit tests for validation rules with valid/invalid inputs. Security tests with malicious payloads (SQL injection, XSS vectors). Integration tests for sanitization effectiveness."
-          },
-          {
-            "id": 4,
-            "title": "Implement Audit Logging System",
-            "description": "Create a comprehensive audit logging system for security events and sensitive operations",
-            "dependencies": [
-              1
-            ],
-            "details": "Design and implement an immutable audit log structure with tamper-evident features (hash chaining or digital signatures). Create logging middleware to capture authentication events, role changes, team operations, and security incidents. Implement log rotation with 1-year retention for impersonation sessions. Add metadata to logs including user IDs, IP addresses, and timestamps. Ensure GDPR compliance by avoiding logging of sensitive personal data. Implement log integrity verification mechanism.",
-            "status": "pending",
-            "testStrategy": "Integration tests verifying log creation for key operations. Tests for log integrity verification. Performance tests to ensure logging doesn't impact system responsiveness."
-          },
-          {
-            "id": 5,
-            "title": "Implement Privilege Escalation Detection and Prevention",
-            "description": "Add mechanisms to detect and prevent privilege escalation attempts and suspicious activities",
-            "dependencies": [
-              1,
-              4
-            ],
-            "details": "Implement role-based access control checks at both API and service layers. Create permission verification middleware for all sensitive operations. Add detection for unusual behavior patterns (multiple failed attempts, accessing unauthorized resources). Implement alerts for suspicious activities. Create an authorization matrix defining allowed operations per role. Add context-aware authorization checks that consider resource ownership and team membership.",
-            "status": "pending",
-            "testStrategy": "Security tests attempting unauthorized access and privilege escalation. Integration tests verifying proper access control enforcement. Tests for alert generation on suspicious activities."
-          }
-        ]
-      },
-      {
-        "id": 15,
-        "title": "Create Comprehensive Test Suite and CI/CD Pipeline",
-        "description": "Build complete testing infrastructure with unit, integration, and E2E tests achieving ≥90% coverage",
-        "details": "Test Suite:\n- Unit tests for all composables, components, and utilities (Jest/Vitest)\n- Integration tests for Supabase Edge Functions and database operations\n- E2E tests for complete user flows (Cypress/Playwright)\n- Component testing with Vue Test Utils\n- API testing for all endpoints\n- Security testing for auth flows and permissions\n- Performance testing for latency requirements\n- Accessibility testing with automated tools\n\nCI/CD Pipeline:\n- Automated testing on pull requests\n- Code coverage reporting with ≥90% target\n- Security scanning with dependency checks\n- Lighthouse performance and accessibility audits (≥90 a11y score)\n- Automated deployment to staging environment\n- Release automation with semantic versioning\n- Database migration testing\n- Cross-browser compatibility testing",
-        "testStrategy": "Meta-testing: Validate test coverage accuracy, CI/CD pipeline reliability, test execution performance, flaky test detection and resolution.",
-        "priority": "high",
-        "dependencies": [
-          11,
-          12,
-          13,
-          14
-        ],
-        "status": "pending",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Set Up Unit Testing Framework and Write Core Tests",
-            "description": "Configure Jest/Vitest testing environment and implement unit tests for core composables, components, and utilities",
-            "dependencies": [],
-            "details": "1. Install and configure Jest/Vitest with TypeScript support\n2. Set up test utilities and mocks for Vue components\n3. Create test files for all core composables with ≥90% coverage\n4. Implement component tests using Vue Test Utils\n5. Write utility function tests with edge cases\n6. Configure code coverage reporting",
-            "status": "pending",
-            "testStrategy": "Focus on isolated unit tests with mocked dependencies. Ensure tests cover normal operation, edge cases, and error handling."
-          },
-          {
-            "id": 2,
-            "title": "Implement Integration and API Tests",
-            "description": "Create integration tests for Supabase Edge Functions, database operations, and API endpoints",
-            "dependencies": [],
-            "details": "1. Set up testing environment for Supabase with test database\n2. Create mocks for Supabase client and responses\n3. Implement tests for all Edge Functions\n4. Write database operation tests with transaction rollbacks\n5. Create API endpoint tests for all routes\n6. Test authentication flows and permissions",
-            "status": "pending",
-            "testStrategy": "Use isolated test database. Test both success and failure paths. Verify data integrity and permission controls."
-          },
-          {
-            "id": 3,
-            "title": "Develop End-to-End and Accessibility Tests",
-            "description": "Implement E2E tests for complete user flows and accessibility compliance testing",
-            "dependencies": [],
-            "details": "1. Install and configure Cypress or Playwright\n2. Create test fixtures and helper functions\n3. Implement E2E tests for all critical user journeys\n4. Add accessibility testing with axe-core or similar\n5. Set up visual regression testing\n6. Configure cross-browser testing",
-            "status": "pending",
-            "testStrategy": "Focus on real user flows from start to finish. Test on multiple browsers. Verify WCAG compliance with automated tools targeting ≥90 accessibility score."
-          },
-          {
-            "id": 4,
-            "title": "Set Up CI Pipeline with Automated Testing",
-            "description": "Configure CI pipeline to run all tests automatically on pull requests with reporting",
-            "dependencies": [],
-            "details": "1. Set up GitHub Actions or similar CI service\n2. Configure workflows for PR testing\n3. Implement code coverage reporting with ≥90% target\n4. Add dependency security scanning\n5. Configure Lighthouse performance and accessibility audits\n6. Set up test result reporting and PR status checks",
-            "status": "pending",
-            "testStrategy": "Ensure CI runs quickly by parallelizing tests where possible. Fail builds that don't meet coverage thresholds or have security issues."
-          },
-          {
-            "id": 5,
-            "title": "Implement CD Pipeline with Deployment Automation",
-            "description": "Create automated deployment pipeline with staging environments and release management",
-            "dependencies": [],
-            "details": "1. Configure deployment to staging environment on successful PR merges\n2. Implement database migration testing\n3. Set up semantic versioning for releases\n4. Create production deployment workflow with approval gates\n5. Implement rollback procedures\n6. Configure monitoring and alerting for deployed environments",
-            "status": "pending",
-            "testStrategy": "Test deployments in isolation. Verify database migrations run correctly. Ensure zero-downtime deployments and working rollback procedures."
-          }
-        ]
-      },
-      {
         "id": 17,
         "title": "Set up Local Supabase Development Environment",
         "description": "Configure a local Supabase development environment with database initialization, environment variables, and development tooling for the team-auth module.",
@@ -922,7 +793,7 @@
         "description": "Improve the invites table to include status tracking (accepted_at, expires_at fields), custom token storage for fallback scenarios, and better audit trails while preserving our simplified auth.admin.inviteUserByEmail() approach.",
         "details": "",
         "testStrategy": "",
-        "status": "done",
+        "status": "cancelled",
         "dependencies": [
           3,
           21
@@ -1041,81 +912,6 @@
         "subtasks": []
       },
       {
-        "id": 31,
-        "title": "Write Integration Tests for Database Operations and RLS",
-        "description": "Implement integration tests for database schema, RLS policies, and SQL helper functions using real Supabase test database. Test team-scoped data access, permission boundaries, and cross-user data isolation. Verify RLS policies block unauthorized access and allow proper team member access.",
-        "details": "",
-        "testStrategy": "",
-        "status": "pending",
-        "dependencies": [
-          21,
-          25,
-          28
-        ],
-        "priority": "high",
-        "subtasks": []
-      },
-      {
-        "id": 32,
-        "title": "Write Component Tests for Vue UI Components",
-        "description": "Create unit and integration tests for all Vue components (AuthSignIn, AuthSignUpWithTeam, UserButton, ProfileForm, TeamMembersTable, TeamSettingsModal, SignedIn, SignedOut) using Vue Test Utils. Test component rendering, user interactions, prop handling, and integration with useTeamAuth composable.",
-        "details": "",
-        "testStrategy": "",
-        "status": "pending",
-        "dependencies": [
-          5,
-          29,
-          28
-        ],
-        "priority": "medium",
-        "subtasks": []
-      },
-      {
-        "id": 33,
-        "title": "Write End-to-End Tests for Complete User Flows",
-        "description": "Implement E2E tests using Playwright covering complete user journeys: signup with team creation, invitation flow, team management, role changes, impersonation workflow, and session persistence across page reloads. Test both happy paths and error scenarios with real Supabase backend.",
-        "details": "",
-        "testStrategy": "",
-        "status": "pending",
-        "dependencies": [
-          22,
-          23,
-          24,
-          28
-        ],
-        "priority": "medium",
-        "subtasks": []
-      },
-      {
-        "id": 34,
-        "title": "Write Security and Performance Tests",
-        "description": "Create specialized tests for security vulnerabilities (SQL injection, privilege escalation, session hijacking) and performance benchmarks (≤150ms P95 latency requirement). Include load testing for Edge Functions and stress testing for concurrent impersonation sessions.",
-        "details": "",
-        "testStrategy": "",
-        "status": "pending",
-        "dependencies": [
-          12,
-          14,
-          28
-        ],
-        "priority": "medium",
-        "subtasks": []
-      },
-      {
-        "id": 35,
-        "title": "Write Tests for CLI Tool and Module Integration",
-        "description": "Create tests for the CLI tool commands (init, migrate), module installation process, and integration with consuming Nuxt applications. Test schema migration workflows, Edge Function deployment, and module configuration in various project setups.",
-        "details": "",
-        "testStrategy": "",
-        "status": "pending",
-        "dependencies": [
-          7,
-          28
-        ],
-        "priority": "low",
-        "subtasks": []
-      },
-      {
         "id": 36,
         "title": "Package Current Project as a Distributable Nuxt Module",
         "description": "Analyze the current project structure and package it as a Nuxt module following best practices.",
@@ -1128,7 +924,53 @@
           5
         ],
         "priority": "high",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Document and validate server endpoint handling",
+            "description": "Ensure comprehensive understanding of how the module handles server-side endpoints and middleware for team authentication",
+            "details": "1. Document all server endpoints used by the module (signup, signin, team management)\\n2. Verify middleware integration and how it affects consuming projects\\n3. Test server-side rendering compatibility\\n4. Validate API route generation and handling\\n5. Ensure proper error handling and response formatting",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 36
+          },
+          {
+            "id": 2,
+            "title": "Create test project that uses the module",
+            "description": "Set up a separate test project to validate the module works correctly when installed as a dependency",
+            "details": "1. Create a fresh Nuxt 3 project in a separate directory\\n2. Install the packaged module as a dependency\\n3. Configure the module in the test project\\n4. Implement basic team authentication features using the module\\n5. Test all major module functionality (signup, signin, team management)\\n6. Validate that the module doesn't conflict with other Nuxt modules\\n7. Test development and production builds",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 36
+          },
+          {
+            "id": 3,
+            "title": "Test Supabase integration with existing project",
+            "description": "Validate how the module integrates with projects that already have Supabase configured",
+            "details": "1. Set up a test project with existing Supabase configuration\\n2. Install and configure the team auth module\\n3. Verify that module doesn't conflict with existing Supabase setup\\n4. Test database schema migration and integration\\n5. Validate RLS policies work alongside existing policies\\n6. Ensure auth flows don't interfere with existing authentication\\n7. Document any configuration requirements or conflicts\\n8. Test edge cases where tables or policies might already exist",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 36
+          },
+          {
+            "id": 4,
+            "title": "Test Supabase integration with fresh project",
+            "description": "Validate how the module works with projects that don't have any existing Supabase configuration",
+            "details": "1. Create a fresh Nuxt 3 project without Supabase\\n2. Install the team auth module\\n3. Test the module's ability to bootstrap Supabase configuration\\n4. Verify automatic database schema setup and migrations\\n5. Test the complete setup flow from scratch\\n6. Validate that all required dependencies are properly installed\\n7. Ensure the module provides clear setup instructions\\n8. Test both local development and production deployment scenarios\\n9. Document the complete setup process for new projects",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 36
+          },
+          {
+            "id": 5,
+            "title": "Create comprehensive module documentation",
+            "description": "Develop complete documentation for the module including API reference, setup guides, and examples",
+            "details": "1. Create README.md with installation and quick start guide\\n2. Document module configuration options and environment variables\\n3. Create API reference for all exposed components, composables, and utilities\\n4. Write setup guides for both fresh and existing Supabase projects\\n5. Document database schema requirements and migrations\\n6. Create usage examples for common scenarios (signup, team management, etc.)\\n7. Document troubleshooting common issues\\n8. Create migration guide from standalone to module usage\\n9. Document TypeScript types and interfaces\\n10. Add JSDoc comments to all public APIs",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 36
+          }
+        ]
       },
       {
         "id": 37,
@@ -1221,28 +1063,194 @@
             "status": "pending",
             "dependencies": [],
             "parentTaskId": 37
+          },
+          {
+            "id": 8,
+            "title": "Implement Security Hardening and Audit Logging",
+            "description": "Add comprehensive security measures, audit logging, and vulnerability prevention mechanisms",
+            "status": "pending",
+            "dependencies": [
+              6,
+              10
+            ],
+            "details": "Security Hardening:\n- JWT signature validation with custom claims verification\n- Rate limiting for sensitive operations (invites, role changes)\n- CSRF protection for state-changing operations\n- Input validation and sanitization\n- SQL injection prevention in custom queries\n- Secure token generation and hashing\n- Session fixation prevention\n- Privilege escalation detection and prevention\n\nAudit Logging:\n- Immutable audit trail for all team operations\n- 1-year retention policy for impersonation sessions\n- Comprehensive logging for role changes, invitations, deletions\n- Security event logging (failed auth, suspicious activity)\n- Log integrity verification\n- GDPR-compliant data handling",
+            "testStrategy": "Security penetration testing, audit log integrity tests, privilege escalation prevention tests, rate limiting validation, input sanitization tests, session security tests."
+          },
+          {
+            "id": 9,
+            "title": "Create Comprehensive Test Suite and CI/CD Pipeline",
+            "description": "Build complete testing infrastructure with unit, integration, and E2E tests achieving ≥90% coverage",
+            "status": "pending",
+            "dependencies": [
+              11,
+              12,
+              13,
+              14
+            ],
+            "details": "Test Suite:\n- Unit tests for all composables, components, and utilities (Jest/Vitest)\n- Integration tests for Supabase Edge Functions and database operations\n- E2E tests for complete user flows (Cypress/Playwright)\n- Component testing with Vue Test Utils\n- API testing for all endpoints\n- Security testing for auth flows and permissions\n- Performance testing for latency requirements\n- Accessibility testing with automated tools\n\nCI/CD Pipeline:\n- Automated testing on pull requests\n- Code coverage reporting with ≥90% target\n- Security scanning with dependency checks\n- Lighthouse performance and accessibility audits (≥90 a11y score)\n- Automated deployment to staging environment\n- Release automation with semantic versioning\n- Database migration testing\n- Cross-browser compatibility testing",
+            "testStrategy": "Meta-testing: Validate test coverage accuracy, CI/CD pipeline reliability, test execution performance, flaky test detection and resolution."
+          },
+          {
+            "id": 10,
+            "title": "Write Integration Tests for Database Operations and RLS",
+            "description": "Implement integration tests for database schema, RLS policies, and SQL helper functions using real Supabase test database. Test team-scoped data access, permission boundaries, and cross-user data isolation. Verify RLS policies block unauthorized access and allow proper team member access.",
+            "status": "pending",
+            "dependencies": [
+              21,
+              25,
+              28
+            ],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 11,
+            "title": "Write Component Tests for Vue UI Components",
+            "description": "Create unit and integration tests for all Vue components (AuthSignIn, AuthSignUpWithTeam, UserButton, ProfileForm, TeamMembersTable, TeamSettingsModal, SignedIn, SignedOut) using Vue Test Utils. Test component rendering, user interactions, prop handling, and integration with useTeamAuth composable.",
+            "status": "pending",
+            "dependencies": [
+              5,
+              29,
+              28
+            ],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 12,
+            "title": "Write End-to-End Tests for Complete User Flows",
+            "description": "Implement E2E tests using Playwright covering complete user journeys: signup with team creation, invitation flow, team management, role changes, impersonation workflow, and session persistence across page reloads. Test both happy paths and error scenarios with real Supabase backend.",
+            "status": "pending",
+            "dependencies": [
+              22,
+              23,
+              24,
+              28
+            ],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 13,
+            "title": "Write Security and Performance Tests",
+            "description": "Create specialized tests for security vulnerabilities (SQL injection, privilege escalation, session hijacking) and performance benchmarks (≤150ms P95 latency requirement). Include load testing for Edge Functions and stress testing for concurrent impersonation sessions.",
+            "status": "pending",
+            "dependencies": [
+              12,
+              14,
+              28
+            ],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 14,
+            "title": "Write Tests for CLI Tool and Module Integration",
+            "description": "Create tests for the CLI tool commands (init, migrate), module installation process, and integration with consuming Nuxt applications. Test schema migration workflows, Edge Function deployment, and module configuration in various project setups.",
+            "status": "pending",
+            "dependencies": [
+              7,
+              28
+            ],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 15,
+            "title": "Complete Nuxt Module Packaging and Distribution Setup",
+            "description": "Finalize the setup for distributing the project as a Nuxt module, including server API route handling, Supabase integration, and TypeScript exports.",
+            "status": "pending",
+            "dependencies": [
+              1,
+              3,
+              4
+            ],
+            "details": "To complete the Nuxt module packaging and distribution setup, follow these steps: 1. Ensure the module is structured according to Nuxt 3 guidelines, building upon the initial setup from Task 1. 2. Implement server API route handling within the module, ensuring routes are correctly registered and accessible. 3. Develop strategies for integrating Supabase configuration, accommodating both projects with existing Supabase setups and those without. This includes handling environment variables securely and providing clear documentation for users. 4. Configure TypeScript exports to ensure compatibility and ease of use in consuming projects. 5. Test the module installation via npm in other projects, verifying that all functionalities, including Supabase integration and API routes, work seamlessly. 6. Update documentation to guide users through installation, configuration, and usage of the module.",
+            "testStrategy": "1. Verify that the module can be installed in a fresh Nuxt 3 project via npm and that all functionalities work as expected. 2. Test server API routes to ensure they are correctly registered and accessible. 3. Validate Supabase integration by setting up a test project with and without existing Supabase configurations, ensuring environment variables are managed correctly. 4. Check TypeScript exports for correctness and usability in consuming projects. 5. Conduct end-to-end tests in a sample project to ensure the module's features integrate smoothly with other Nuxt components and plugins. 6. Review and test the documentation by following the installation and configuration steps to ensure clarity and completeness."
           }
         ]
       },
       {
         "id": 38,
-        "title": "Complete Nuxt Module Packaging and Distribution Setup",
-        "description": "Finalize the setup for distributing the project as a Nuxt module, including server API route handling, Supabase integration, and TypeScript exports.",
-        "details": "To complete the Nuxt module packaging and distribution setup, follow these steps: 1. Ensure the module is structured according to Nuxt 3 guidelines, building upon the initial setup from Task 1. 2. Implement server API route handling within the module, ensuring routes are correctly registered and accessible. 3. Develop strategies for integrating Supabase configuration, accommodating both projects with existing Supabase setups and those without. This includes handling environment variables securely and providing clear documentation for users. 4. Configure TypeScript exports to ensure compatibility and ease of use in consuming projects. 5. Test the module installation via npm in other projects, verifying that all functionalities, including Supabase integration and API routes, work seamlessly. 6. Update documentation to guide users through installation, configuration, and usage of the module.",
-        "testStrategy": "1. Verify that the module can be installed in a fresh Nuxt 3 project via npm and that all functionalities work as expected. 2. Test server API routes to ensure they are correctly registered and accessible. 3. Validate Supabase integration by setting up a test project with and without existing Supabase configurations, ensuring environment variables are managed correctly. 4. Check TypeScript exports for correctness and usability in consuming projects. 5. Conduct end-to-end tests in a sample project to ensure the module's features integrate smoothly with other Nuxt components and plugins. 6. Review and test the documentation by following the installation and configuration steps to ensure clarity and completeness.",
+        "title": "Develop Unit Tests for Middleware Functions",
+        "description": "Create comprehensive unit tests for middleware functions focusing on isolated logic, edge cases, and specific route protection scenarios.",
         "status": "pending",
         "dependencies": [
-          1,
-          3,
+          24,
           4
         ],
-        "priority": "high",
+        "priority": "medium",
+        "details": "Develop unit tests for middleware functions to ensure isolated logic is thoroughly tested without relying on mocked implementations. Focus on edge cases such as session expiration, network errors, malformed parameters, role hierarchy, and complex middleware combinations. Additionally, include tests for specific route protection scenarios: protected route middleware behavior, admin route middleware with role hierarchy, team-specific route validation, owner-only route protection, impersonation route blocking (admin routes blocked during impersonation), complex nested route requirements, optional team parameter handling, and concurrent middleware execution testing. These tests should complement existing integration tests by providing detailed coverage of unit-level behavior. Use a testing framework like Jest to write and execute these tests, ensuring each middleware function is tested in isolation. Consider using dependency injection or similar techniques to isolate middleware logic from external dependencies. Ensure that tests are written to cover all possible edge cases and scenarios, particularly those that are not covered by integration tests.",
+        "testStrategy": "1. Use Jest to write unit tests for each middleware function. \n2. Test middleware functions in isolation, ensuring no external dependencies are mocked. \n3. Cover edge cases such as session expiration, network errors, malformed parameters, role hierarchy, and complex middleware combinations. \n4. Include tests for specific route protection scenarios: protected route middleware behavior, admin route middleware with role hierarchy, team-specific route validation, owner-only route protection, impersonation route blocking, complex nested route requirements, optional team parameter handling, and concurrent middleware execution testing. \n5. Verify that each test accurately reflects the middleware's expected behavior in these scenarios. \n6. Run the tests and ensure all pass successfully. \n7. Review test coverage reports to ensure comprehensive coverage of middleware logic.",
+        "subtasks": [
+          {
+            "id": 39,
+            "title": "Implement unit tests for protected route middleware behavior",
+            "description": "Develop unit tests to verify the behavior of middleware protecting specific routes, ensuring unauthorized access is blocked.",
+            "status": "pending"
+          },
+          {
+            "id": 40,
+            "title": "Implement unit tests for admin route middleware with role hierarchy",
+            "description": "Create unit tests to ensure that admin routes are protected based on role hierarchy, allowing only authorized roles to access.",
+            "status": "pending"
+          },
+          {
+            "id": 41,
+            "title": "Implement unit tests for team-specific route validation",
+            "description": "Write unit tests to validate middleware behavior for routes specific to team contexts, ensuring correct team access.",
+            "status": "pending"
+          },
+          {
+            "id": 42,
+            "title": "Implement unit tests for owner-only route protection",
+            "description": "Develop unit tests to verify that routes restricted to owners are correctly protected by middleware.",
+            "status": "pending"
+          },
+          {
+            "id": 43,
+            "title": "Implement unit tests for impersonation route blocking",
+            "description": "Create unit tests to ensure that admin routes are blocked during impersonation sessions.",
+            "status": "pending"
+          },
+          {
+            "id": 44,
+            "title": "Implement unit tests for complex nested route requirements",
+            "description": "Write unit tests to verify middleware behavior for routes with complex nested requirements.",
+            "status": "pending"
+          },
+          {
+            "id": 45,
+            "title": "Implement unit tests for optional team parameter handling",
+            "description": "Develop unit tests to ensure middleware correctly handles optional team parameters in routes.",
+            "status": "pending"
+          },
+          {
+            "id": 46,
+            "title": "Implement unit tests for concurrent middleware execution",
+            "description": "Create unit tests to verify the behavior of middleware when executed concurrently.",
+            "status": "pending"
+          }
+        ]
+      },
+      {
+        "id": 39,
+        "title": "Document Simplified Invitation Approach Using Supabase",
+        "description": "Update documentation and code comments to reflect the current invitation approach using Supabase's auth.users table and auth.admin.inviteUserByEmail() method.",
+        "details": "1. Review the current implementation of the invitation system that uses Supabase's auth.users table instead of custom tracking tables.\\n2. Update the documentation to clearly describe the use of auth.admin.inviteUserByEmail() with team metadata in options.\\n3. Document how admin tracking is performed by querying the auth.users table, specifically focusing on the invited_at, email_confirmed_at, and raw_user_meta_data fields.\\n4. Ensure that all relevant code comments are updated to reflect these changes, providing clear guidance for future developers.\\n5. Coordinate with the team to ensure that the documentation aligns with the current system architecture and practices.",
+        "testStrategy": "1. Verify that the updated documentation accurately reflects the current implementation of the invitation system.\\n2. Check that all code comments are clear and provide sufficient context for developers.\\n3. Ensure that the documentation includes examples of how to use auth.admin.inviteUserByEmail() and how to query auth.users for tracking purposes.\\n4. Conduct a peer review with team members to confirm the clarity and accuracy of the documentation updates.",
+        "status": "pending",
+        "dependencies": [
+          3,
+          17
+        ],
+        "priority": "medium",
         "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-06-18T17:53:26.166Z",
-      "updated": "2025-06-21T11:06:24.106Z",
+      "updated": "2025-06-21T13:47:43.311Z",
       "description": "Tasks for master context"
     }
   }

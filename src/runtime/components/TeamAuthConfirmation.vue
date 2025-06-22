@@ -274,9 +274,11 @@ const processConfirmation = async () => {
     }
 
     if (type === 'email') {
+      confirmationType.value = 'email'
       await handleEmailConfirmation(params)
     }
     else if (type === 'invite') {
+      confirmationType.value = 'invite'
       await handleInviteAcceptance(params)
     }
   }
