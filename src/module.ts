@@ -80,6 +80,10 @@ export default defineNuxtModule<ModuleOptions>({
         name: 'useImpersonation',
         from: resolver.resolve('./runtime/composables/useImpersonation'),
       },
+      {
+        name: 'useSession',
+        from: resolver.resolve('./runtime/composables/useSession'),
+      },
     ])
 
     // Add components directory

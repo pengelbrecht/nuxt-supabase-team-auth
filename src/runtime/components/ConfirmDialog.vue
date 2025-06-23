@@ -13,7 +13,7 @@
       <div class="text-sm text-gray-600 dark:text-gray-400">
         {{ message }}
       </div>
-      
+
       <div class="flex justify-end gap-3">
         <UButton
           variant="ghost"

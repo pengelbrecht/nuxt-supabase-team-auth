@@ -17,6 +17,83 @@
       </UButton>
     </template>
 
+    <!-- Pending Invitations Section -->
+    <UCard
+      v-if="pendingInvitations && pendingInvitations.length > 0"
+      variant="subtle"
+      :ui="{ body: 'p-0 sm:p-0' }"
+      class="mb-6"
+    >
+      <template #header>
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Pending Invitations
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              {{ pendingInvitations?.length || 0 }} invitation{{ pendingInvitations?.length === 1 ? '' : 's' }} waiting for response
+            </p>
+          </div>
+        </div>
+      </template>
+
+      <ul
+        role="list"
+        class="divide-y divide-default"
+      >
+        <li
+          v-for="invitation in pendingInvitations"
+          :key="invitation.id"
+          class="flex items-center justify-between gap-3 px-4 sm:px-6"
+          style="padding-top: 1rem; padding-bottom: 1rem;"
+        >
+          <!-- Invitation Info -->
+          <div class="flex items-center gap-3 min-w-0">
+            <UAvatar
+              size="md"
+              :ui="{ background: 'bg-orange-100 dark:bg-orange-900' }"
+            >
+              <UIcon
+                name="i-lucide-mail"
+                class="text-orange-600 dark:text-orange-400"
+              />
+            </UAvatar>
+
+            <div class="text-sm min-w-0">
+              <p class="text-highlighted font-medium truncate">
+                {{ invitation.email }}
+              </p>
+              <p class="text-muted text-xs">
+                Invited by {{ invitation.invited_by }} • {{ formatInviteDate(invitation.invited_at) }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Role and Actions -->
+          <div class="flex items-center gap-3">
+            <UBadge
+              color="orange"
+              variant="soft"
+              size="sm"
+            >
+              {{ formatRole(invitation.role) }} (Pending)
+            </UBadge>
+
+            <UButton
+              icon="i-lucide-x"
+              color="red"
+              variant="ghost"
+              size="sm"
+              :loading="isRevokingInvite"
+              @click="handleRevokeInvitation(invitation)"
+            >
+              Revoke
+            </UButton>
+          </div>
+        </li>
+      </ul>
+    </UCard>
+
     <!-- Team Members List -->
     <UCard
       variant="subtle"
@@ -116,15 +193,15 @@
   </DialogBox>
 
   <!-- Invite Member Modal -->
-  <FormDialog
+  <ActionDialog
     v-model="showInviteModal"
     title="Invite Team Member"
     subtitle="Send an invitation to join your team"
     :loading="isInviteLoading"
-    :has-changes="!!inviteEmail"
-    save-text="Send Invitation"
-    :require-changes="false"
-    @save="handleInviteMember"
+    :is-valid="!!inviteEmail && !!inviteRole"
+    action-text="Send Invitation"
+    cancel-text="Cancel"
+    @action="handleInviteMember"
     @close="handleInviteModalClose"
   >
     <UFormField
@@ -149,7 +226,7 @@
         size="md"
       />
     </UFormField>
-  </FormDialog>
+  </ActionDialog>
 
   <!-- Confirmation Modal for Member Deletion -->
   <ConfirmationModal
@@ -175,9 +252,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
-import type { Profile, TeamMember } from '../types'
+import type { Profile } from '../types'
 import ConfirmationModal from './ConfirmationModal.vue'
 import EditUserModal from './EditUserModal.vue'
 
@@ -207,11 +284,12 @@ const emit = defineEmits<{
 }>()
 
 // Get auth state and composable functions
-const { currentUser, currentRole, teamMembers, inviteMember, getAvatarFallback, getTeamMembers, updateMemberRole, removeMember } = useTeamAuth()
+const { currentUser, currentRole, currentTeam, teamMembers, inviteMember, getAvatarFallback, getTeamMembers, updateMemberRole, removeMember, revokeInvite, getPendingInvitations } = useTeamAuth()
 
 // Component state
 const isInviteLoading = ref(false)
 const isDeletingMember = ref(false)
+const isRevokingInvite = ref(false)
 const showInviteModal = ref(false)
 const showConfirmModal = ref(false)
 const memberToDelete = ref<TeamMemberWithProfile | null>(null)
@@ -221,6 +299,52 @@ const editingUserId = ref<string | null>(null)
 // Invite state
 const inviteEmail = ref('')
 const inviteRole = ref('member')
+
+// Get Supabase client for auth
+const supabase = useSupabaseClient()
+
+// Back to manual fetch with reactive data - avoiding useLazyFetch SSR issues
+const pendingInvitations = ref([])
+const pendingInvitationsLoading = ref(false)
+const pendingInvitationsError = ref(null)
+
+const refreshPendingInvitations = async () => {
+  // Only fetch if we have authentication and team
+  if (!currentTeam.value?.id || !currentUser.value) return
+
+  // Only fetch if user has permission to view invitations
+  if (!['owner', 'admin', 'super_admin'].includes(currentRole.value)) return
+
+  try {
+    pendingInvitationsLoading.value = true
+    pendingInvitationsError.value = null
+
+    const response = await getPendingInvitations()
+    pendingInvitations.value = response?.invitations || []
+  }
+  catch (error: any) {
+    console.error('Failed to fetch pending invitations:', error)
+    pendingInvitationsError.value = error
+    pendingInvitations.value = []
+  }
+  finally {
+    pendingInvitationsLoading.value = false
+  }
+}
+
+// Watch for auth and team changes
+watch([currentTeam, currentUser], () => {
+  if (currentTeam.value?.id && currentUser.value) {
+    refreshPendingInvitations()
+  }
+}, { immediate: false })
+
+// Manual refresh when dialog opens
+watch(() => props.modelValue, (isOpen) => {
+  if (isOpen && currentTeam.value?.id) {
+    refreshPendingInvitations()
+  }
+})
 
 // Toast notifications
 const toast = useToast()
@@ -425,8 +549,9 @@ const handleInviteMember = async () => {
     inviteRole.value = 'member'
     showInviteModal.value = false
 
-    // Reload team members
+    // Reload team members and pending invitations
     await loadTeamMembers()
+    await refreshPendingInvitations()
   }
   catch (error: any) {
     console.error('Invite member error:', error)
@@ -475,7 +600,6 @@ const handleRoleChange = async (member: any, newRole: string) => {
   }
 
   try {
-
     // Update role in database using composable
     await updateMemberRole(member.user_id, newRole)
 
@@ -566,6 +690,53 @@ const cancelDeleteMember = () => {
   memberToDelete.value = null
 }
 
+// Handle revoking an invitation
+const handleRevokeInvitation = async (invitation: any) => {
+  try {
+    isRevokingInvite.value = true
+
+    await revokeInvite(invitation.id)
+
+    toast.add({
+      title: 'Invitation Revoked',
+      description: `Invitation for ${invitation.email} has been revoked`,
+      color: 'green',
+    })
+
+    // Reload pending invitations
+    await refreshPendingInvitations()
+  }
+  catch (error: any) {
+    console.error('Revoke invitation error:', error)
+    toast.add({
+      title: 'Revoke Failed',
+      description: error.message || 'Failed to revoke invitation. Please try again.',
+      color: 'red',
+    })
+  }
+  finally {
+    isRevokingInvite.value = false
+  }
+}
+
+// Format invitation date
+const formatInviteDate = (dateString: string) => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+
+  if (diffInHours < 1) {
+    return 'Just now'
+  }
+  else if (diffInHours < 24) {
+    return `${diffInHours}h ago`
+  }
+  else {
+    const diffInDays = Math.floor(diffInHours / 24)
+    return `${diffInDays}d ago`
+  }
+}
+
 // Handle close
 const handleClose = () => {
   // Could add cleanup here if needed
@@ -574,5 +745,9 @@ const handleClose = () => {
 // Initialize on mount
 onMounted(() => {
   loadTeamMembers()
+  // Load pending invitations if dialog is open and we have a team
+  if (props.modelValue && currentTeam.value?.id) {
+    refreshPendingInvitations()
+  }
 })
 </script>

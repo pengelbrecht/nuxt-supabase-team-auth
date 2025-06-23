@@ -6,11 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface InviteMemberRequest {
-  email: string
-  team_id?: string
-  teamId?: string // Alternative naming from frontend
-  role?: string
+interface RevokeInvitationRequest {
+  userId: string
+  teamId: string
 }
 
 serve(async (req) => {
@@ -73,15 +71,11 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { email, team_id, teamId, role }: InviteMemberRequest = await req.json()
+    const { userId, teamId }: RevokeInvitationRequest = await req.json()
 
-    // Support both team_id and teamId naming
-    const finalTeamId = team_id || teamId
-    const inviteRole = role || 'member'
-
-    if (!email || !finalTeamId) {
+    if (!userId || !teamId) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: email, team_id/teamId' }),
+        JSON.stringify({ error: 'Missing required fields: userId, teamId' }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -89,11 +83,11 @@ serve(async (req) => {
       )
     }
 
-    // Verify user has permission to invite (admin or owner)
+    // Verify user has permission to revoke invitations (admin or owner)
     const { data: membership, error: membershipError } = await supabaseAdmin
       .from('team_members')
       .select('role')
-      .eq('team_id', finalTeamId)
+      .eq('team_id', teamId)
       .eq('user_id', user.id)
       .single()
 
@@ -107,9 +101,9 @@ serve(async (req) => {
       )
     }
 
-    if (!['owner', 'admin', 'super_admin'].includes(membership.role)) {
+    if (!['owner', 'admin'].includes(membership.role)) {
       return new Response(
-        JSON.stringify({ error: 'ROLE_FORBIDDEN', message: 'Only owners, admins, and super_admins can invite members' }),
+        JSON.stringify({ error: 'Only owners and admins can revoke invitations' }),
         {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -117,51 +111,12 @@ serve(async (req) => {
       )
     }
 
-    // Check if user is already a member or has a pending invitation
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
-    const existingUser = existingUsers?.users?.find(u => u.email === email)
+    // Get the user to verify it's an unconfirmed invitation for this team
+    const { data: targetUser, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(userId)
 
-    if (existingUser) {
-      // Check if user is already a team member
-      const { data: existingMember } = await supabaseAdmin
-        .from('team_members')
-        .select('id')
-        .eq('user_id', existingUser.id)
-        .eq('team_id', finalTeamId)
-        .single()
-
-      if (existingMember) {
-        return new Response(
-          JSON.stringify({ error: 'User is already a member of this team' }),
-          {
-            status: 409,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          },
-        )
-      }
-
-      // Check if user has unconfirmed invitation (email_confirmed_at is null)
-      if (!existingUser.user.email_confirmed_at) {
-        return new Response(
-          JSON.stringify({ error: 'User already has a pending invitation' }),
-          {
-            status: 409,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          },
-        )
-      }
-    }
-
-    // Get team info for the invite metadata
-    const { data: team, error: teamError } = await supabaseAdmin
-      .from('teams')
-      .select('name')
-      .eq('id', finalTeamId)
-      .single()
-
-    if (teamError || !team) {
+    if (getUserError || !targetUser.user) {
       return new Response(
-        JSON.stringify({ error: 'Team not found' }),
+        JSON.stringify({ error: 'User not found' }),
         {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -169,33 +124,35 @@ serve(async (req) => {
       )
     }
 
-    // Send invite using Supabase's built-in system
-    const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:3000'
-    const redirectUrl = `${siteUrl}/accept-invite?team_id=${finalTeamId}`
-
-    console.log('SITE_URL env var:', Deno.env.get('SITE_URL'))
-    console.log('Computed site URL:', siteUrl)
-    console.log('Full redirect URL:', redirectUrl)
-
-    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-      email,
-      {
-        data: {
-          team_id: finalTeamId,
-          team_name: team.name,
-          invited_by: user.id,
-          invited_by_email: user.email,
-          role: inviteRole,
+    // Verify this is an unconfirmed invitation for the specified team
+    if (targetUser.user.email_confirmed_at !== null) {
+      return new Response(
+        JSON.stringify({ error: 'User has already confirmed their account' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         },
-        redirectTo: redirectUrl,
-      },
-    )
+      )
+    }
 
-    if (inviteError) {
+    if (targetUser.user.user_metadata?.team_id !== teamId) {
+      return new Response(
+        JSON.stringify({ error: 'Invitation is not for this team' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
+    // Delete the unconfirmed user (this revokes the invitation)
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
+
+    if (deleteError) {
       return new Response(
         JSON.stringify({
-          error: 'Failed to send invitation',
-          details: inviteError.message,
+          error: 'Failed to revoke invitation',
+          details: deleteError.message,
         }),
         {
           status: 500,
@@ -208,11 +165,10 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Invitation sent successfully',
-        invited_user: inviteData.user,
-        team: {
-          id: finalTeamId,
-          name: team.name,
+        message: 'Invitation revoked successfully',
+        revoked_user: {
+          id: targetUser.user.id,
+          email: targetUser.user.email,
         },
       }),
       {
@@ -221,7 +177,7 @@ serve(async (req) => {
     )
   }
   catch (error) {
-    console.error('Unexpected error in invite-member:', error)
+    console.error('Unexpected error in revoke-invitation:', error)
 
     return new Response(
       JSON.stringify({

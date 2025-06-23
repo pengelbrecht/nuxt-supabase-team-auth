@@ -263,6 +263,7 @@ const processConfirmation = async () => {
     const params = extractParameters()
 
     if (props.debug) {
+      console.log('Confirmation parameters:', params)
     }
 
     const type = determineConfirmationType(params)

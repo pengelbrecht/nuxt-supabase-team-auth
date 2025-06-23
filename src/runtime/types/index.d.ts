@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { DbProfile, DbTeam, DbTeamMember, DbInvite, DbImpersonationSession, TeamRole } from './database.types'
+import type { DbProfile, DbTeam, DbTeamMember, DbInvite, DbImpersonationSession } from './database.types'
 
 export interface User {
   id: string

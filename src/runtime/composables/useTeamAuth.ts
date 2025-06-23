@@ -2,6 +2,7 @@ import { ref, computed, triggerRef } from 'vue'
 import type { SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js'
 import type { User, Profile, Team, TeamMember, TeamAuth } from '../types'
 import { useSessionSync } from './useSessionSync'
+import { useSession } from './useSession'
 
 interface _TeamAuthError {
   code: string
@@ -24,8 +25,46 @@ function getErrorForLogging(error: unknown): any {
   return { message: String(error) }
 }
 
+// Helper function to create headers with auth token
+async function createAuthHeaders(supabaseClient?: any): Promise<Record<string, string>> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  try {
+    if (supabaseClient) {
+      // Use the provided client directly for auth
+      const { data: { session }, error } = await supabaseClient.auth.getSession()
+      if (!error && session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+    }
+    else {
+      // Fallback to useSession for normal runtime usage
+      const { getSession } = useSession()
+      const session = await getSession()
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+    }
+  }
+  catch (error) {
+    console.warn('Failed to get session for auth headers:', error)
+  }
+
+  return headers
+}
+
 // Global flag to prevent multiple auth listeners
 let authListenerRegistered = false
+
+// Cache the Supabase client to avoid repeated calls
+let cachedClient: any = null
+
+// Reset cached client for testing
+export function resetTeamAuthState() {
+  cachedClient = null
+}
 
 const IMPERSONATION_STORAGE_KEY = 'team_auth_impersonation'
 
@@ -166,12 +205,14 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     if (import.meta.server) {
       throw new Error('Supabase client not available during SSR')
     }
-    return getSupabaseClient()
+    if (!cachedClient) {
+      cachedClient = getSupabaseClient()
+    }
+    return cachedClient
   }
 
   // Update complete auth state atomically using updateAuthState helper
   const updateCompleteAuthState = async (user: SupabaseUser) => {
-
     // For impersonation scenarios, immediately update with user data
     // and use data from impersonation response to avoid hanging queries
     if (authState.value.impersonating && authState.value.impersonatedUser) {
@@ -218,7 +259,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     }
 
     try {
-
       // Fetch all data in parallel for normal (non-impersonation) scenarios
       const [profileResult, teamResult] = await Promise.all([
         getClient()
@@ -268,7 +308,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         role: teamResult.data?.role || null,
         loading: false,
       })
-
     }
     catch (error) {
       console.error('Failed to update auth state:', getErrorForLogging(error))
@@ -572,19 +611,41 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         throw new Error('Invalid role. Must be member or admin')
       }
 
+      // Check if we have a current team
+      if (!currentTeam.value?.id) {
+        throw new Error('No team selected')
+      }
+
       // Check permissions - only admin and owner can invite
       if (!currentRole.value || !['admin', 'owner', 'super_admin'].includes(currentRole.value)) {
         throw new Error('You do not have permission to invite members')
       }
 
       try {
+        console.log('invite: step 1 - setting loading state')
         authState.value = { ...authState.value, loading: true }
 
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        }
+
+        try {
+          console.log('invite: step 2 - getting session')
+          const { getSession } = useSession()
+          const session = await getSession()
+          if (session?.access_token) {
+            headers['Authorization'] = `Bearer ${session.access_token}`
+          }
+          console.log('invite: step 3 - session obtained')
+        }
+        catch (error) {
+          console.warn('Failed to get session for auth headers:', error)
+        }
+
+        console.log('invite: step 4 - making API call')
         const response = await $fetch('/api/invite-member', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers,
           body: {
             email,
             role,
@@ -596,8 +657,49 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           throw { code: 'INVITE_FAILED', message: response.message || 'Failed to send invite' }
         }
       }
-      catch (error: unknown) {
+      catch (error: any) {
         console.error('Invite member failed:', error)
+        // Make sure we have a proper error message
+        const errorMessage = error?.data?.message || error?.message || 'Failed to send invitation'
+        throw new Error(errorMessage)
+      }
+      finally {
+        authState.value = { ...authState.value, loading: false }
+      }
+    },
+
+    getPendingInvitations: async () => {
+      // Check role permissions - only owner, admin, or super_admin can view pending invitations
+      if (!currentRole.value || !['owner', 'admin', 'super_admin'].includes(currentRole.value)) {
+        throw new Error('You do not have permission to view pending invitations')
+      }
+
+      if (!currentTeam.value) {
+        throw new Error('No current team available')
+      }
+
+      try {
+        authState.value = { ...authState.value, loading: true }
+
+        const headers = await createAuthHeaders(getClient())
+
+        // Get pending invitations from auth.users via Edge Function
+        const response = await $fetch('/api/get-pending-invitations', {
+          method: 'POST',
+          headers,
+          body: {
+            teamId: currentTeam.value.id,
+          },
+        })
+
+        if (!response.success) {
+          throw { code: 'GET_INVITATIONS_FAILED', message: response.message || 'Failed to fetch invitations' }
+        }
+
+        return response.invitations || []
+      }
+      catch (error: unknown) {
+        console.error('Get pending invitations failed:', error)
         throw error
       }
       finally {
@@ -605,7 +707,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       }
     },
 
-    revokeInvite: async (inviteId: string): Promise<void> => {
+    revokeInvite: async (userId: string): Promise<void> => {
       if (!currentTeam.value) {
         throw new Error('No current team available')
       }
@@ -618,14 +720,20 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       try {
         authState.value = { ...authState.value, loading: true }
 
-        const { error } = await getClient()
-          .from('invites')
-          .update({ status: 'revoked' })
-          .eq('id', inviteId)
-          .eq('team_id', currentTeam.value.id)
+        const headers = await createAuthHeaders(getClient())
 
-        if (error) {
-          throw { code: 'REVOKE_INVITE_FAILED', message: error.message }
+        // Revoke invitation by deleting the unconfirmed user via Edge Function
+        const response = await $fetch('/api/revoke-invitation', {
+          method: 'POST',
+          headers,
+          body: {
+            userId,
+            teamId: currentTeam.value.id,
+          },
+        })
+
+        if (!response.success) {
+          throw { code: 'REVOKE_INVITE_FAILED', message: response.message || 'Failed to revoke invitation' }
         }
       }
       catch (error: unknown) {
@@ -705,11 +813,11 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       try {
         authState.value = { ...authState.value, loading: true }
 
+        const headers = await createAuthHeaders(getClient())
+
         const response = await $fetch('/api/transfer-ownership', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers,
           body: {
             teamId: currentTeam.value.id,
             newOwnerId: userId,
@@ -1165,7 +1273,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           impersonationSessionId: response.impersonation.session_id,
           loading: false,
         })
-
 
         // Show success toast
         const toast = useToast()

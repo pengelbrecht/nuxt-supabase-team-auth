@@ -380,7 +380,7 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import * as v from 'valibot'
 import { useTeamAuth } from '../composables/useTeamAuth'
-import type { Profile, TeamMember } from '../types'
+import type { Profile } from '../types'
 import SettingsTabContainer from './SettingsTabContainer.vue'
 import ConfirmationModal from './ConfirmationModal.vue'
 import EditUserModal from './EditUserModal.vue'
@@ -799,7 +799,6 @@ const handleRoleChange = async (member: any, newRole: string) => {
   }
 
   try {
-
     // Update role in database using composable
     await updateMemberRole(member.user_id, newRole)
 

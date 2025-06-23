@@ -1,20 +1,21 @@
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = 'http://127.0.0.1:54321'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0'
-const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
+import { createTestSupabaseClient, validateTestEnvironment, TEST_ENV } from './helpers/test-env'
 
 describe('RLS Policies', () => {
   let serviceClient: ReturnType<typeof createClient>
 
   beforeAll(() => {
+    console.log('[RLS-POLICIES] beforeAll: Starting RLS test setup')
+    console.log(`[RLS-POLICIES] beforeAll: Test run timestamp: ${new Date().toISOString()}`)
+
+    // Validate environment in CI
+    validateTestEnvironment()
+
     // Service role client for setup/teardown with no session persistence
-    serviceClient = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        persistSession: false,
-      },
-    })
+    serviceClient = createTestSupabaseClient('service')
+
+    console.log('[RLS-POLICIES] beforeAll: Setup complete')
   })
 
   afterEach(async () => {
@@ -90,11 +91,7 @@ describe('RLS Policies', () => {
   describe('Team Member Visibility', () => {
     it('Alpha owner should see 5 Alpha team members', async () => {
       // Create a fresh client for this test with no session persistence
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: {
-          persistSession: false,
-        },
-      })
+      const testClient = createTestSupabaseClient('anon')
 
       const { data: authData, error: authError } = await testClient.auth.signInWithPassword({
         email: 'owner@a.test',
@@ -131,7 +128,7 @@ describe('RLS Policies', () => {
 
     it('Alpha member should see 5 Alpha team members', async () => {
       // Create a fresh client with no session persistence
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: {
           persistSession: false,
         },
@@ -166,7 +163,7 @@ describe('RLS Policies', () => {
 
     it('Beta owner should see 0 Alpha team members (cross-team isolation)', async () => {
       // Create a fresh client with no session persistence
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: {
           persistSession: false,
         },
@@ -199,7 +196,7 @@ describe('RLS Policies', () => {
   describe('Profile Visibility', () => {
     it('Alpha member should see Alpha team profiles', async () => {
       // Create a fresh client with no session persistence
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: {
           persistSession: false,
         },
@@ -234,7 +231,7 @@ describe('RLS Policies', () => {
   describe('Team Access', () => {
     it('Alpha owner should see Alpha team', async () => {
       // Create a fresh client with no session persistence
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: {
           persistSession: false,
         },
@@ -266,7 +263,7 @@ describe('RLS Policies', () => {
 
   describe('Permission Restrictions - What Members CANNOT Do', () => {
     it('Member cannot update other team member roles', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -325,7 +322,7 @@ describe('RLS Policies', () => {
     })
 
     it('Member cannot delete other team members', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -373,7 +370,7 @@ describe('RLS Policies', () => {
     })
 
     it('Member cannot add new team members', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -400,7 +397,7 @@ describe('RLS Policies', () => {
     })
 
     it('Member cannot update team settings', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -451,7 +448,7 @@ describe('RLS Policies', () => {
 
   describe('Admin Permissions - What Admins CAN Do', () => {
     it('Admin can promote member to admin', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -502,7 +499,7 @@ describe('RLS Policies', () => {
     })
 
     it('Admin can invite new admin (consistent with promotion permissions)', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -560,7 +557,7 @@ describe('RLS Policies', () => {
     })
 
     it('Admin can delete members but not owners/admins', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -612,7 +609,7 @@ describe('RLS Policies', () => {
 
   describe('Admin Restrictions - What Admins CANNOT Do', () => {
     it('Admin cannot promote anyone to owner', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -637,7 +634,7 @@ describe('RLS Policies', () => {
     })
 
     it('Admin cannot update their own role', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -662,7 +659,7 @@ describe('RLS Policies', () => {
     })
 
     it('Admin cannot update team settings', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -712,7 +709,7 @@ describe('RLS Policies', () => {
 
   describe('Owner Permissions - What Owners CAN Do', () => {
     it('Owner can update team settings', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -753,7 +750,7 @@ describe('RLS Policies', () => {
     })
 
     it('Owner can promote members to admin', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -786,7 +783,7 @@ describe('RLS Policies', () => {
 
   describe('Owner Restrictions - What Owners CANNOT Do', () => {
     it('Owner cannot degrade themselves', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -811,7 +808,7 @@ describe('RLS Policies', () => {
     })
 
     it('Owner cannot assign super_admin role', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -836,7 +833,7 @@ describe('RLS Policies', () => {
     })
 
     it('Owner cannot delete super_admins', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -885,7 +882,7 @@ describe('RLS Policies', () => {
 
   describe('Super Admin Permissions - What Super Admins CAN Do', () => {
     it('Super admin can see all teams across organizations', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -899,7 +896,20 @@ describe('RLS Policies', () => {
         .from('teams')
         .select('*')
 
-      console.log('Super admin teams query:', { teams, error })
+      console.log('[RLS-POLICIES] Super Admin Teams Test: Query result:', {
+        teamsCount: teams?.length,
+        teamNames: teams?.map(t => t.name),
+        error,
+      })
+
+      if (teams && teams.length > 2) {
+        console.log('[RLS-POLICIES] Super Admin Teams Test: Extra teams found:')
+        teams.forEach((t) => {
+          if (t.name !== 'Alpha Corporation' && t.name !== 'Beta Industries') {
+            console.log(`  - ${t.name} (${t.id}) created at ${t.created_at}`)
+          }
+        })
+      }
 
       expect(error).toBeNull()
       expect(teams).toHaveLength(2)
@@ -909,7 +919,7 @@ describe('RLS Policies', () => {
     })
 
     it('Super admin can see all team members across organizations', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -932,7 +942,7 @@ describe('RLS Policies', () => {
     })
 
     it('Super admin can see all profiles across organizations', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -957,7 +967,7 @@ describe('RLS Policies', () => {
 
   describe('Multiple Owners Policy', () => {
     it('Should allow multiple owners per team', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -1009,7 +1019,7 @@ describe('RLS Policies', () => {
     })
 
     it('Should prevent team from having zero owners (database constraint)', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 
@@ -1078,7 +1088,7 @@ describe('RLS Policies', () => {
 
   describe('Cross-Team Isolation', () => {
     it('Users cannot see other teams data', async () => {
-      const testClient = createClient(supabaseUrl, supabaseAnonKey, {
+      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
       })
 

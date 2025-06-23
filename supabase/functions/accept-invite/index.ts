@@ -82,15 +82,8 @@ serve(async (req) => {
       )
     }
 
-    // Check if there's a pending invite for this user/team
-    const { data: invite, error: inviteError } = await supabaseAdmin
-      .from('invites')
-      .select('*')
-      .eq('email', user.email)
-      .eq('team_id', team_id)
-      .single()
-
-    if (inviteError || !invite) {
+    // Check if user has invitation metadata for this team
+    if (!user.user_metadata?.team_id || user.user_metadata.team_id !== team_id) {
       return new Response(
         JSON.stringify({
           error: 'INVITE_NOT_FOUND',
@@ -141,13 +134,16 @@ serve(async (req) => {
       )
     }
 
+    // Get the role from invitation metadata
+    const invitedRole = user.user_metadata?.role || 'member'
+
     // Add user to team
     const { error: memberError } = await supabaseAdmin
       .from('team_members')
       .insert({
         team_id: team_id,
         user_id: user.id,
-        role: 'member', // Default role for invited users
+        role: invitedRole,
       })
 
     if (memberError) {
@@ -163,12 +159,6 @@ serve(async (req) => {
       )
     }
 
-    // Remove the invite record (it's been accepted)
-    await supabaseAdmin
-      .from('invites')
-      .delete()
-      .eq('id', invite.id)
-
     // Return success response
     return new Response(
       JSON.stringify({
@@ -180,7 +170,7 @@ serve(async (req) => {
         user: {
           id: user.id,
           email: user.email,
-          role: 'member',
+          role: invitedRole,
         },
       }),
       {

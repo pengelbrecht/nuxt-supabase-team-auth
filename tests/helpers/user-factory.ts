@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { createClient } from '@supabase/supabase-js'
 import type { TestUser, TeamRole } from './database'
+import { createTestSupabaseClient } from './test-env'
 
 /**
  * Factory for creating test users with various configurations
@@ -8,18 +8,10 @@ import type { TestUser, TeamRole } from './database'
 export class TestUserFactory {
   private supabase: SupabaseClient
   private createdUsers: string[] = []
+  private createdTeams: string[] = []
 
   constructor() {
-    const supabaseUrl = process.env.SUPABASE_URL || 'http://localhost:54321'
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-      || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
-
-    this.supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    })
+    this.supabase = createTestSupabaseClient('service')
   }
 
   /**
@@ -98,7 +90,6 @@ export class TestUserFactory {
       .from('teams')
       .insert({
         name: teamName,
-        created_by: user.id,
       })
       .select()
       .single()
@@ -106,6 +97,9 @@ export class TestUserFactory {
     if (teamError || !team) {
       throw new Error(`Failed to create team: ${teamError?.message}`)
     }
+
+    // Track created team for cleanup
+    this.createdTeams.push(team.id)
 
     // Add user as owner
     const { error: memberError } = await this.supabase
@@ -237,18 +231,52 @@ export class TestUserFactory {
   }
 
   /**
-   * Clean up all users created by this factory
+   * Clean up all users and teams created by this factory
+   * Now works properly with the improved ensure_team_has_owner trigger
    */
   async cleanup(): Promise<void> {
-    for (const userId of this.createdUsers) {
+    console.log(`[USER-FACTORY] cleanup: Starting cleanup. Teams: ${this.createdTeams.length}, Users: ${this.createdUsers.length}`)
+
+    // With the improved trigger, we can delete teams directly and it will cascade properly
+    // The trigger now allows cascade deletes when the team itself is being deleted
+
+    console.log(`[USER-FACTORY] cleanup: Deleting ${this.createdTeams.length} teams...`)
+    for (const teamId of this.createdTeams) {
       try {
-        await this.supabase.auth.admin.deleteUser(userId)
+        // Delete team directly - the improved trigger allows cascade deletes
+        const { error } = await this.supabase
+          .from('teams')
+          .delete()
+          .eq('id', teamId)
+
+        if (error) {
+          console.error(`[USER-FACTORY] cleanup: Error deleting team ${teamId}:`, JSON.stringify(error, null, 2))
+        }
       }
       catch (error) {
-        console.warn(`Failed to delete user ${userId}:`, error)
+        console.error(`[USER-FACTORY] cleanup: Failed to delete team ${teamId}:`, error)
       }
     }
+    const teamsDeleted = this.createdTeams.length
+    this.createdTeams = []
+
+    // Delete users - this will clean up auth.users and any remaining data
+    console.log(`[USER-FACTORY] cleanup: Deleting ${this.createdUsers.length} users...`)
+    for (const userId of this.createdUsers) {
+      try {
+        const { error } = await this.supabase.auth.admin.deleteUser(userId)
+        if (error) {
+          console.error(`[USER-FACTORY] cleanup: Error deleting user ${userId}:`, error)
+        }
+      }
+      catch (error) {
+        console.error(`[USER-FACTORY] cleanup: Failed to delete user ${userId}:`, error)
+      }
+    }
+    const usersDeleted = this.createdUsers.length
     this.createdUsers = []
+
+    console.log(`[USER-FACTORY] cleanup: Complete. Deleted ${teamsDeleted} teams and ${usersDeleted} users`)
   }
 
   /**

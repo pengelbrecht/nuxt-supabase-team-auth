@@ -6,7 +6,7 @@
     style="background-color: #dc2626 !important; color: white !important; border-color: #b91c1c !important;"
   >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="py-3">
+      <div class="py-4">
         <div class="flex items-center justify-between">
           <!-- Left side - Impersonation info -->
           <div class="flex items-center gap-3">

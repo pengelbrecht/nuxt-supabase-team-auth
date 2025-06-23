@@ -219,7 +219,7 @@ export function useImpersonation() {
       try {
         await navigateTo('/dashboard', { external: true })
       }
-      catch (navError) {
+      catch (_navError) {
         // navigateTo might throw but that's expected during page reload
       }
     }

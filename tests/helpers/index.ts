@@ -15,7 +15,7 @@ interface TestUser extends User {
   teamId?: string
 }
 
-interface TestTeam extends Team {
+interface _TestTeam extends Team {
   owner?: TestUser
 }
 

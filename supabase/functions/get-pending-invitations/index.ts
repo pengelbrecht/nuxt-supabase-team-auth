@@ -6,11 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface InviteMemberRequest {
-  email: string
-  team_id?: string
-  teamId?: string // Alternative naming from frontend
-  role?: string
+interface GetPendingInvitationsRequest {
+  teamId: string
 }
 
 serve(async (req) => {
@@ -73,15 +70,11 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { email, team_id, teamId, role }: InviteMemberRequest = await req.json()
+    const { teamId }: GetPendingInvitationsRequest = await req.json()
 
-    // Support both team_id and teamId naming
-    const finalTeamId = team_id || teamId
-    const inviteRole = role || 'member'
-
-    if (!email || !finalTeamId) {
+    if (!teamId) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: email, team_id/teamId' }),
+        JSON.stringify({ error: 'Missing teamId' }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -89,11 +82,11 @@ serve(async (req) => {
       )
     }
 
-    // Verify user has permission to invite (admin or owner)
+    // Verify user has permission to view invitations (admin or owner)
     const { data: membership, error: membershipError } = await supabaseAdmin
       .from('team_members')
       .select('role')
-      .eq('team_id', finalTeamId)
+      .eq('team_id', teamId)
       .eq('user_id', user.id)
       .single()
 
@@ -109,7 +102,7 @@ serve(async (req) => {
 
     if (!['owner', 'admin', 'super_admin'].includes(membership.role)) {
       return new Response(
-        JSON.stringify({ error: 'ROLE_FORBIDDEN', message: 'Only owners, admins, and super_admins can invite members' }),
+        JSON.stringify({ error: 'Only owners, admins, and super_admins can view invitations' }),
         {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -117,85 +110,14 @@ serve(async (req) => {
       )
     }
 
-    // Check if user is already a member or has a pending invitation
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
-    const existingUser = existingUsers?.users?.find(u => u.email === email)
+    // Get all users with null email_confirmed_at (pending invitations)
+    const { data: allUsers, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
 
-    if (existingUser) {
-      // Check if user is already a team member
-      const { data: existingMember } = await supabaseAdmin
-        .from('team_members')
-        .select('id')
-        .eq('user_id', existingUser.id)
-        .eq('team_id', finalTeamId)
-        .single()
-
-      if (existingMember) {
-        return new Response(
-          JSON.stringify({ error: 'User is already a member of this team' }),
-          {
-            status: 409,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          },
-        )
-      }
-
-      // Check if user has unconfirmed invitation (email_confirmed_at is null)
-      if (!existingUser.user.email_confirmed_at) {
-        return new Response(
-          JSON.stringify({ error: 'User already has a pending invitation' }),
-          {
-            status: 409,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          },
-        )
-      }
-    }
-
-    // Get team info for the invite metadata
-    const { data: team, error: teamError } = await supabaseAdmin
-      .from('teams')
-      .select('name')
-      .eq('id', finalTeamId)
-      .single()
-
-    if (teamError || !team) {
-      return new Response(
-        JSON.stringify({ error: 'Team not found' }),
-        {
-          status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        },
-      )
-    }
-
-    // Send invite using Supabase's built-in system
-    const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:3000'
-    const redirectUrl = `${siteUrl}/accept-invite?team_id=${finalTeamId}`
-
-    console.log('SITE_URL env var:', Deno.env.get('SITE_URL'))
-    console.log('Computed site URL:', siteUrl)
-    console.log('Full redirect URL:', redirectUrl)
-
-    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-      email,
-      {
-        data: {
-          team_id: finalTeamId,
-          team_name: team.name,
-          invited_by: user.id,
-          invited_by_email: user.email,
-          role: inviteRole,
-        },
-        redirectTo: redirectUrl,
-      },
-    )
-
-    if (inviteError) {
+    if (usersError) {
       return new Response(
         JSON.stringify({
-          error: 'Failed to send invitation',
-          details: inviteError.message,
+          error: 'Failed to fetch users',
+          details: usersError.message,
         }),
         {
           status: 500,
@@ -204,16 +126,59 @@ serve(async (req) => {
       )
     }
 
+    // Get all team members for this team
+    const { data: teamMembers, error: membersError } = await supabaseAdmin
+      .from('team_members')
+      .select('user_id')
+      .eq('team_id', teamId)
+
+    if (membersError) {
+      return new Response(
+        JSON.stringify({
+          error: 'Failed to fetch team members',
+          details: membersError.message,
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
+    const teamMemberIds = new Set(teamMembers.map(m => m.user_id))
+
+    // Filter for pending invitations - users with team metadata but not yet in team_members
+    // Also filter out expired invitations (older than 24 hours)
+    const now = new Date()
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+
+    const pendingInvitations = allUsers.users
+      .filter((user) => {
+        // Must have team metadata and not be in team_members
+        const hasTeamMetadata = user.user_metadata?.team_id === teamId
+        const notInTeam = !teamMemberIds.has(user.id)
+
+        // Check if invitation is still valid (not expired)
+        const inviteDate = user.invited_at ? new Date(user.invited_at) : null
+        const notExpired = inviteDate && inviteDate > twentyFourHoursAgo
+
+        return hasTeamMetadata && notInTeam && notExpired
+      })
+      .map(user => ({
+        id: user.id,
+        email: user.email,
+        invited_at: user.invited_at,
+        invited_by: user.user_metadata?.invited_by_email || 'Unknown',
+        role: user.user_metadata?.role || 'member',
+        team_name: user.user_metadata?.team_name,
+        expires_at: user.invited_at ? new Date(new Date(user.invited_at).getTime() + 24 * 60 * 60 * 1000).toISOString() : null,
+      }))
+
     // Return success response
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Invitation sent successfully',
-        invited_user: inviteData.user,
-        team: {
-          id: finalTeamId,
-          name: team.name,
-        },
+        invitations: pendingInvitations,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -221,7 +186,7 @@ serve(async (req) => {
     )
   }
   catch (error) {
-    console.error('Unexpected error in invite-member:', error)
+    console.error('Unexpected error in get-pending-invitations:', error)
 
     return new Response(
       JSON.stringify({

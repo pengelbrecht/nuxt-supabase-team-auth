@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { nextTick, ref } from 'vue'
-import { useTeamAuth } from '../../src/runtime/composables/useTeamAuth'
+import { useTeamAuth, resetTeamAuthState } from '../../src/runtime/composables/useTeamAuth'
+import { resetSessionState } from '../../src/runtime/composables/useSession'
 
 // Mock Nuxt composables
 const mockUseState = vi.fn()
@@ -8,6 +9,7 @@ const mockUseNuxtApp = vi.fn()
 const mockUseRuntimeConfig = vi.fn()
 const mockUseSessionSync = vi.fn()
 const mockUseToast = vi.fn()
+const mockUseSupabaseClient = vi.fn()
 const mockFetch = vi.fn()
 
 Object.assign(global, {
@@ -16,6 +18,7 @@ Object.assign(global, {
   useRuntimeConfig: mockUseRuntimeConfig,
   useSessionSync: mockUseSessionSync,
   useToast: mockUseToast,
+  useSupabaseClient: mockUseSupabaseClient,
   $fetch: mockFetch,
 })
 
@@ -106,7 +109,11 @@ describe('useTeamAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    // Create fresh mock for each test
+    // Reset all global state BEFORE creating new mocks
+    resetSessionState()
+    resetTeamAuthState()
+
+    // Create completely fresh mock for each test to prevent interference
     mockSupabaseClient = createMockSupabaseClient()
 
     // Create mock auth state that behaves like a reactive ref
@@ -139,6 +146,8 @@ describe('useTeamAuth', () => {
     mockUseNuxtApp.mockReturnValue({
       $teamAuthClient: mockSupabaseClient,
     })
+    // Always return the fresh mockSupabaseClient instance
+    mockUseSupabaseClient.mockReturnValue(mockSupabaseClient)
     mockUseRuntimeConfig.mockReturnValue({
       public: {
         teamAuth: {
@@ -368,6 +377,7 @@ describe('useTeamAuth', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': expect.stringMatching(/^Bearer /),
         },
         body: {
           email: 'newuser@example.com',
