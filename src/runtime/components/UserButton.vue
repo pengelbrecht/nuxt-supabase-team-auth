@@ -38,6 +38,20 @@
       @saved="handleSettingsSaved"
       @error="handleSettingsError"
     />
+
+    <!-- Company Settings Dialog -->
+    <CompanySettingsDialog
+      v-model="showCompanySettingsDialog"
+      @saved="handleCompanySettingsSaved"
+      @error="handleSettingsError"
+    />
+
+    <!-- Team Members Dialog -->
+    <TeamMembersDialog
+      v-model="showTeamMembersDialog"
+      @saved="handleTeamMembersSaved"
+      @error="handleSettingsError"
+    />
   </div>
 </template>
 
@@ -45,6 +59,8 @@
 import { computed, ref, watch } from 'vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import SettingsModal from './SettingsModal.vue'
+import CompanySettingsDialog from './CompanySettingsDialog.vue'
+import TeamMembersDialog from './TeamMembersDialog.vue'
 
 // Props
 interface Props {
@@ -74,7 +90,9 @@ const {
 
 // Modal state
 const showSettingsModal = ref(false)
-const settingsTab = ref<'profile' | 'team' | 'impersonation'>('profile')
+const settingsTab = ref<'profile' | 'impersonation'>('profile')
+const showCompanySettingsDialog = ref(false)
+const showTeamMembersDialog = ref(false)
 
 // Computed properties
 const avatarFallback = computed(() => {
@@ -102,9 +120,12 @@ const openProfileSettings = () => {
   showSettingsModal.value = true
 }
 
-const openTeamSettings = () => {
-  settingsTab.value = 'team'
-  showSettingsModal.value = true
+const openCompanySettings = () => {
+  showCompanySettingsDialog.value = true
+}
+
+const openTeamMembers = () => {
+  showTeamMembersDialog.value = true
 }
 
 const openImpersonationSettings = () => {
@@ -114,6 +135,14 @@ const openImpersonationSettings = () => {
 
 const handleSettingsSaved = (_data: any) => {
   // Profile updates automatically via reactive state in composable
+}
+
+const handleCompanySettingsSaved = (_data: any) => {
+  // Company updates automatically via reactive state in composable
+}
+
+const handleTeamMembersSaved = (_data: any) => {
+  // Team member updates automatically via reactive state in composable
 }
 
 const handleSettingsError = (error: string) => {
@@ -158,13 +187,21 @@ const dropdownItems = computed(() => {
     },
   })
 
-  // Team management (admin/owner + super_admin only)
+  // Company management (admin/owner + super_admin only)
   if (isAdmin.value || isSuperAdmin.value) {
     items.push({
-      label: 'Team Settings',
+      label: 'Company Settings',
+      icon: 'i-lucide-building',
+      onSelect: () => {
+        openCompanySettings()
+      },
+    })
+
+    items.push({
+      label: 'Team Members',
       icon: 'i-lucide-users',
       onSelect: () => {
-        openTeamSettings()
+        openTeamMembers()
       },
     })
   }
