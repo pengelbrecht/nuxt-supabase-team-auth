@@ -22,7 +22,7 @@ describe('RLS Policies', () => {
     // Remove any members from Alpha team that aren't part of the original seed data
     const originalAlphaMembers = [
       '11111111-1111-1111-1111-111111111111', // Super Admin (super@a.test)
-      '22222222-2222-2222-2222-222222222222', // Alpha Owner (owner@a.test) 
+      '22222222-2222-2222-2222-222222222222', // Alpha Owner (owner@a.test)
       '33333333-3333-3333-3333-333333333333', // Alpha Admin (admin@a.test)
       '44444444-4444-4444-4444-444444444444', // Alpha Member (member@a.test)
     ]
@@ -1029,7 +1029,7 @@ describe('RLS Policies', () => {
       expect(promoteError).toBeNull() // Super admin can promote anyone
 
       // Now try to demote one owner to admin (should succeed - still have 1 owner left)
-      const { data: firstUpdate, error: firstError } = await testClient
+      const { data: _firstUpdate, error: firstError } = await testClient
         .from('team_members')
         .update({ role: 'admin' })
         .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')

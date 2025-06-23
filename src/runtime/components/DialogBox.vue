@@ -26,7 +26,7 @@
           >
             You have unsaved changes
           </span>
-          
+
           <!-- Custom actions slot -->
           <slot name="actions">
             <!-- Default save button for forms -->
@@ -43,7 +43,7 @@
               {{ saveText }}
             </UButton>
           </slot>
-          
+
           <!-- Close button -->
           <UButton
             color="gray"
@@ -120,7 +120,6 @@ const isOpen = computed({
   get: () => props.modelValue,
   set: (value: boolean) => emit('update:modelValue', value),
 })
-
 
 // Methods
 const handleClose = () => {

@@ -127,6 +127,9 @@ describe('useImpersonation Composable - Security Tests', () => {
 
       // Should not make another server request
       expect($fetch).not.toHaveBeenCalled()
+
+      // Should still be impersonating from first call
+      expect(isImpersonating.value).toBe(true)
     })
 
     // Note: Server response and error handling tests are covered by server endpoint tests

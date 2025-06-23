@@ -8,6 +8,22 @@ interface _TeamAuthError {
   message: string
 }
 
+interface ImpersonationStorageData {
+  targetUser: User
+  expiresAt: string
+  sessionId: string
+  originalAccessToken: string
+  originalRefreshToken: string
+}
+
+// Helper function to safely extract error for logging
+function getErrorForLogging(error: unknown): any {
+  if (error && typeof error === 'object') {
+    return error
+  }
+  return { message: String(error) }
+}
+
 // Global flag to prevent multiple auth listeners
 let authListenerRegistered = false
 
@@ -39,7 +55,7 @@ const loadImpersonationFromStorage = () => {
     }
   }
   catch (error) {
-    console.error('Failed to load impersonation data:', error)
+    console.error('Failed to load impersonation data:', getErrorForLogging(error))
     localStorage.removeItem(IMPERSONATION_STORAGE_KEY)
   }
 
@@ -47,7 +63,7 @@ const loadImpersonationFromStorage = () => {
 }
 
 // Save impersonation data to localStorage
-const saveImpersonationToStorage = (data: any) => {
+const saveImpersonationToStorage = (data: ImpersonationStorageData) => {
   if (!import.meta.client) return
 
   try {
@@ -61,7 +77,7 @@ const saveImpersonationToStorage = (data: any) => {
     localStorage.setItem(IMPERSONATION_STORAGE_KEY, JSON.stringify(storageData))
   }
   catch (error) {
-    console.error('Failed to save impersonation data:', error)
+    console.error('Failed to save impersonation data:', getErrorForLogging(error))
   }
 }
 
@@ -100,7 +116,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
   // Simple immediate state update with localStorage persistence for impersonation
   const updateAuthState = (updates: Partial<typeof authState.value>) => {
-    console.log('🔥 Updating auth state immediately:', updates)
     authState.value = { ...authState.value, ...updates }
 
     // Save to localStorage if impersonation state changed
@@ -156,12 +171,10 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
   // Update complete auth state atomically using updateAuthState helper
   const updateCompleteAuthState = async (user: SupabaseUser) => {
-    console.log(`🔥 Updating complete auth state for: ${user.email}`)
 
     // For impersonation scenarios, immediately update with user data
     // and use data from impersonation response to avoid hanging queries
     if (authState.value.impersonating && authState.value.impersonatedUser) {
-      console.log('🔥 Impersonation active, using impersonation data')
       const impersonatedData = authState.value.impersonatedUser
       updateAuthState({
         user: {
@@ -173,12 +186,12 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           id: impersonatedData.id,
           full_name: impersonatedData.full_name,
           email: impersonatedData.email,
-        } as any,
+        } as User,
         team: impersonatedData.team
           ? {
               id: impersonatedData.team.id,
               name: impersonatedData.team.name,
-            } as any
+            } as Team
           : null,
         role: impersonatedData.role,
         loading: false,
@@ -189,7 +202,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     // For stopping impersonation, immediately update with minimal data
     // and skip database queries that might hang during session switch
     if (authState.value.stoppingImpersonation) {
-      console.log('🔥 Stopping impersonation detected, using immediate state update')
       updateAuthState({
         user: {
           id: user.id,
@@ -206,7 +218,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     }
 
     try {
-      console.log(`🔥 Fetching profile and team data for user: ${user.id}`)
 
       // Fetch all data in parallel for normal (non-impersonation) scenarios
       const [profileResult, teamResult] = await Promise.all([
@@ -258,10 +269,9 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         loading: false,
       })
 
-      console.log(`🔥 Auth state updated - User: ${user.email}, Team: ${authState.value.team?.name}, Role: ${authState.value.role}`)
     }
     catch (error) {
-      console.error('🔥 Failed to update auth state:', error)
+      console.error('Failed to update auth state:', getErrorForLogging(error))
       // Update with partial data using same helper
       updateAuthState({
         user: {
@@ -279,7 +289,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
   // Reset auth state
   const resetAuthState = () => {
-    console.log('🔥 Resetting auth state')
     authState.value = {
       ...authState.value,
       user: null,
@@ -298,11 +307,8 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   // Initialize auth state once
   const initializeAuth = async () => {
     if (authState.value.initialized) {
-      console.log('🔥 Auth already initialized, skipping')
       return
     }
-
-    console.log('🔥 Initializing auth state')
 
     try {
       // Get initial session
@@ -314,7 +320,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       else {
         // No active session - clear any stale impersonation state
         if (authState.value.impersonating) {
-          console.log('🔥 No active session but impersonation state found, clearing stale data')
           if (import.meta.client) {
             localStorage.removeItem(IMPERSONATION_STORAGE_KEY)
           }
@@ -336,18 +341,14 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       // Setup auth listener once globally
       if (!authListenerRegistered) {
         authListenerRegistered = true
-        console.log('🔥 Registering auth listener (once)')
 
         getClient().auth.onAuthStateChange(async (event, session) => {
           // Deduplicate events
           const eventKey = `${event}:${session?.user?.id || 'none'}:${session?.user?.email || 'none'}`
           if (lastProcessedEvent.value === eventKey) {
-            console.log(`🔥 Skipping duplicate auth event: ${eventKey}`)
             return
           }
           lastProcessedEvent.value = eventKey
-
-          console.log(`🔥 Auth event: ${event} | User: ${session?.user?.email || 'none'}`)
 
           switch (event) {
             case 'SIGNED_IN':
@@ -365,15 +366,11 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           }
         })
       }
-      else {
-        console.log('🔥 Auth listener already registered, skipping')
-      }
 
       authState.value.initialized = true
-      console.log('🔥 Auth initialization complete')
     }
     catch (error) {
-      console.error('🔥 Auth initialization failed:', error)
+      console.error('Auth initialization failed:', getErrorForLogging(error))
       authState.value = { ...authState.value, loading: false }
     }
   }
@@ -442,8 +439,8 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
         // State will be updated by the auth listener
       }
-      catch (error: any) {
-        console.error('Sign up with team failed:', error)
+      catch (error: unknown) {
+        console.error('Sign up with team failed:', getErrorForLogging(error))
         throw error
       }
       finally {
@@ -466,7 +463,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
         // State will be updated by the auth listener
       }
-      catch (error: any) {
+      catch (error: unknown) {
         console.error('Sign in failed:', error)
         throw error
       }
@@ -554,7 +551,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           triggerRef(authState)
         }
       }
-      catch (error: any) {
+      catch (error: unknown) {
         console.error('Profile update failed:', error)
         throw error
       }
@@ -599,7 +596,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           throw { code: 'INVITE_FAILED', message: response.message || 'Failed to send invite' }
         }
       }
-      catch (error: any) {
+      catch (error: unknown) {
         console.error('Invite member failed:', error)
         throw error
       }
@@ -631,7 +628,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           throw { code: 'REVOKE_INVITE_FAILED', message: error.message }
         }
       }
-      catch (error: any) {
+      catch (error: unknown) {
         console.error('Revoke invite failed:', error)
         throw error
       }
@@ -673,7 +670,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         // Create a new invite using the invite member method
         await this.inviteMember(invite.email, invite.role)
       }
-      catch (error: any) {
+      catch (error: unknown) {
         console.error('Resend invite failed:', error)
         throw error
       }
@@ -732,7 +729,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         // Refresh team members to show updated roles
         await this.getTeamMembers()
       }
-      catch (error: any) {
+      catch (error: unknown) {
         console.error('Transfer ownership failed:', error)
         throw error
       }
@@ -770,7 +767,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           team: { ...authState.value.team!, name },
         }
       }
-      catch (error: any) {
+      catch (error: unknown) {
         console.error('Rename team failed:', error)
         throw error
       }
@@ -808,7 +805,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           team: { ...authState.value.team!, ...data },
         }
       }
-      catch (error: any) {
+      catch (error: unknown) {
         console.error('Update team failed:', error)
         throw error
       }
@@ -862,7 +859,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           teamMembers: [],
         }
       }
-      catch (error: any) {
+      catch (error: unknown) {
         console.error('Delete team failed:', error)
         throw error
       }
@@ -962,7 +959,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           teamMembers: updatedMembers,
         }
       }
-      catch (error: any) {
+      catch (error: unknown) {
         console.error('Update member role failed:', error)
         throw error
       }
@@ -1006,7 +1003,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           teamMembers: updatedMembers,
         }
       }
-      catch (error: any) {
+      catch (error: unknown) {
         console.error('Remove member failed:', error)
         throw error
       }
@@ -1087,7 +1084,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           teamMembers: updatedMembers,
         }
       }
-      catch (error: any) {
+      catch (error: unknown) {
         console.error('Update team member profile failed:', error)
         throw error
       }
@@ -1169,7 +1166,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           loading: false,
         })
 
-        console.log('🔥 Impersonation state updated immediately')
 
         // Show success toast
         const toast = useToast()
@@ -1189,7 +1185,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           refresh_token: response.session.refresh_token,
         })
       }
-      catch (error: any) {
+      catch (error: unknown) {
         console.error('Start impersonation failed:', error)
         updateAuthState({ loading: false })
 
@@ -1218,7 +1214,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         const { data: { session } } = await getClient().auth.getSession()
         if (!session) {
           // No active session - just clear local state
-          console.log('🔥 No active session, clearing impersonation state locally')
           updateAuthState({
             impersonating: false,
             impersonatedUser: null,
@@ -1275,7 +1270,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
         // Restore original session - this is critical!
         if (originalAccessToken && originalRefreshToken) {
-          console.log('🔥 Restoring original session')
           try {
             await getClient().auth.setSession({
               access_token: originalAccessToken,
@@ -1290,8 +1284,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           }
         }
 
-        console.log('🔥 Impersonation stopped, state reset immediately')
-
         // Show success toast
         const toast = useToast()
         toast.add({
@@ -1301,7 +1293,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           icon: 'i-lucide-user-x',
         })
       }
-      catch (error: any) {
+      catch (error: unknown) {
         console.error('Stop impersonation failed:', error)
         updateAuthState({ loading: false })
 
@@ -1330,7 +1322,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     // Force refresh auth state
     refreshAuthState: async () => {
       if (currentUser.value) {
-        await updateCompleteAuthState(currentUser.value as any)
+        await updateCompleteAuthState(currentUser.value as SupabaseUser)
       }
     },
 

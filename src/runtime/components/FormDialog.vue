@@ -21,7 +21,7 @@
     >
       <slot name="actions" />
     </template>
-    
+
     <slot />
   </DialogBox>
 </template>
@@ -79,8 +79,8 @@ const isOpen = computed({
   set: (value: boolean) => emit('update:modelValue', value),
 })
 
-const preventClose = computed(() => 
-  props.preventCloseDuringSave && props.loading
+const preventClose = computed(() =>
+  props.preventCloseDuringSave && props.loading,
 )
 
 // Methods

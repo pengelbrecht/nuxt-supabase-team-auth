@@ -65,7 +65,7 @@ export class DatabaseAssertions {
   }
 
   async assertTeamNotExists(teamId: string): Promise<boolean> {
-    const { data, error } = await this.supabase
+    const { data: _data, error } = await this.supabase
       .from('teams')
       .select('id')
       .eq('id', teamId)
@@ -112,7 +112,7 @@ export class DatabaseAssertions {
   }
 
   async assertUserNotTeamMember(userId: string, teamId: string): Promise<boolean> {
-    const { data, error } = await this.supabase
+    const { data: _data, error } = await this.supabase
       .from('team_members')
       .select('id')
       .eq('user_id', userId)
@@ -170,7 +170,7 @@ export class DatabaseAssertions {
   }
 
   async assertInvitationNotExists(inviteId: string): Promise<boolean> {
-    const { data, error } = await this.supabase
+    const { data: _data, error } = await this.supabase
       .from('invites')
       .select('id')
       .eq('id', inviteId)

@@ -213,21 +213,23 @@ export class TestUserFactory {
       case 'unconfirmed':
         return this.createUser({ ...baseConfig, emailConfirmed: false })
 
-      case 'banned':
+      case 'banned': {
         const bannedUser = await this.createUser(baseConfig)
         // Ban the user
         await this.supabase.auth.admin.updateUserById(bannedUser.id, {
           ban_duration: '24h',
         })
         return bannedUser
+      }
 
-      case 'inactive':
+      case 'inactive': {
         const inactiveUser = await this.createUser(baseConfig)
         // Set last sign in to long ago
         await this.supabase.auth.admin.updateUserById(inactiveUser.id, {
           user_metadata: { last_active: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString() },
         })
         return inactiveUser
+      }
 
       default:
         return this.createUser(baseConfig)

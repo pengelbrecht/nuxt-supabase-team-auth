@@ -1,10 +1,29 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+// Mock interfaces
+interface MockUser {
+  id: string
+  email: string
+  role?: string
+}
+
+interface MockAdminClient {
+  auth: {
+    getUser: () => Promise<{ data: { user: MockUser | null }, error: any }>
+  }
+  from: (table: string) => any
+}
+
+interface MockRequestBody {
+  targetUserId: string
+  reason: string
+}
+
 // Simplified server endpoint tests without module import issues
 describe('Impersonation Server Logic - Security Tests', () => {
-  let mockUser: any
-  let mockAdminClient: any
-  let mockRequestBody: any
+  let mockUser: MockUser
+  let mockAdminClient: MockAdminClient
+  let _mockRequestBody: MockRequestBody
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -21,7 +40,7 @@ describe('Impersonation Server Logic - Security Tests', () => {
       single: vi.fn(),
     }
 
-    mockRequestBody = {
+    _mockRequestBody = {
       targetUserId: 'target-user-id',
       reason: 'Customer support ticket #123',
     }
@@ -127,7 +146,7 @@ describe('Impersonation Server Logic - Security Tests', () => {
 })
 
 // Helper functions that extract the core logic
-async function checkUserPermissions(user: any, adminClient: any) {
+async function checkUserPermissions(user: MockUser, adminClient: MockAdminClient) {
   try {
     const { data: memberData, error: memberError } = await adminClient
       .from('team_members')
@@ -145,7 +164,7 @@ async function checkUserPermissions(user: any, adminClient: any) {
 
     return { allowed: true }
   }
-  catch (error) {
+  catch {
     return { allowed: false, error: 'Database error' }
   }
 }
@@ -162,7 +181,7 @@ function validateImpersonationRequest(targetUserId: string, reason: string) {
   return { valid: true }
 }
 
-async function validateTargetUser(targetUserId: string, adminClient: any) {
+async function validateTargetUser(targetUserId: string, adminClient: MockAdminClient) {
   try {
     const { data: targetMember, error: targetError } = await adminClient
       .from('team_members')
@@ -180,7 +199,7 @@ async function validateTargetUser(targetUserId: string, adminClient: any) {
 
     return { valid: true, targetUser: targetMember }
   }
-  catch (error) {
+  catch {
     return { valid: false, error: 'Database error' }
   }
 }

@@ -109,7 +109,7 @@ describe('useTeamAuth', () => {
     // Create fresh mock for each test
     mockSupabaseClient = createMockSupabaseClient()
 
-    // Create mock auth state that behaves like a reactive ref  
+    // Create mock auth state that behaves like a reactive ref
     mockAuthState = ref({
       // Core auth - start with null state for initialization tests
       user: null,
@@ -202,7 +202,7 @@ describe('useTeamAuth', () => {
   // Helper function to set up authenticated state for tests that need it
   const setupAuthenticatedState = (options: {
     user?: any
-    team?: any  
+    team?: any
     role?: string
     impersonating?: boolean
     impersonationSessionId?: string
@@ -239,7 +239,7 @@ describe('useTeamAuth', () => {
     it('should update state when session is restored', async () => {
       // REAL FUNCTIONALITY TESTED: State updates from auth listener
       setupAuthenticatedState()
-      
+
       const { currentUser, currentTeam, currentRole } = useTeamAuth(mockSupabaseClient)
 
       // State should be already set by setupAuthenticatedState
@@ -351,7 +351,7 @@ describe('useTeamAuth', () => {
     it('should invite member with proper permissions', async () => {
       // Setup authenticated state as owner
       setupAuthenticatedState({ role: 'owner' })
-      
+
       mockFetch.mockResolvedValue({
         success: true,
         message: 'Invitation sent successfully',
@@ -392,7 +392,7 @@ describe('useTeamAuth', () => {
     it('should promote member to admin', async () => {
       // Setup authenticated state as owner
       setupAuthenticatedState({ role: 'owner' })
-      
+
       // Set up the proper chain for database operations: .update().eq().eq().neq()
       const mockChain = {
         eq: vi.fn(() => ({
@@ -422,7 +422,7 @@ describe('useTeamAuth', () => {
     it('should transfer ownership', async () => {
       // Setup authenticated state as owner
       setupAuthenticatedState({ role: 'owner' })
-      
+
       mockFetch.mockResolvedValue({
         success: true,
         message: 'Ownership transferred successfully',
@@ -436,7 +436,7 @@ describe('useTeamAuth', () => {
       expect(currentTeam.value).toBeTruthy()
       expect(currentUser.value).toBeTruthy()
       expect(currentRole.value).toBe('owner')
-      
+
       // This test verifies the state is properly set up for transfer ownership
       // The actual API integration is tested at the API level
     })
@@ -446,23 +446,23 @@ describe('useTeamAuth', () => {
     it('should handle impersonation state through normal flow', async () => {
       // This test verifies that impersonation works end-to-end without testing localStorage directly
       setupAuthenticatedState({ role: 'super_admin' })
-      
+
       const { isImpersonating, startImpersonation } = useTeamAuth(mockSupabaseClient)
-      
+
       // Initially should not be impersonating
       expect(isImpersonating.value).toBe(false)
-      
+
       // Set up mocks for successful impersonation
       mockSupabaseClient.auth.getSession.mockResolvedValue({
         data: { session: mockSession },
         error: null,
       })
-      
+
       mockSupabaseClient.auth.setSession.mockResolvedValue({
         data: { session: { ...mockSession, access_token: 'impersonated-token' } },
         error: null,
       })
-      
+
       mockFetch.mockResolvedValue({
         success: true,
         session: {
@@ -475,13 +475,13 @@ describe('useTeamAuth', () => {
           expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
         },
       })
-      
+
       const mockToast = { add: vi.fn() }
       mockUseToast.mockReturnValue(mockToast)
-      
+
       // Start impersonation
       await startImpersonation('target', 'test reason')
-      
+
       // State should be updated
       expect(isImpersonating.value).toBe(true)
     })
@@ -489,7 +489,7 @@ describe('useTeamAuth', () => {
     it('should properly expose impersonation state properties', async () => {
       // Test that the composable exposes the correct impersonation properties
       const composableApi = useTeamAuth(mockSupabaseClient)
-      
+
       // Verify the impersonation-related properties are exposed
       expect(composableApi).toHaveProperty('isImpersonating')
       expect(composableApi).toHaveProperty('impersonatedUser')
@@ -497,7 +497,7 @@ describe('useTeamAuth', () => {
       expect(composableApi).toHaveProperty('originalUser')
       expect(composableApi).toHaveProperty('startImpersonation')
       expect(composableApi).toHaveProperty('stopImpersonation')
-      
+
       // Verify initial state is correct
       expect(composableApi.isImpersonating.value).toBe(false)
       expect(composableApi.impersonatedUser.value).toBeNull()
@@ -510,36 +510,36 @@ describe('useTeamAuth', () => {
       setupAuthenticatedState({
         role: 'super_admin',
         impersonating: true,
-        impersonationSessionId: 'session-123'
+        impersonationSessionId: 'session-123',
       })
 
       const { isImpersonating, stopImpersonation } = useTeamAuth(mockSupabaseClient)
-      
+
       // Initially impersonating
       expect(isImpersonating.value).toBe(true)
-      
+
       // Set up mocks for stop impersonation
       mockSupabaseClient.auth.getSession.mockResolvedValue({
         data: { session: mockSession },
         error: null,
       })
-      
+
       mockFetch.mockResolvedValue({
         success: true,
         message: 'Impersonation stopped',
       })
-      
+
       mockSupabaseClient.auth.setSession.mockResolvedValue({
         data: { session: mockSession },
         error: null,
       })
-      
+
       const mockToast = { add: vi.fn() }
       mockUseToast.mockReturnValue(mockToast)
-      
+
       // Stop impersonation
       await stopImpersonation()
-      
+
       // State should be cleared
       expect(isImpersonating.value).toBe(false)
     })
@@ -548,9 +548,9 @@ describe('useTeamAuth', () => {
   describe('Impersonation', () => {
     it('should start impersonation for super admin', async () => {
       // Set up authenticated super admin state
-      setupAuthenticatedState({ 
+      setupAuthenticatedState({
         role: 'super_admin',
-        user: { ...mockUser, id: 'super-admin-123' }
+        user: { ...mockUser, id: 'super-admin-123' },
       })
 
       const superAdminSession = {
@@ -562,7 +562,7 @@ describe('useTeamAuth', () => {
         data: { session: superAdminSession },
         error: null,
       })
-      
+
       mockSupabaseClient.auth.setSession.mockResolvedValue({
         data: { session: { ...superAdminSession, access_token: 'impersonation-access-token' } },
         error: null,
@@ -586,7 +586,7 @@ describe('useTeamAuth', () => {
       }
 
       mockFetch.mockResolvedValue(impersonationResponse)
-      
+
       // Mock useToast
       const mockToast = { add: vi.fn() }
       mockUseToast.mockReturnValue(mockToast)
@@ -637,10 +637,10 @@ describe('useTeamAuth', () => {
 
     it('should stop impersonation and restore original session', async () => {
       // Set up authenticated state with impersonation active
-      setupAuthenticatedState({ 
+      setupAuthenticatedState({
         role: 'super_admin',
         impersonating: true,
-        impersonationSessionId: 'session-123'
+        impersonationSessionId: 'session-123',
       })
 
       mockSupabaseClient.auth.getSession.mockResolvedValue({
@@ -657,7 +657,7 @@ describe('useTeamAuth', () => {
         data: { session: mockSession },
         error: null,
       })
-      
+
       // Mock useToast
       const mockToast = { add: vi.fn() }
       mockUseToast.mockReturnValue(mockToast)

@@ -187,7 +187,6 @@ export function useImpersonation() {
       }
 
       // Call stop endpoint
-      console.log('Calling stop-impersonation API...')
       await $fetch('/api/stop-impersonation', {
         method: 'POST',
         headers: {
@@ -198,7 +197,6 @@ export function useImpersonation() {
           originalAccessToken: data.originalAccessToken,
         },
       })
-      console.log('Stop-impersonation API completed')
 
       // Restore original session
       await supabase.auth.setSession({
@@ -223,7 +221,6 @@ export function useImpersonation() {
       }
       catch (navError) {
         // navigateTo might throw but that's expected during page reload
-        console.log('Navigation during impersonation stop (expected):', navError)
       }
     }
     catch (error: unknown) {

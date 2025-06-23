@@ -1,5 +1,8 @@
 <template>
-  <div v-if="isModal" class="space-y-6">
+  <div
+    v-if="isModal"
+    class="space-y-6"
+  >
     <!-- Error Messages Only - Success shown in button -->
     <div
       v-if="message?.type === 'error'"
@@ -93,7 +96,7 @@ interface Props {
   isModal?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+const _props = withDefaults(defineProps<Props>(), {
   isModal: false,
 })
 

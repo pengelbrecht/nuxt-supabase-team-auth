@@ -37,6 +37,9 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
     "test:all": "npm run test && npm run test:e2e",
+    "types:generate": "supabase gen types typescript --local > src/runtime/types/database.types.ts",
+    "types:check": "supabase gen types typescript --local | diff - src/runtime/types/database.types.ts",
+    "types:update": "npm run types:generate && echo 'Supabase types updated! Consider running: npm run lint:fix'",
     "prepack": "nuxt-module-build build",
     "prepare": "nuxt-module-build build --stub"
   },

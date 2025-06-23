@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach as _afterEach } from 'vitest'
 
 /**
  * Integration tests for Edge Function business logic patterns
@@ -28,7 +28,7 @@ const corsHeaders = {
 }
 
 // Helper to create mock request
-function createMockRequest(method: string, body: any, authHeader?: string): MockRequest {
+function _createMockRequest(method: string, body: any, authHeader?: string): MockRequest {
   const headers = new Map<string, string>()
   headers.set('Content-Type', 'application/json')
   if (authHeader) {
@@ -39,7 +39,7 @@ function createMockRequest(method: string, body: any, authHeader?: string): Mock
 }
 
 // Helper to create mock response
-function createMockResponse(status: number, body: any): MockResponse {
+function _createMockResponse(status: number, body: any): MockResponse {
   const headers = new Map<string, string>()
   headers.set('Content-Type', 'application/json')
   headers.set('Access-Control-Allow-Origin', '*')
@@ -490,7 +490,7 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         { id: '550e8400-e29b-41d4-a716-446655440000', isValid: true },
       ]
 
-      uuidTests.forEach(({ id, isValid }) => {
+      uuidTests.forEach(({ id, isValid: _isValid }) => {
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
         const actuallyValid = uuidRegex.test(id) || (id.length > 0 && id.includes('-')) // Allow our test IDs
         expect(typeof actuallyValid).toBe('boolean')

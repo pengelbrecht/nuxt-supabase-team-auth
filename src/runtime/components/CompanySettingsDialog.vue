@@ -15,7 +15,10 @@
       class="space-y-6"
     >
       <!-- Basic Information -->
-      <UCard variant="subtle" class="mb-6">
+      <UCard
+        variant="subtle"
+        class="mb-6"
+      >
         <template #header>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Basic Information
@@ -54,7 +57,10 @@
       </UCard>
 
       <!-- Company Address -->
-      <UCard variant="subtle" class="mb-6">
+      <UCard
+        variant="subtle"
+        class="mb-6"
+      >
         <template #header>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Company Address
@@ -187,7 +193,7 @@ const props = defineProps<Props>()
 // Emits
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
-  'saved': [team: any]
+  'saved': [team: Record<string, unknown>]
   'error': [error: string]
 }>()
 
@@ -265,14 +271,14 @@ const handleSave = async () => {
     emit('saved', form)
     isOpen.value = false
   }
-  catch (error: any) {
+  catch (error) {
     console.error('Company update error:', error)
     toast.add({
       title: 'Update Failed',
-      description: error.message || 'Failed to update company settings. Please try again.',
+      description: error instanceof Error ? error.message : 'Failed to update company settings. Please try again.',
       color: 'red',
     })
-    emit('error', error.message)
+    emit('error', error instanceof Error ? error.message : 'Update failed')
   }
   finally {
     isLoading.value = false

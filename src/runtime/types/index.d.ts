@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { DbProfile, DbTeam, DbTeamMember, DbInvite, DbImpersonationSession, TeamRole } from './database.types'
 
 export interface User {
   id: string
@@ -10,60 +11,13 @@ export interface User {
   }
 }
 
-export interface Profile {
-  id: string
-  full_name?: string
-  avatar_url?: string
-  phone?: string
-  bio?: string
-  timezone?: string
-  language?: string
-  email_notifications?: boolean
-  marketing_emails?: boolean
-  created_at: string
-  updated_at: string
-}
+// Use Supabase-generated types
+export type Profile = DbProfile
+export type Team = DbTeam
+export type TeamMember = DbTeamMember
 
-export interface Team {
-  id: string
-  name: string
-  address?: string
-  vat_number?: string
-  created_at: string
-  company_name?: string
-  company_address_line1?: string
-  company_address_line2?: string
-  company_city?: string
-  company_state?: string
-  company_postal_code?: string
-  company_country?: string
-  company_vat_number?: string
-}
-
-export interface TeamMember {
-  team_id: string
-  user_id: string
-  role: 'owner' | 'admin' | 'member' | 'super_admin'
-  joined_at: string
-}
-
-export interface Invite {
-  id: string
-  team_id: string
-  email: string
-  token_hash: string
-  expires_at: string
-  status: 'pending' | 'accepted' | 'revoked'
-}
-
-export interface ImpersonationSession {
-  id: string
-  admin_user_id: string
-  target_user_id: string
-  started_at: string
-  ended_at?: string
-  reason: string
-}
+export type Invite = DbInvite
+export type ImpersonationSession = DbImpersonationSession
 
 export interface TeamAuthState {
   currentUser: Ref<User | null>

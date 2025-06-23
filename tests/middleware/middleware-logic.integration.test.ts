@@ -5,6 +5,27 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
  * without the Nuxt wrapper, focusing on the core business logic.
  */
 
+// Test helper interfaces
+interface MockRoute {
+  path: string
+  params?: Record<string, string>
+  query?: Record<string, string>
+}
+
+interface MockAuthState {
+  currentUser: { value: any }
+  currentRole: { value: string | null }
+  isLoading: { value: boolean }
+}
+
+type MockNavigateTo = (path: string) => void
+
+interface RequireRoleOptions {
+  redirectTo?: string
+  errorMessage?: string
+  strict?: boolean
+}
+
 // Mock navigateTo
 const mockNavigateTo = vi.fn()
 
@@ -19,11 +40,11 @@ let mockAuthState = {
 }
 
 // Extract middleware logic functions to test them directly
-async function globalAuthMiddlewareLogic(route: any, authState: any, navigateTo: any) {
+async function globalAuthMiddlewareLogic(route: MockRoute, authState: MockAuthState, navigateTo: MockNavigateTo) {
   // Skip middleware on server-side rendering for performance
   if (import.meta.server) return
 
-  const { currentUser, currentTeam, currentRole, isLoading, isImpersonating } = authState
+  const { currentUser, currentTeam: _currentTeam, currentRole, isLoading, isImpersonating: _isImpersonating } = authState
 
   // Wait for auth state to load
   if (isLoading.value) {
@@ -83,7 +104,7 @@ async function globalAuthMiddlewareLogic(route: any, authState: any, navigateTo:
   }
 
   // Handle impersonation restrictions
-  if (isImpersonating.value) {
+  if (_isImpersonating.value) {
     // Block admin routes during impersonation (except stop impersonation)
     if (currentPath.startsWith('/admin/') && !currentPath.includes('/impersonate/stop')) {
       return navigateTo('/dashboard?error=admin_blocked_during_impersonation')
@@ -101,7 +122,7 @@ async function globalAuthMiddlewareLogic(route: any, authState: any, navigateTo:
   if (currentPath.startsWith('/teams/') && currentPath !== '/teams') {
     const teamIdFromRoute = currentPath.split('/teams/')[1]?.split('/')[0]
 
-    if (teamIdFromRoute && currentTeam.value?.id !== teamIdFromRoute) {
+    if (teamIdFromRoute && _currentTeam.value?.id !== teamIdFromRoute) {
       return navigateTo('/teams?error=unauthorized_team_access')
     }
   }
@@ -110,12 +131,12 @@ async function globalAuthMiddlewareLogic(route: any, authState: any, navigateTo:
   const teamRequiredRoutes = ['/team/', '/dashboard']
   const requiresTeam = teamRequiredRoutes.some(routePath => currentPath.startsWith(routePath))
 
-  if (requiresTeam && currentUser.value && !currentTeam.value) {
+  if (requiresTeam && currentUser.value && !_currentTeam.value) {
     return navigateTo('/teams?message=select_team_first')
   }
 }
 
-async function requireAuthLogic(route: any, authState: any, navigateTo: any) {
+async function requireAuthLogic(route: MockRoute, authState: MockAuthState, navigateTo: MockNavigateTo) {
   const { currentUser, isLoading } = authState
 
   // Wait for loading to complete
@@ -134,7 +155,7 @@ async function requireAuthLogic(route: any, authState: any, navigateTo: any) {
   }
 }
 
-async function requireTeamLogic(route: any, authState: any, navigateTo: any) {
+async function requireTeamLogic(route: MockRoute, authState: MockAuthState, navigateTo: MockNavigateTo) {
   const { currentUser, currentTeam, isLoading } = authState
 
   // Wait for loading to complete
@@ -163,9 +184,9 @@ async function requireTeamLogic(route: any, authState: any, navigateTo: any) {
   }
 }
 
-function createRequireRoleLogic(requiredRole: string, options: any = {}) {
-  return async function requireRoleLogic(route: any, authState: any, navigateTo: any) {
-    const { currentUser, currentRole, currentTeam, isLoading } = authState
+function createRequireRoleLogic(requiredRole: string, options: RequireRoleOptions = {}) {
+  return async function requireRoleLogic(route: MockRoute, authState: MockAuthState, navigateTo: MockNavigateTo) {
+    const { currentUser, currentRole, isLoading } = authState
     const { redirectTo = '/dashboard', errorMessage = 'insufficient_permissions', strict = false } = options
 
     // Wait for loading to complete
@@ -210,7 +231,7 @@ function createRequireRoleLogic(requiredRole: string, options: any = {}) {
 }
 
 describe('Middleware Logic Integration Tests', () => {
-  let mockRoute: any
+  let mockRoute: MockRoute
 
   beforeEach(() => {
     vi.clearAllMocks()

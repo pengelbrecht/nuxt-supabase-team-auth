@@ -9,25 +9,27 @@
     :ui="ui"
     @close="handleCancel"
   >
-    <template #actions>
-      <UButton
-        variant="ghost"
-        :disabled="loading"
-        @click="handleCancel"
-      >
-        {{ cancelText }}
-      </UButton>
-      <UButton
-        :color="confirmColor"
-        :loading="loading"
-        @click="handleConfirm"
-      >
-        {{ confirmText }}
-      </UButton>
-    </template>
-    
-    <div class="text-sm text-gray-600 dark:text-gray-400">
-      {{ message }}
+    <div class="space-y-6">
+      <div class="text-sm text-gray-600 dark:text-gray-400">
+        {{ message }}
+      </div>
+      
+      <div class="flex justify-end gap-3">
+        <UButton
+          variant="ghost"
+          :disabled="loading"
+          @click="handleCancel"
+        >
+          {{ cancelText }}
+        </UButton>
+        <UButton
+          :color="confirmColor"
+          :loading="loading"
+          @click="handleConfirm"
+        >
+          {{ confirmText }}
+        </UButton>
+      </div>
     </div>
   </DialogBox>
 </template>
@@ -52,7 +54,7 @@ interface Props {
   /** Loading state */
   loading?: boolean
   /** Custom UI config */
-  ui?: Record<string, any>
+  ui?: Record<string, unknown>
 }
 
 const props = withDefaults(defineProps<Props>(), {

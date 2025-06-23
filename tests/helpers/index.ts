@@ -5,6 +5,28 @@
  * Import from this file to access all test functionality
  */
 
+// Import types
+import type { User, Profile, Team } from '../../src/runtime/types'
+
+// Test-specific user interface with additional test data
+interface TestUser extends User {
+  password?: string
+  profile?: Profile
+  teamId?: string
+}
+
+interface TestTeam extends Team {
+  owner?: TestUser
+}
+
+interface TestInvitation {
+  id: string
+  email: string
+  role: string
+  status: string
+  team_id: string
+}
+
 // Database utilities
 export * from './database'
 export { testDb } from './database'
@@ -55,50 +77,50 @@ export const testHelpers = {
 /**
  * Test environment setup utilities
  */
-export class TestEnvironment {
+export const TestEnvironment = {
   /**
    * Set up a clean test environment
    */
-  static async setup(): Promise<void> {
+  async setup(): Promise<void> {
     console.log('🧪 Setting up test environment...')
     await testDb.resetDatabase()
     console.log('✅ Test environment ready')
-  }
+  },
 
   /**
    * Clean up test environment
    */
-  static async teardown(): Promise<void> {
+  async teardown(): Promise<void> {
     console.log('🧹 Cleaning up test environment...')
     await testDb.cleanupTestData()
     await userFactory.cleanup()
     await teamFactory.cleanup()
     console.log('✅ Test environment cleaned')
-  }
+  },
 
   /**
    * Reset to clean state between tests
    */
-  static async reset(): Promise<void> {
+  async reset(): Promise<void> {
     await testDb.resetDatabase()
-  }
+  },
 
   /**
    * Get environment statistics
    */
-  static async getStats() {
+  async getStats() {
     return await testDb.getStats()
-  }
+  },
 }
 
 /**
  * Test data builder for complex scenarios
  */
-export class TestDataBuilder {
+export const TestDataBuilder = {
   /**
    * Create a complete test scenario with users and teams
    */
-  static async createCompleteScenario(): Promise<TestScenario> {
+  async createCompleteScenario(): Promise<TestScenario> {
     // Create users with different roles
     const superAdmin = await userFactory.createSuperAdmin()
     const ownerWithTeam = await userFactory.createOwnerWithTeam()
@@ -133,12 +155,12 @@ export class TestDataBuilder {
       standaloneUser,
       invitations,
     }
-  }
+  },
 
   /**
    * Create a multi-team scenario for testing cross-team operations
    */
-  static async createMultiTeamScenario(): Promise<MultiTeamScenario> {
+  async createMultiTeamScenario(): Promise<MultiTeamScenario> {
     const teams = await teamFactory.createMultipleTeams(3, {
       adminCount: 1,
       memberCount: 2,
@@ -155,21 +177,21 @@ export class TestDataBuilder {
       teams,
       multiTeamUser,
     }
-  }
+  },
 }
 
 // Type definitions for test scenarios
 export interface TestScenario {
-  superAdmin: any
+  superAdmin: TestUser
   team: {
     id: string
     name: string
-    owner: any
-    admin: any
-    members: any[]
+    owner: TestUser
+    admin: TestUser
+    members: TestUser[]
   }
-  standaloneUser: any
-  invitations: any[]
+  standaloneUser: TestUser
+  invitations: TestInvitation[]
 }
 
 export interface MultiTeamScenario {

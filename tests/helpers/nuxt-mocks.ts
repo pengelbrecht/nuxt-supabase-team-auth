@@ -3,7 +3,7 @@ import { vi } from 'vitest'
 /**
  * Mock Nuxt context for middleware testing
  */
-export function createMockNuxtContext(overrides: any = {}) {
+export function createMockNuxtContext(overrides: Record<string, unknown> = {}) {
   const defaultContext = {
     route: {
       path: '/',
@@ -90,7 +90,7 @@ export function createMockRouter() {
 /**
  * Mock Nuxt app composable
  */
-export function createMockNuxtApp(overrides: any = {}) {
+export function createMockNuxtApp(overrides: Record<string, unknown> = {}) {
   return {
     $teamAuthClient: {
       auth: {
@@ -120,7 +120,7 @@ export function createMockNuxtApp(overrides: any = {}) {
 /**
  * Mock useTeamAuth composable for middleware tests
  */
-export function createMockTeamAuth(overrides: any = {}) {
+export function createMockTeamAuth(overrides: Record<string, unknown> = {}) {
   return {
     currentUser: { value: null },
     currentTeam: { value: null },
@@ -175,7 +175,7 @@ export function resetMiddlewareMocks() {
 /**
  * Assert redirect was called with expected URL
  */
-export function expectRedirect(url: string, options?: any) {
+export function expectRedirect(url: string, options?: Record<string, unknown>) {
   expect(mockNavigateTo).toHaveBeenCalledWith(url, options)
 }
 

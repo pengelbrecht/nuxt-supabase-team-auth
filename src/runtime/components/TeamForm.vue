@@ -380,9 +380,21 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import * as v from 'valibot'
 import { useTeamAuth } from '../composables/useTeamAuth'
+import type { Profile, TeamMember } from '../types'
 import SettingsTabContainer from './SettingsTabContainer.vue'
 import ConfirmationModal from './ConfirmationModal.vue'
 import EditUserModal from './EditUserModal.vue'
+
+// Team member with profile data
+interface TeamMemberWithProfile {
+  user_id: string
+  role: string
+  joined_at: string
+  profile?: Profile
+  id?: string // Computed from user_id
+  full_name?: string
+  email?: string
+}
 
 // Form validation schema - expanded for company info
 const teamSchema = v.object({
@@ -407,7 +419,7 @@ const _props = withDefaults(defineProps<Props>(), {})
 
 // Emits
 const emit = defineEmits<{
-  saved: [team: any]
+  saved: [team: Team]
   error: [error: string]
 }>()
 
@@ -501,7 +513,7 @@ const _roleOptions = computed(() => {
 })
 
 // Get available role options for a specific member based on current user's role and RLS restrictions
-const getAvailableRoleOptions = (member: any) => {
+const getAvailableRoleOptions = (member: TeamMemberWithProfile) => {
   if (!canChangeRole(member)) {
     return []
   }
@@ -583,14 +595,14 @@ const getRoleColor = (role: string | null | undefined) => {
   }
 }
 
-const getMemberInitials = (member: any) => {
+const getMemberInitials = (member: TeamMemberWithProfile) => {
   return getAvatarFallback({
     fullName: member.profile?.full_name,
     email: member.user?.email,
   })
 }
 
-const canManageMember = (member: any) => {
+const canManageMember = (member: TeamMemberWithProfile) => {
   // Cannot manage yourself (RLS restriction: user_id != auth.uid())
   if (member.user_id === currentUser.value?.id) {
     return false
@@ -615,7 +627,7 @@ const canManageMember = (member: any) => {
   return false
 }
 
-const canChangeRole = (member: any) => {
+const canChangeRole = (member: TeamMemberWithProfile) => {
   // Users cannot change their own role (RLS restriction: user_id != auth.uid())
   if (member.user_id === currentUser.value?.id) {
     return false
@@ -787,7 +799,6 @@ const handleRoleChange = async (member: any, newRole: string) => {
   }
 
   try {
-    console.log(`Changing ${member.profile?.email || member.user?.email} from ${member.role} to ${newRole}`)
 
     // Update role in database using composable
     await updateMemberRole(member.user_id, newRole)

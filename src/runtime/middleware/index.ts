@@ -169,7 +169,7 @@ export const createMiddleware = {
   teamAccess: (options?: MiddlewareOptions) =>
     createTeamAccessMiddleware(options),
 
-  redirectAuth: (redirectTo: string | Function, condition?: Function) =>
+  redirectAuth: (redirectTo: string | (() => string), condition?: () => boolean) =>
     createRedirectAuthenticated(redirectTo as any, condition),
 
   impersonationRestriction: (options?: MiddlewareOptions) =>

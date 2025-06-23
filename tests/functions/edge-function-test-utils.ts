@@ -29,8 +29,8 @@ export class MockSupabaseAuth {
 export class MockQueryBuilder {
   private _table: string
   private _selectFields: string = '*'
-  private _filters: Array<{ column: string, operator: string, value: any }> = []
-  private _data: any = null
+  private _filters: Array<{ column: string, operator: string, value: unknown }> = []
+  private _data: Record<string, unknown> | null = null
 
   constructor(table: string) {
     this._table = table
@@ -41,12 +41,12 @@ export class MockQueryBuilder {
     return this
   }
 
-  insert(data: any) {
+  insert(data: Record<string, unknown>) {
     this._data = data
     return this
   }
 
-  update(data: any) {
+  update(data: Partial<Record<string, unknown>>) {
     this._data = data
     return this
   }
@@ -55,7 +55,7 @@ export class MockQueryBuilder {
     return this
   }
 
-  eq(column: string, value: any) {
+  eq(column: string, value: unknown) {
     this._filters.push({ column, operator: 'eq', value })
     return this
   }
@@ -250,7 +250,7 @@ export function setupDenoMocks() {
     get: vi.fn((key: string) => mockEnvironment[key as keyof typeof mockEnvironment]),
   }
 
-  // @ts-ignore - Mock global Deno for edge function compatibility
+  // @ts-expect-error - Mock global Deno for edge function compatibility
   global.Deno = {
     env: mockEnv,
   }

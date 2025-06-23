@@ -177,8 +177,20 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
+import type { Profile, TeamMember } from '../types'
 import ConfirmationModal from './ConfirmationModal.vue'
 import EditUserModal from './EditUserModal.vue'
+
+// Team member with profile data
+interface TeamMemberWithProfile {
+  user_id: string
+  role: string
+  joined_at: string
+  profile?: Profile
+  id?: string // Computed from user_id
+  full_name?: string
+  email?: string
+}
 
 // Props
 interface Props {
@@ -190,7 +202,7 @@ const props = defineProps<Props>()
 // Emits
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
-  'saved': [data: any]
+  'saved': [data: TeamMemberWithProfile]
   'error': [error: string]
 }>()
 
@@ -202,7 +214,7 @@ const isInviteLoading = ref(false)
 const isDeletingMember = ref(false)
 const showInviteModal = ref(false)
 const showConfirmModal = ref(false)
-const memberToDelete = ref<any>(null)
+const memberToDelete = ref<TeamMemberWithProfile | null>(null)
 const showEditUserModal = ref(false)
 const editingUserId = ref<string | null>(null)
 
@@ -224,7 +236,7 @@ const canInviteMembers = computed(() => {
 })
 
 // Get available role options for a specific member based on current user's role and RLS restrictions
-const getAvailableRoleOptions = (member: any) => {
+const getAvailableRoleOptions = (member: TeamMemberWithProfile) => {
   if (!canChangeRole(member)) {
     return []
   }
@@ -306,14 +318,14 @@ const getRoleColor = (role: string | null | undefined) => {
   }
 }
 
-const getMemberInitials = (member: any) => {
+const getMemberInitials = (member: TeamMemberWithProfile) => {
   return getAvatarFallback({
     fullName: member.profile?.full_name,
     email: member.user?.email,
   })
 }
 
-const canManageMember = (member: any) => {
+const canManageMember = (member: TeamMemberWithProfile) => {
   // Cannot manage yourself (RLS restriction: user_id != auth.uid())
   if (member.user_id === currentUser.value?.id) {
     return false
@@ -338,7 +350,7 @@ const canManageMember = (member: any) => {
   return false
 }
 
-const canChangeRole = (member: any) => {
+const canChangeRole = (member: TeamMemberWithProfile) => {
   // Users cannot change their own role (RLS restriction: user_id != auth.uid())
   if (member.user_id === currentUser.value?.id) {
     return false
@@ -463,7 +475,6 @@ const handleRoleChange = async (member: any, newRole: string) => {
   }
 
   try {
-    console.log(`Changing ${member.profile?.email || member.user?.email} from ${member.role} to ${newRole}`)
 
     // Update role in database using composable
     await updateMemberRole(member.user_id, newRole)
@@ -498,7 +509,7 @@ const handleEditUserModalClose = () => {
 }
 
 // Handle user saved from edit modal
-const handleUserSaved = (_profile: any) => {
+const handleUserSaved = (_profile: Profile) => {
   // Find the member to get their name for the toast
   const member = teamMembers.value.find(m => m.user_id === editingUserId.value)
   const memberName = member?.profile?.full_name || member?.profile?.email || 'User'

@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-// Mock useTeamAuth composable  
-vi.mock('../../src/runtime/composables/useTeamAuth', () => ({
-  useTeamAuth: vi.fn(),
-}))
-
 // Import after mocking
 import { useTeamAuth } from '../../src/runtime/composables/useTeamAuth'
 import authGlobal from '../../src/runtime/middleware/auth.global'
@@ -13,9 +8,23 @@ import requireTeam from '../../src/runtime/middleware/require-team'
 import { createRequireRoleMiddleware } from '../../src/runtime/middleware/require-role'
 import { navigateTo } from '#app'
 
+// Test interfaces
+interface MockRoute {
+  path: string
+  query?: Record<string, string>
+  params?: Record<string, string>
+}
+
+type MockNavigateTo = (path: string) => void
+
+// Mock useTeamAuth composable
+vi.mock('../../src/runtime/composables/useTeamAuth', () => ({
+  useTeamAuth: vi.fn(),
+}))
+
 describe('Middleware Integration Tests', () => {
-  let mockNavigateTo: any
-  let mockRoute: any
+  let mockNavigateTo: MockNavigateTo
+  let mockRoute: MockRoute
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -52,25 +61,25 @@ describe('Middleware Integration Tests', () => {
     it('should allow access to public routes without authentication', async () => {
       mockRoute.path = '/'
 
-      const result = await authGlobal(mockRoute)
+      const _result = await authGlobal(mockRoute)
 
-      expect(result).toBeUndefined() // No redirect
+      expect(_result).toBeUndefined() // No redirect
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
     it('should allow access to login page without authentication', async () => {
       mockRoute.path = '/signin'
 
-      const result = await authGlobal(mockRoute)
+      const _result = await authGlobal(mockRoute)
 
-      expect(result).toBeUndefined()
+      expect(_result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
     it('should redirect unauthenticated users from protected routes', async () => {
       mockRoute.path = '/dashboard'
 
-      const result = await authGlobal(mockRoute)
+      const _result = await authGlobal(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/signin?redirect=%2Fdashboard')
     })
@@ -85,9 +94,9 @@ describe('Middleware Integration Tests', () => {
         isImpersonating: { value: false },
       })
 
-      const result = await authGlobal(mockRoute)
+      const _result = await authGlobal(mockRoute)
 
-      expect(result).toBeUndefined()
+      expect(_result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
@@ -101,7 +110,7 @@ describe('Middleware Integration Tests', () => {
         isImpersonating: { value: false },
       })
 
-      const result = await authGlobal(mockRoute)
+      const _result = await authGlobal(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/teams?message=select_team_first')
     })
@@ -115,7 +124,7 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: false },
       })
 
-      const result = await authGlobal(mockRoute)
+      const _result = await authGlobal(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=admin_blocked_during_impersonation')
     })
@@ -130,7 +139,7 @@ describe('Middleware Integration Tests', () => {
         isImpersonating: { value: false },
       })
 
-      const result = await authGlobal(mockRoute)
+      const _result = await authGlobal(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/teams?error=unauthorized_team_access')
     })
@@ -144,7 +153,7 @@ describe('Middleware Integration Tests', () => {
         isImpersonating: { value: false },
       })
 
-      const result = await authGlobal(mockRoute)
+      const _result = await authGlobal(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=insufficient_permissions')
     })
@@ -163,9 +172,9 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: false },
       })
 
-      const result = await requireAuth(mockRoute)
+      const _result = await requireAuth(mockRoute)
 
-      expect(result).toBeUndefined()
+      expect(_result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
@@ -176,7 +185,7 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: false },
       })
 
-      const result = await requireAuth(mockRoute)
+      const _result = await requireAuth(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/signin?redirect=%2Fdashboard')
     })
@@ -191,7 +200,7 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: false },
       })
 
-      const result = await requireAuth(mockRoute)
+      const _result = await requireAuth(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/signin?redirect=%2Fdashboard%3Ftab%3Dsettings%26filter%3Dactive')
     })
@@ -206,9 +215,9 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: false },
       })
 
-      const result = await requireTeam(mockRoute)
+      const _result = await requireTeam(mockRoute)
 
-      expect(result).toBeUndefined()
+      expect(_result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
@@ -220,7 +229,7 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: false },
       })
 
-      const result = await requireTeam(mockRoute)
+      const _result = await requireTeam(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/signin?redirect=%2Fdashboard')
     })
@@ -233,7 +242,7 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: false },
       })
 
-      const result = await requireTeam(mockRoute)
+      const _result = await requireTeam(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/teams?message=select_team_first')
     })
@@ -247,7 +256,7 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: false },
       })
 
-      const result = await requireTeam(mockRoute)
+      const _result = await requireTeam(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/teams?error=unauthorized_team_access')
     })
@@ -261,9 +270,9 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: false },
       })
 
-      const result = await requireTeam(mockRoute)
+      const _result = await requireTeam(mockRoute)
 
-      expect(result).toBeUndefined()
+      expect(_result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
   })
@@ -279,9 +288,9 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: false },
       })
 
-      const result = await requireAdminMiddleware(mockRoute)
+      const _result = await requireAdminMiddleware(mockRoute)
 
-      expect(result).toBeUndefined()
+      expect(_result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
@@ -295,9 +304,9 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: false },
       })
 
-      const result = await requireAdminMiddleware(mockRoute)
+      const _result = await requireAdminMiddleware(mockRoute)
 
-      expect(result).toBeUndefined()
+      expect(_result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
@@ -311,7 +320,7 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: false },
       })
 
-      const result = await requireAdminMiddleware(mockRoute)
+      const _result = await requireAdminMiddleware(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=insufficient_permissions')
     })
@@ -326,7 +335,7 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: false },
       })
 
-      const result = await requireAdminMiddleware(mockRoute)
+      const _result = await requireAdminMiddleware(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/teams?message=select_team_first')
     })
@@ -340,7 +349,7 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: false },
       })
 
-      const result = await requireAdminMiddleware(mockRoute)
+      const _result = await requireAdminMiddleware(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/signin?redirect=%2Fdashboard')
     })
@@ -355,7 +364,7 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: false },
       })
 
-      const result = await requireExactAdminMiddleware(mockRoute)
+      const _result = await requireExactAdminMiddleware(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=insufficient_permissions')
     })
@@ -373,7 +382,7 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: false },
       })
 
-      const result = await customMiddleware(mockRoute)
+      const _result = await customMiddleware(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/team/settings?error=owner_required')
     })
@@ -390,7 +399,7 @@ describe('Middleware Integration Tests', () => {
         isLoading: { value: false },
       })
 
-      const result = await invalidRoleMiddleware(mockRoute)
+      const _result = await invalidRoleMiddleware(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=invalid_role')
     })
@@ -398,11 +407,11 @@ describe('Middleware Integration Tests', () => {
     // Skipping this test as import.meta.server is hard to mock in Vitest
     // The SSR skip functionality works in production but is difficult to test
     it.skip('should handle server-side rendering gracefully', async () => {
-      const result = await authGlobal(mockRoute)
-      expect(result).toBeUndefined()
+      const _result = await authGlobal(mockRoute)
+      expect(_result).toBeUndefined()
     })
 
-    // Skipping this test as it takes too long and tests timeout behavior 
+    // Skipping this test as it takes too long and tests timeout behavior
     // The timeout functionality works in production
     it.skip('should handle auth loading timeout', async () => {
       // Timeout testing - skipped for performance
@@ -440,7 +449,7 @@ describe('Middleware Integration Tests', () => {
       })
 
       // Should fail at auth check
-      const authResult = await requireAuth(mockRoute)
+      await requireAuth(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/signin?redirect=%2Fdashboard')
       expect(mockNavigateTo).toHaveBeenCalledTimes(1)

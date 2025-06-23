@@ -331,12 +331,12 @@ const props = withDefaults(defineProps<AuthSignUpProps>(), {
 })
 
 const emit = defineEmits<{
-  'success': [data: { user: any, team: any }]
+  'success': [data: { user: User, team: Team }]
   'error': [error: string]
   'switch-to-signin': []
   'view-terms': []
   'view-privacy': []
-  'social-success': [provider: string, data: any]
+  'social-success': [provider: string, data: unknown]
   'social-error': [provider: string, error: string]
 }>()
 
@@ -410,7 +410,7 @@ const handleSignUp = async (event: FormSubmitEvent<any>) => {
       marketingConsent: false,
     })
   }
-  catch (error: any) {
+  catch (error: unknown) {
     console.error('Signup error:', error)
     errorMessage.value = error.message || 'Failed to create account'
     emit('error', errorMessage.value)
@@ -445,7 +445,7 @@ const handleGoogleSignUp = async () => {
 
     emit('social-success', 'google', data)
   }
-  catch (error: any) {
+  catch (error: unknown) {
     const errorMessage = error.message || 'Failed to sign up with Google'
     emit('social-error', 'google', errorMessage)
   }
@@ -478,7 +478,7 @@ const handleGithubSignUp = async () => {
 
     emit('social-success', 'github', data)
   }
-  catch (error: any) {
+  catch (error: unknown) {
     const errorMessage = error.message || 'Failed to sign up with GitHub'
     emit('social-error', 'github', errorMessage)
   }

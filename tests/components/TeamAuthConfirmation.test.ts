@@ -220,7 +220,7 @@ describe('TeamAuthConfirmation', () => {
       await nextTick()
       await nextTick()
 
-      // Since confirmationType is set to 'invite' inside handleInviteAcceptance before the error  
+      // Since confirmationType is set to 'invite' inside handleInviteAcceptance before the error
       expect(_wrapper.text()).toContain('Invitation Acceptance Failed')
       expect(_wrapper.text()).toContain('Missing team information')
     })
@@ -321,7 +321,7 @@ describe('TeamAuthConfirmation', () => {
 
       // Click retry button
       await _wrapper.find('button').trigger('click')
-      
+
       // Wait for retry to complete
       await new Promise(resolve => setTimeout(resolve, 0))
       await nextTick()
