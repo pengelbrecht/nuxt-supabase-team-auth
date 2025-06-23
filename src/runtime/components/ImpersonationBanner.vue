@@ -19,22 +19,19 @@
               <div class="font-semibold text-sm">
                 Impersonating {{ displayUser?.full_name || displayUser?.email || 'User' }}
               </div>
-              <div
-                class="text-xs !text-red-100"
-                style="color: #fecaca !important;"
-              >
+              <div class="flex items-baseline gap-2 text-xs text-red-100 pb-2">
                 <span v-if="displayUser?.team?.name">
-                  {{ displayUser.team.name }} •
+                  {{ displayUser.team.name }}
                 </span>
-                <RoleBadge
-                  :role="displayUser?.role"
-                  size="xs"
-                  class="inline-block"
-                />
-                <span
-                  v-if="timeRemaining"
-                  class="ml-2"
-                >
+                <span v-if="displayUser?.team?.name">•</span>
+                <div class="inline-block mb-1">
+                  <RoleBadge
+                    :role="displayUser?.role"
+                    size="xs"
+                    variant="solid"
+                  />
+                </div>
+                <span v-if="timeRemaining">
                   • {{ timeRemaining }} remaining
                 </span>
               </div>
@@ -43,12 +40,10 @@
 
           <!-- Right side - Stop button -->
           <UButton
-            variant="outline"
+            variant="solid"
             size="sm"
-            color="white"
+            color="neutral"
             :loading="isStopping"
-            class="!text-white !border-white hover:!bg-white hover:!text-red-600"
-            style="color: white !important; border-color: white !important;"
             @click="handleStopImpersonation"
           >
             <template #leading>

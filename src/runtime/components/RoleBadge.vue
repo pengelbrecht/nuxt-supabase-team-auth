@@ -1,7 +1,7 @@
 <template>
   <UBadge
     :color="badgeColor"
-    variant="soft"
+    :variant="props.variant"
     :size="badgeSize"
   >
     {{ formattedRole }}
@@ -17,10 +17,13 @@ interface Props {
   role: string | null | undefined
   /** Override size (default: auto-sized based on role) */
   size?: 'xs' | 'sm' | 'md' | 'lg'
+  /** Badge variant (default: soft) */
+  variant?: 'solid' | 'outline' | 'soft' | 'subtle'
 }
 
 const props = withDefaults(defineProps<Props>(), {
   size: undefined,
+  variant: 'soft',
 })
 
 // Computed properties
