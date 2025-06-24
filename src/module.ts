@@ -95,6 +95,10 @@ export default defineNuxtModule<ModuleOptions>({
         name: 'useTeamAuthConfig',
         from: resolver.resolve('./runtime/composables/useTeamAuthConfig'),
       },
+      {
+        name: 'usePerformance',
+        from: resolver.resolve('./runtime/composables/usePerformance'),
+      },
     ])
 
     // Add components directory

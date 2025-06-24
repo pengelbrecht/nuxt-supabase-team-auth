@@ -1328,7 +1328,7 @@
             "description": "Implement performance measurement utilities and logging infrastructure to track auth component performance metrics across the application.",
             "dependencies": [],
             "details": "Create a performance utility module in `/src/runtime/utils/performance.ts` with functions for marking performance milestones, measuring durations, and logging results. Add console grouping for organized performance logs. Implement performance.mark() and performance.measure() wrappers with consistent naming conventions for auth-related operations.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": "Verify performance marks are created correctly and measurements are logged with proper timing data in browser DevTools Performance tab."
           },
           {
@@ -1394,7 +1394,7 @@
     ],
     "metadata": {
       "created": "2025-06-18T17:53:26.166Z",
-      "updated": "2025-06-24T14:50:41.061Z",
+      "updated": "2025-06-24T14:59:35.702Z",
       "description": "Tasks for master context"
     }
   }
