@@ -59,6 +59,23 @@ vi.mock('@nuxt/app', () => ({
 // Global mock for useNuxtApp
 global.useNuxtApp = vi.fn(() => mockNuxtApp)
 
+// Mock useTeamAuthConfig composable
+const mockDebugMode = { value: false }
+const mockUseTeamAuthConfig = () => ({
+  debug: mockDebugMode,
+  redirectTo: { value: '/dashboard' },
+  supabaseUrl: { value: 'http://localhost:54321' },
+  supabaseKey: { value: 'test-key' },
+  config: { value: {} },
+})
+
+vi.mock('../../src/runtime/composables/useTeamAuthConfig', () => ({
+  useTeamAuthConfig: mockUseTeamAuthConfig,
+}))
+
+// Global mock for useTeamAuthConfig
+global.useTeamAuthConfig = mockUseTeamAuthConfig
+
 describe('TeamAuthConfirmation', () => {
   const globalMountOptions = {
     global: {
@@ -388,6 +405,9 @@ describe('TeamAuthConfirmation', () => {
     it('should log parameters in debug mode', async () => {
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
+      // Enable debug mode for this test
+      mockDebugMode.value = true
+
       mockRoute.query = { token: 'test-token', type: 'email' }
 
       const _wrapper = mount(TeamAuthConfirmation, {
@@ -401,6 +421,8 @@ describe('TeamAuthConfirmation', () => {
 
       expect(consoleSpy).toHaveBeenCalledWith('Confirmation parameters:', expect.any(Object))
 
+      // Reset debug mode
+      mockDebugMode.value = false
       consoleSpy.mockRestore()
     })
   })
