@@ -17,6 +17,9 @@ const ROLE_HIERARCHY: Record<TeamRole, number> = {
  * Create middleware that requires a specific role or higher
  * @param requiredRole The minimum role required
  * @param options Additional options
+ * @param options.redirectTo Path to redirect to when access is denied
+ * @param options.errorMessage Custom error message to display
+ * @param options.strict If true, requires exact role match instead of minimum role
  */
 export function createRequireRoleMiddleware(
   requiredRole: TeamRole,

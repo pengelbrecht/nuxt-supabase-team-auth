@@ -17,4 +17,9 @@ export default createConfigForNuxt({
   rules: {
     '@typescript-eslint/no-explicit-any': 'warn',
   },
+}).override('nuxt/typescript/rules', {
+  files: ['**/*.test.ts', '**/*.test.js', '**/tests/**/*.ts', '**/tests/**/*.js'],
+  rules: {
+    '@typescript-eslint/no-explicit-any': 'off',
+  },
 })

@@ -118,6 +118,11 @@ export const blockDuringImpersonation = defineNuxtRouteMiddleware(async (_to) =>
 /**
  * Create custom impersonation restriction middleware
  * @param options Configuration options
+ * @param options.blockedPaths Array of paths to block during impersonation
+ * @param options.allowedPaths Array of paths to allow during impersonation (overrides blockedPaths)
+ * @param options.redirectTo Path to redirect to when access is blocked
+ * @param options.errorMessage Custom error message to display
+ * @param options.checkSuperAdmin Whether to also check if user is a super admin
  */
 export function createImpersonationRestriction(options: {
   blockedPaths?: string[]

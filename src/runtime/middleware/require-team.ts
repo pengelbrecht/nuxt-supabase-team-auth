@@ -40,6 +40,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
 /**
  * Create middleware that validates specific team access
  * @param options Configuration options
+ * @param options.allowAnyTeam If true, allows access to any team the user is a member of
+ * @param options.redirectTo Path to redirect to when access is denied
+ * @param options.errorMessage Custom error message to display
+ * @param options.validateMembership If true, validates user is a member of the specified team
  */
 export function createTeamAccessMiddleware(options: {
   allowAnyTeam?: boolean

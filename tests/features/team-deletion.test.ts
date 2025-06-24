@@ -15,8 +15,31 @@ describe('Team Deletion', () => {
 
   describe('Owner can delete team with all members', () => {
     it('should allow team owner to delete team and cascade to all team_members', async () => {
-      // Arrange: Create a team with multiple users
-      const teamWithUsers = await userFactory.createTeamWithUsers('Test Deletion Team')
+      // Arrange: Create a team with multiple users using unique domain
+      const ownerWithTeam = await userFactory.createOwnerWithTeam({
+        teamName: 'Test Deletion Team',
+        testDomain: 'team-deletion-test.com',
+      })
+
+      // Create additional team members with same domain
+      const admin = await userFactory.createUserWithRole(ownerWithTeam.team.id, 'admin', {
+        testDomain: 'team-deletion-test.com',
+      })
+      const member1 = await userFactory.createUserWithRole(ownerWithTeam.team.id, 'member', {
+        testDomain: 'team-deletion-test.com',
+      })
+      const member2 = await userFactory.createUserWithRole(ownerWithTeam.team.id, 'member', {
+        testDomain: 'team-deletion-test.com',
+      })
+
+      const teamWithUsers = {
+        team: ownerWithTeam.team,
+        users: {
+          owner: ownerWithTeam.user,
+          admin,
+          members: [member1, member2],
+        },
+      }
       const { team, users } = teamWithUsers
 
       console.log('Created team with users:', {
@@ -118,6 +141,7 @@ describe('Team Deletion', () => {
       // This test specifically checks the ensure_team_has_owner constraint
       const ownerWithTeam = await userFactory.createOwnerWithTeam({
         teamName: 'Single Owner Test Team',
+        testDomain: 'team-deletion-test.com',
       })
 
       const ownerClient = createTestSupabaseClient('anon')
@@ -138,8 +162,26 @@ describe('Team Deletion', () => {
     })
 
     it('should allow service role to bypass constraints and delete team completely', async () => {
-      // Create team with users
-      const teamWithUsers = await userFactory.createTeamWithUsers('Service Role Test Team')
+      // Create team with users using unique domain
+      const ownerWithTeam = await userFactory.createOwnerWithTeam({
+        teamName: 'Service Role Test Team',
+        testDomain: 'team-deletion-test.com',
+      })
+      const admin = await userFactory.createUserWithRole(ownerWithTeam.team.id, 'admin', {
+        testDomain: 'team-deletion-test.com',
+      })
+      const member1 = await userFactory.createUserWithRole(ownerWithTeam.team.id, 'member', {
+        testDomain: 'team-deletion-test.com',
+      })
+
+      const teamWithUsers = {
+        team: ownerWithTeam.team,
+        users: {
+          owner: ownerWithTeam.user,
+          admin,
+          members: [member1],
+        },
+      }
       const { team } = teamWithUsers
 
       const serviceClient = createTestSupabaseClient('service')
@@ -171,9 +213,13 @@ describe('Team Deletion', () => {
 
   describe('User deletion cascades properly', () => {
     it('should cascade delete profiles and team_members when user is deleted', async () => {
-      // Create a user and add to team
-      const ownerWithTeam = await userFactory.createOwnerWithTeam()
-      const member = await userFactory.createUserWithRole(ownerWithTeam.team.id, 'member')
+      // Create a user and add to team using unique domain
+      const ownerWithTeam = await userFactory.createOwnerWithTeam({
+        testDomain: 'team-deletion-test.com',
+      })
+      const member = await userFactory.createUserWithRole(ownerWithTeam.team.id, 'member', {
+        testDomain: 'team-deletion-test.com',
+      })
 
       const serviceClient = createTestSupabaseClient('service')
 

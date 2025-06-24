@@ -24,11 +24,12 @@ export class TestUserFactory {
       password: 'TestPassword123!',
       emailConfirmed: true,
       metadata: {},
+      testDomain: 'example.com',
       ...overrides,
     }
 
     const timestamp = Date.now()
-    const email = `${config.emailPrefix}-${timestamp}@example.com`
+    const email = `${config.emailPrefix}-${timestamp}@${config.testDomain}`
 
     const { data, error } = await this.supabase.auth.admin.createUser({
       email,
@@ -270,7 +271,8 @@ export class TestUserFactory {
 
   /**
    * Clean up all users and teams created by this factory
-   * Uses a strategy of putting all test users in a single team then deleting everything
+   * Uses a strategy of deleting teams first (which removes team_members via cleanup function), then users
+   * Also cleans up any orphaned test users with common test email patterns
    */
   async cleanup(): Promise<void> {
     const originalTeamCount = this.createdTeams.length
@@ -283,33 +285,13 @@ export class TestUserFactory {
       return
     }
 
-    // Strategy: Delete all test users first (which cascades to team_members and profiles)
-    // Then delete any teams we created
-
-    console.log(`[USER-FACTORY] cleanup: Step 1 - Deleting ${originalUserCount} users...`)
-    let usersDeleted = 0
-    for (const userId of this.createdUsers) {
-      try {
-        const { error } = await this.supabase.auth.admin.deleteUser(userId)
-        if (error) {
-          console.error(`[USER-FACTORY] cleanup: Error deleting user ${userId}:`, error)
-        }
-        else {
-          usersDeleted++
-        }
-      }
-      catch (error) {
-        console.error(`[USER-FACTORY] cleanup: Failed to delete user ${userId}:`, error)
-      }
-    }
-    this.createdUsers = []
-
-    // Step 2: Clean up teams (including test team if we created it)
-    console.log(`[USER-FACTORY] cleanup: Step 2 - Cleaning up ${originalTeamCount} teams...`)
+    // Strategy: Delete teams first (which removes team_members via cleanup function)
+    // This avoids the "cannot delete last owner" constraint
+    console.log(`[USER-FACTORY] cleanup: Step 1 - Cleaning up ${originalTeamCount} teams first...`)
     let teamsDeleted = 0
     for (const teamId of this.createdTeams) {
       try {
-        // Use the SQL cleanup function to bypass constraints
+        // Use the SQL cleanup function to bypass constraints and remove team_members
         const { error } = await this.supabase.rpc('cleanup_test_team', { team_id_param: teamId })
         if (error) {
           console.error(`[USER-FACTORY] cleanup: Error cleaning up team ${teamId}:`, error)
@@ -325,14 +307,47 @@ export class TestUserFactory {
     this.createdTeams = []
     this.testTeamId = null
 
-    console.log(`[USER-FACTORY] cleanup: Complete. Successfully deleted ${usersDeleted}/${originalUserCount} users and ${teamsDeleted}/${originalTeamCount} teams`)
+    // Step 2: Now delete users (should succeed since team_members are gone)
+    console.log(`[USER-FACTORY] cleanup: Step 2 - Deleting ${originalUserCount} users...`)
+    let usersDeleted = 0
+    for (const userId of this.createdUsers) {
+      try {
+        const { error } = await this.supabase.auth.admin.deleteUser(userId)
+        if (error) {
+          // "User not found" is expected when tests delete users themselves
+          if (error.message?.includes('User not found')) {
+            console.log(`[USER-FACTORY] cleanup: User ${userId} already deleted (expected)`)
+            usersDeleted++
+          }
+          else {
+            console.error(`[USER-FACTORY] cleanup: Error deleting user ${userId}:`, error)
+          }
+        }
+        else {
+          usersDeleted++
+        }
+      }
+      catch (error: any) {
+        // Handle "User not found" gracefully since some tests delete users
+        if (error?.code === 'user_not_found' || error?.status === 404) {
+          console.log(`[USER-FACTORY] cleanup: User ${userId} already deleted (expected)`)
+          usersDeleted++
+        }
+        else {
+          console.error(`[USER-FACTORY] cleanup: Failed to delete user ${userId}:`, error)
+        }
+      }
+    }
+    this.createdUsers = []
+
+    console.log(`[USER-FACTORY] cleanup: Complete. Successfully deleted ${teamsDeleted}/${originalTeamCount} teams and ${usersDeleted}/${originalUserCount} users`)
 
     // Verify cleanup worked
-    if (usersDeleted < originalUserCount) {
-      console.warn(`[USER-FACTORY] cleanup: WARNING - Only ${usersDeleted} of ${originalUserCount} users were deleted`)
-    }
     if (teamsDeleted < originalTeamCount) {
       console.warn(`[USER-FACTORY] cleanup: WARNING - Only ${teamsDeleted} of ${originalTeamCount} teams were deleted`)
+    }
+    if (usersDeleted < originalUserCount) {
+      console.warn(`[USER-FACTORY] cleanup: WARNING - Only ${usersDeleted} of ${originalUserCount} users were deleted`)
     }
   }
 
@@ -357,6 +372,7 @@ export interface UserConfig {
   password: string
   emailConfirmed: boolean
   metadata: Record<string, any>
+  testDomain: string
 }
 
 export interface TeamConfig {

@@ -27,13 +27,22 @@ describe('Native Invitations Integration Tests', () => {
     // Service role client for setup
     serviceClient = createTestSupabaseClient('service')
 
-    // Create test team with owner and admin using unique timestamp
+    // Create test team with owner and admin using unique timestamp and domain
     const timestamp = Date.now()
     console.log(`[NATIVE-INVITATIONS] beforeAll: Creating team with timestamp ${timestamp}`)
-    const teamWithUsers = await userFactory.createTeamWithUsers(`Test-Invitations-${timestamp}`)
-    testTeam = teamWithUsers.team
-    teamOwner = teamWithUsers.users.owner
-    teamAdmin = teamWithUsers.users.admin
+
+    // Use custom domain for this test to help track orphaned users
+    const ownerWithTeam = await userFactory.createOwnerWithTeam({
+      teamName: `Test-Invitations-${timestamp}`,
+      testDomain: 'native-invitations-test.com',
+    })
+    testTeam = ownerWithTeam.team
+    teamOwner = ownerWithTeam.user
+
+    // Create admin with same domain
+    teamAdmin = await userFactory.createUserWithRole(testTeam.id, 'admin', {
+      testDomain: 'native-invitations-test.com',
+    })
 
     console.log(`[NATIVE-INVITATIONS] beforeAll: Created team ${testTeam.id} with owner ${teamOwner.email}`)
     console.log(`[NATIVE-INVITATIONS] beforeAll: Factory tracked users: ${userFactory.getCreatedUserIds().length}`)
@@ -58,7 +67,7 @@ describe('Native Invitations Integration Tests', () => {
         u.email?.includes('test-invite-')
         || u.email?.includes('test-malformed-')
         || u.email?.includes('test-invalid-')
-        || (u.email?.includes('@example.com') && u.email?.includes('test-')),
+        || u.email?.includes('@native-invitations-test.com'),
       )
 
       if (testUsers.length > 0) {
@@ -91,7 +100,7 @@ describe('Native Invitations Integration Tests', () => {
 
   describe('Invitation Creation', () => {
     it('should create invitation using auth.admin.inviteUserByEmail with team metadata', async () => {
-      const testEmail = `test-invite-${Date.now()}@example.com`
+      const testEmail = `test-invite-${Date.now()}@native-invitations-test.com`
 
       // Create invitation
       const { data: inviteData, error } = await serviceClient.auth.admin.inviteUserByEmail(
@@ -117,7 +126,7 @@ describe('Native Invitations Integration Tests', () => {
     })
 
     it('should prevent duplicate invitations for same email', async () => {
-      const testEmail = `test-invite-duplicate-${Date.now()}@example.com`
+      const testEmail = `test-invite-duplicate-${Date.now()}@native-invitations-test.com`
 
       // Create first invitation
       await serviceClient.auth.admin.inviteUserByEmail(testEmail, {
@@ -136,8 +145,8 @@ describe('Native Invitations Integration Tests', () => {
 
   describe('Listing Pending Invitations', () => {
     it('should list pending invitations filtered by team', async () => {
-      const testEmail1 = `test-invite-1-${Date.now()}@example.com`
-      const testEmail2 = `test-invite-2-${Date.now()}@example.com`
+      const testEmail1 = `test-invite-1-${Date.now()}@native-invitations-test.com`
+      const testEmail2 = `test-invite-2-${Date.now()}@native-invitations-test.com`
 
       // Create test invitations
       await serviceClient.auth.admin.inviteUserByEmail(testEmail1, {
@@ -190,7 +199,7 @@ describe('Native Invitations Integration Tests', () => {
 
   describe('Revoking Invitations', () => {
     it('should revoke invitation by deleting unconfirmed user', async () => {
-      const testEmail = `test-invite-revoke-${Date.now()}@example.com`
+      const testEmail = `test-invite-revoke-${Date.now()}@native-invitations-test.com`
 
       // Create invitation
       const { data: inviteData } = await serviceClient.auth.admin.inviteUserByEmail(testEmail, {
@@ -236,7 +245,7 @@ describe('Native Invitations Integration Tests', () => {
 
   describe('Invitation Acceptance Flow', () => {
     it('should properly handle invitation acceptance metadata', async () => {
-      const testEmail = `test-invite-accept-${Date.now()}@example.com`
+      const testEmail = `test-invite-accept-${Date.now()}@native-invitations-test.com`
 
       // Create invitation with specific metadata
       const { data: inviteData } = await serviceClient.auth.admin.inviteUserByEmail(testEmail, {
@@ -270,7 +279,7 @@ describe('Native Invitations Integration Tests', () => {
 
   describe('Error Handling', () => {
     it('should handle invalid team IDs gracefully', async () => {
-      const testEmail = `test-invite-invalid-${Date.now()}@example.com`
+      const testEmail = `test-invite-invalid-${Date.now()}@native-invitations-test.com`
       const invalidTeamId = 'invalid-team-id'
 
       // This should succeed at the auth level but validation would happen in Edge Functions
@@ -287,7 +296,7 @@ describe('Native Invitations Integration Tests', () => {
     })
 
     it('should handle malformed metadata gracefully', async () => {
-      const testEmail = `test-invite-malformed-${Date.now()}@example.com`
+      const testEmail = `test-invite-malformed-${Date.now()}@native-invitations-test.com`
 
       const { data, error } = await serviceClient.auth.admin.inviteUserByEmail(testEmail, {
         data: {

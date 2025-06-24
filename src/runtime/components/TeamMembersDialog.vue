@@ -300,9 +300,6 @@ const editingUserId = ref<string | null>(null)
 const inviteEmail = ref('')
 const inviteRole = ref('member')
 
-// Get Supabase client for auth
-const supabase = useSupabaseClient()
-
 // Back to manual fetch with reactive data - avoiding useLazyFetch SSR issues
 const pendingInvitations = ref([])
 const pendingInvitationsLoading = ref(false)
