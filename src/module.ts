@@ -43,6 +43,9 @@ export default defineNuxtModule<ModuleOptions>({
   async setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
 
+    // Note: Consumer must add '@nuxt/ui' to their modules array
+    // Auto-installation doesn't properly initialize context providers
+
     // Merge options with runtime config
     // Debug mode hierarchy: explicit option > env var > nuxt dev mode
     const debugMode = options.debug !== undefined
@@ -50,6 +53,11 @@ export default defineNuxtModule<ModuleOptions>({
       : process.env.TEAM_AUTH_DEBUG === 'true'
         ? true
         : nuxt.options.dev
+
+    // Set up runtime config for both client and server
+    nuxt.options.runtimeConfig = defu(nuxt.options.runtimeConfig, {
+      supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY,
+    })
 
     nuxt.options.runtimeConfig.public.teamAuth = defu(
       nuxt.options.runtimeConfig.public.teamAuth || {},
@@ -61,16 +69,17 @@ export default defineNuxtModule<ModuleOptions>({
       },
     )
 
-    // Add plugin for Supabase client initialization
+    // Add plugins with dependency order - load after UI framework
     addPlugin({
-      src: resolver.resolve('./runtime/plugins/supabase.client.ts'),
+      src: resolver.resolve('./runtime/plugins/supabase.client'),
       mode: 'client',
+      order: 10, // Load after default plugins (0)
     })
 
-    // Add server plugin for SSR
     addPlugin({
-      src: resolver.resolve('./runtime/plugins/supabase.server.ts'),
+      src: resolver.resolve('./runtime/plugins/supabase.server'),
       mode: 'server',
+      order: 10, // Load after default plugins (0)
     })
 
     // Add composables
@@ -103,6 +112,38 @@ export default defineNuxtModule<ModuleOptions>({
       prefix: '',
     })
 
+    // Add middleware directory
+    nuxt.hook('app:resolve', (app) => {
+      // Add our middleware directory to the middleware paths
+      app.middleware.push(...[
+        {
+          name: 'require-auth',
+          path: resolver.resolve('./runtime/middleware/require-auth'),
+          global: false,
+        },
+        {
+          name: 'require-team',
+          path: resolver.resolve('./runtime/middleware/require-team'),
+          global: false,
+        },
+        {
+          name: 'require-role',
+          path: resolver.resolve('./runtime/middleware/require-role'),
+          global: false,
+        },
+        {
+          name: 'redirect-authenticated',
+          path: resolver.resolve('./runtime/middleware/redirect-authenticated'),
+          global: false,
+        },
+        {
+          name: 'impersonation',
+          path: resolver.resolve('./runtime/middleware/impersonation'),
+          global: false,
+        },
+      ])
+    })
+
     // Add CSS for components - only our custom styles, not conflicting with Nuxt UI
     nuxt.options.css = nuxt.options.css || []
     nuxt.options.css.push(resolver.resolve('./runtime/assets/css/components.css'))
@@ -111,17 +152,25 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.hook('nitro:config', (nitroConfig) => {
       nitroConfig.handlers = nitroConfig.handlers || []
 
-      // Add impersonation API endpoints
-      nitroConfig.handlers.push({
-        route: '/api/impersonate',
-        method: 'post',
-        handler: resolver.resolve('./runtime/server/api/impersonate.post.ts'),
-      })
+      // Register all server API endpoints
+      const apiEndpoints = [
+        'accept-invite',
+        'delete-user',
+        'get-pending-invitations',
+        'impersonate',
+        'invite-member',
+        'revoke-invitation',
+        'signup-with-team',
+        'stop-impersonation',
+        'transfer-ownership',
+      ]
 
-      nitroConfig.handlers.push({
-        route: '/api/stop-impersonation',
-        method: 'post',
-        handler: resolver.resolve('./runtime/server/api/stop-impersonation.post.ts'),
+      apiEndpoints.forEach((endpoint) => {
+        nitroConfig.handlers.push({
+          route: `/api/${endpoint}`,
+          method: 'post',
+          handler: resolver.resolve(`./runtime/server/api/${endpoint}.post`),
+        })
       })
     })
 

@@ -19,15 +19,24 @@
           {{ currentProfile?.full_name || currentUser.user_metadata?.name || currentUser.email }}
         </span>
 
-        <UAvatar
-          :src="currentUser?.user_metadata?.avatar_url || undefined"
-          :alt="currentProfile?.full_name || currentUser?.user_metadata?.name || currentUser?.email || 'User'"
-          :size="props.size"
-          :icon="!currentUser ? 'i-lucide-user' : undefined"
-          class="ring-2 ring-white dark:ring-gray-900"
-        >
-          {{ avatarFallback }}
-        </UAvatar>
+        <ClientOnly>
+          <UAvatar
+            :src="currentUser?.user_metadata?.avatar_url || undefined"
+            :alt="currentProfile?.full_name || currentUser?.user_metadata?.name || currentUser?.email || 'User'"
+            :size="props.size"
+            :icon="!currentUser ? 'i-lucide-user' : undefined"
+            class="ring-2 ring-white dark:ring-gray-900"
+          >
+            {{ avatarFallback }}
+          </UAvatar>
+          <template #fallback>
+            <UAvatar
+              :size="props.size"
+              icon="i-lucide-user"
+              class="ring-2 ring-white dark:ring-gray-900"
+            />
+          </template>
+        </ClientOnly>
       </UButton>
     </UDropdownMenu>
 
@@ -94,8 +103,9 @@ const settingsTab = ref<'profile' | 'impersonation'>('profile')
 const showCompanySettingsDialog = ref(false)
 const showTeamMembersDialog = ref(false)
 
-// Computed properties
+// Computed properties - ensure consistent SSR/client rendering
 const avatarFallback = computed(() => {
+  // During SSR, currentUser may be null, so return empty string consistently
   if (!currentUser.value) return ''
 
   // Use shared avatar fallback logic with profile data
