@@ -3,6 +3,7 @@ import type { SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js
 import type { User, Profile, Team, TeamMember, TeamAuth } from '../types'
 import { useSessionSync } from './useSessionSync'
 import { useSession } from './useSession'
+import { getGlobalPerformanceLogger, timeAsync } from '../utils/performance'
 
 interface _TeamAuthError {
   code: string
@@ -205,9 +206,17 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
   // Update complete auth state atomically using updateAuthState helper
   const updateCompleteAuthState = async (user: SupabaseUser) => {
-    // For impersonation scenarios, immediately update with user data
-    // and use data from impersonation response to avoid hanging queries
-    if (authState.value.impersonating && authState.value.impersonatedUser) {
+    const perfLogger = getGlobalPerformanceLogger()
+    perfLogger.start('auth-update-complete-state-full', 'auth', { 
+      userId: user.id,
+      impersonating: authState.value.impersonating,
+      stoppingImpersonation: authState.value.stoppingImpersonation
+    })
+
+    try {
+      // For impersonation scenarios, immediately update with user data
+      // and use data from impersonation response to avoid hanging queries
+      if (authState.value.impersonating && authState.value.impersonatedUser) {
       const impersonatedData = authState.value.impersonatedUser
       updateAuthState({
         user: {
@@ -247,11 +256,13 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         stoppingImpersonation: false, // Clear the flag
         loading: false,
       })
+      perfLogger.end('auth-update-complete-state-full')
       return
     }
 
     try {
       // Fetch all data in parallel for normal (non-impersonation) scenarios
+      perfLogger.start('auth-database-queries', 'database', { operation: 'parallel-profile-team-fetch' })
       const [profileResult, teamResult] = await Promise.all([
         getClient()
           .from('profiles')
@@ -273,6 +284,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           .eq('user_id', user.id)
           .single(),
       ])
+      perfLogger.end('auth-database-queries')
 
       // Use updateAuthState for immediate, consistent updates
       updateAuthState({
@@ -300,6 +312,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         role: teamResult.data?.role || null,
         loading: false,
       })
+      perfLogger.end('auth-update-complete-state-full')
     }
     catch (error) {
       console.error('Failed to update auth state:', getErrorForLogging(error))
@@ -315,6 +328,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         role: null,
         loading: false,
       })
+      perfLogger.end('auth-update-complete-state-full')
     }
   }
 
@@ -341,12 +355,19 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       return
     }
 
+    const perfLogger = getGlobalPerformanceLogger()
+    perfLogger.start('auth-initialization', 'auth', { stage: 'start' })
+
     try {
       // Get initial session
+      perfLogger.start('auth-get-session', 'auth')
       const { data: { session } } = await getClient().auth.getSession()
+      perfLogger.end('auth-get-session')
 
       if (session?.user) {
+        perfLogger.start('auth-update-complete-state', 'auth', { userId: session.user.id })
         await updateCompleteAuthState(session.user)
+        perfLogger.end('auth-update-complete-state')
       }
       else {
         // No active session - clear any stale impersonation state
@@ -399,10 +420,12 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       }
 
       authState.value.initialized = true
+      perfLogger.end('auth-initialization')
     }
     catch (error) {
       console.error('Auth initialization failed:', getErrorForLogging(error))
       authState.value = { ...authState.value, loading: false }
+      perfLogger.end('auth-initialization')
     }
   }
 

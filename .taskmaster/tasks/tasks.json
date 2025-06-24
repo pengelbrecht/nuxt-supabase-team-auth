@@ -1328,7 +1328,7 @@
             "description": "Implement performance measurement utilities and logging infrastructure to track auth component performance metrics across the application.",
             "dependencies": [],
             "details": "Create a performance utility module in `/src/runtime/utils/performance.ts` with functions for marking performance milestones, measuring durations, and logging results. Add console grouping for organized performance logs. Implement performance.mark() and performance.measure() wrappers with consistent naming conventions for auth-related operations.",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": "Verify performance marks are created correctly and measurements are logged with proper timing data in browser DevTools Performance tab."
           },
           {
@@ -1339,7 +1339,7 @@
               1
             ],
             "details": "Add performance.mark() calls in component lifecycle hooks (onMounted, onUpdated) and key methods. Track time from component creation to full render completion. Measure async operations like user data fetching in useTeamAuthConfig. Add performance logging to component state changes and reactive property updates.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": "Use browser DevTools to verify component timing marks appear correctly. Test with different user states (signed in/out, with/without teams) to measure variations."
           },
           {
@@ -1394,7 +1394,7 @@
     ],
     "metadata": {
       "created": "2025-06-18T17:53:26.166Z",
-      "updated": "2025-06-24T14:59:35.702Z",
+      "updated": "2025-06-24T15:24:15.764Z",
       "description": "Tasks for master context"
     }
   }
