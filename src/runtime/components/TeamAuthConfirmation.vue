@@ -109,17 +109,17 @@ import { useRoute, useRouter } from 'vue-router'
 interface ConfirmationProps {
   /** Custom redirect URL after successful confirmation */
   redirectUrl?: string
-  /** Show debugging information in development */
-  debug?: boolean
 }
 
 const props = withDefaults(defineProps<ConfirmationProps>(), {
   redirectUrl: '/',
-  debug: false,
 })
 
 const route = useRoute()
 const router = useRouter()
+
+// Get debug mode from team auth config
+const { debug: debugMode } = useTeamAuthConfig()
 
 // State management
 const isLoading = ref(true)
@@ -262,7 +262,7 @@ const processConfirmation = async () => {
   try {
     const params = extractParameters()
 
-    if (props.debug) {
+    if (debugMode.value) {
       console.log('Confirmation parameters:', params)
     }
 

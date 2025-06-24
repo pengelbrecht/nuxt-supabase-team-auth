@@ -1262,7 +1262,7 @@
         "description": "Comprehensive security remediation addressing exposed credentials, CORS configuration, token storage, debug mode settings, and other identified security vulnerabilities from security review.",
         "details": "1. Audit and secure credential management:\n   - Remove any hardcoded credentials from codebase\n   - Implement proper environment variable usage for all sensitive data\n   - Add .env files to .gitignore if not already present\n   - Rotate any exposed credentials in production\n\n2. Configure CORS policies:\n   - Review and restrict CORS origins to only necessary domains\n   - Implement proper preflight request handling\n   - Remove wildcard (*) origins from production configuration\n   - Test CORS policy effectiveness with various origin requests\n\n3. Secure token storage and handling:\n   - Implement secure token storage using httpOnly cookies where possible\n   - Add token expiration and refresh mechanisms\n   - Ensure tokens are cleared on logout\n   - Implement proper CSRF protection for token-based requests\n\n4. Production security hardening:\n   - Disable debug mode in production environments\n   - Remove development-only middleware and error handlers\n   - Implement proper error handling without exposing internal details\n   - Add security headers (CSP, HSTS, X-Frame-Options, etc.)\n\n5. Edge Function security:\n   - Review and validate all input parameters\n   - Implement rate limiting for sensitive operations\n   - Add proper authentication checks for all endpoints\n   - Ensure RLS policies are enforced consistently\n\n6. Session and authentication security:\n   - Implement session timeout and renewal\n   - Add brute force protection for login attempts\n   - Ensure proper session invalidation on security events\n   - Review impersonation security controls",
         "testStrategy": "1. Credential Security Testing:\n   - Scan codebase for hardcoded secrets using tools like git-secrets or truffleHog\n   - Verify all environment variables are properly configured\n   - Test that application fails gracefully when credentials are missing\n   - Confirm no sensitive data appears in logs or error messages\n\n2. CORS Configuration Testing:\n   - Test requests from unauthorized origins are blocked\n   - Verify preflight requests work correctly for authorized origins\n   - Test various HTTP methods and headers against CORS policy\n   - Use browser developer tools to confirm CORS headers are present\n\n3. Token Security Testing:\n   - Verify tokens are stored securely (httpOnly cookies vs localStorage)\n   - Test token expiration and refresh functionality\n   - Confirm tokens are properly cleared on logout\n   - Test CSRF protection is working for authenticated requests\n\n4. Production Hardening Testing:\n   - Verify debug mode is disabled in production builds\n   - Test that error messages don't expose sensitive information\n   - Use security scanning tools to verify security headers are present\n   - Test application behavior under various attack scenarios\n\n5. Edge Function Security Testing:\n   - Test input validation with malformed and malicious payloads\n   - Verify rate limiting is working for sensitive endpoints\n   - Test authentication requirements for all protected functions\n   - Confirm RLS policies prevent unauthorized data access\n\n6. Authentication Security Testing:\n   - Test session timeout and renewal mechanisms\n   - Verify brute force protection is active\n   - Test session invalidation works correctly\n   - Review impersonation controls and audit logging",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           21,
           23,
@@ -1302,16 +1302,99 @@
             "title": "Disable debug mode in production",
             "description": "Update nuxt.config.ts to disable teamAuth.debug in production environments to prevent sensitive information leakage",
             "details": "",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 40
+          }
+        ]
+      },
+      {
+        "id": 41,
+        "title": "Performance Profiling: Analyze Auth Component Loading Times",
+        "description": "Investigate and profile the performance bottlenecks causing auth elements to take several seconds to load, identifying specific areas for optimization.",
+        "details": "Implement comprehensive performance profiling for auth components:\n\n1. **Component Load Time Analysis:**\n   - Add performance.mark() calls to track component initialization times\n   - Profile UserButton, ProfileForm, and AuthSignUpWithTeam components\n   - Measure time from component mount to full render\n   - Track async operations like user data fetching and team membership queries\n\n2. **Database Query Performance:**\n   - Profile Supabase queries in auth flows (user profile, team membership)\n   - Add timing logs to server-side auth operations\n   - Analyze RLS policy execution times\n   - Check for N+1 query patterns in team/user relationships\n\n3. **Dev Server vs Production Analysis:**\n   - Compare performance between dev server and production builds\n   - Profile HMR impact on auth component re-rendering\n   - Measure bundle size impact of auth-related code\n   - Check for development-only overhead in auth flows\n\n4. **Network Request Profiling:**\n   - Use browser DevTools to analyze auth-related network requests\n   - Profile Edge Function response times for auth operations\n   - Check for unnecessary round trips in auth state management\n   - Analyze caching effectiveness for user/team data\n\n5. **Client-Side Performance:**\n   - Profile JavaScript execution time in auth components\n   - Check for expensive reactive computations in auth state\n   - Analyze component re-render frequency\n   - Profile useTeamAuthConfig composable performance",
+        "testStrategy": "1. **Performance Benchmarking:**\n   - Establish baseline performance metrics for auth component loading\n   - Use Chrome DevTools Performance tab to record detailed traces\n   - Run Lighthouse audits focusing on auth-heavy pages\n   - Create automated performance tests using Playwright or similar\n\n2. **Load Testing:**\n   - Test auth performance under various network conditions (3G, slow WiFi)\n   - Simulate different user scenarios (new user, returning user, team member)\n   - Test with different team sizes and user counts\n   - Verify performance in both dev and production environments\n\n3. **Profiling Validation:**\n   - Confirm performance markers are accurately capturing bottlenecks\n   - Validate that identified slow operations match user experience\n   - Test performance improvements after optimization implementation\n   - Document performance regression thresholds for future monitoring",
+        "status": "pending",
+        "dependencies": [
+          6,
+          10,
+          40
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set up Performance Monitoring Infrastructure",
+            "description": "Implement performance measurement utilities and logging infrastructure to track auth component performance metrics across the application.",
+            "dependencies": [],
+            "details": "Create a performance utility module in `/src/runtime/utils/performance.ts` with functions for marking performance milestones, measuring durations, and logging results. Add console grouping for organized performance logs. Implement performance.mark() and performance.measure() wrappers with consistent naming conventions for auth-related operations.",
+            "status": "pending",
+            "testStrategy": "Verify performance marks are created correctly and measurements are logged with proper timing data in browser DevTools Performance tab."
+          },
+          {
+            "id": 2,
+            "title": "Profile Auth Component Loading and Rendering",
+            "description": "Add comprehensive performance tracking to UserButton, ProfileForm, and AuthSignUpWithTeam components to measure initialization, mount, and render times.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add performance.mark() calls in component lifecycle hooks (onMounted, onUpdated) and key methods. Track time from component creation to full render completion. Measure async operations like user data fetching in useTeamAuthConfig. Add performance logging to component state changes and reactive property updates.",
+            "status": "pending",
+            "testStrategy": "Use browser DevTools to verify component timing marks appear correctly. Test with different user states (signed in/out, with/without teams) to measure variations."
+          },
+          {
+            "id": 3,
+            "title": "Analyze Database Query Performance",
+            "description": "Profile Supabase queries and database operations in auth flows to identify slow queries and potential optimization opportunities.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add timing logs to database queries in server routes (`/src/runtime/server/api/`). Profile user profile fetching, team membership queries, and RLS policy execution. Use Supabase's query performance insights and add custom timing to Edge Functions. Check for N+1 patterns in team/user relationship queries.",
+            "status": "pending",
+            "testStrategy": "Monitor query execution times in Supabase dashboard. Test with various team sizes and user configurations to identify performance bottlenecks."
+          },
+          {
+            "id": 4,
+            "title": "Profile Network Requests and API Response Times",
+            "description": "Analyze network performance for auth-related API calls, Edge Functions, and data fetching operations to identify network bottlenecks.",
+            "dependencies": [
+              1
+            ],
+            "details": "Use browser DevTools Network tab to analyze auth API requests. Add timing logs to fetch operations in composables and server routes. Profile Edge Function response times for auth operations. Measure caching effectiveness for user/team data and identify unnecessary round trips in auth state management.",
+            "status": "pending",
+            "testStrategy": "Use browser DevTools to measure network request timings. Test with different network conditions (fast 3G, slow 3G) to identify critical performance issues."
+          },
+          {
+            "id": 5,
+            "title": "Evaluate Client-Side JavaScript Performance",
+            "description": "Profile JavaScript execution performance in auth components, focusing on reactive computations, component re-renders, and composable efficiency.",
+            "dependencies": [
+              2
+            ],
+            "details": "Use browser DevTools Profiler to analyze JavaScript execution in auth components. Profile useTeamAuthConfig composable performance and reactive property computations. Check component re-render frequency and identify expensive operations. Analyze memory usage patterns in auth state management.",
+            "status": "pending",
+            "testStrategy": "Record performance profiles during typical auth flows (login, signup, profile updates). Compare execution times between different user scenarios."
+          },
+          {
+            "id": 6,
+            "title": "Compare Development vs Production Performance",
+            "description": "Analyze performance differences between development and production environments to identify development-specific bottlenecks and validate optimization effectiveness.",
+            "dependencies": [
+              2,
+              3,
+              4,
+              5
+            ],
+            "details": "Build production version and compare auth component performance against dev server. Measure HMR impact on auth component re-rendering. Analyze bundle size impact of auth-related code using webpack-bundle-analyzer. Profile production build performance and identify development-only overhead in auth flows.",
+            "status": "pending",
+            "testStrategy": "Compare performance metrics between `pnpm run dev` and production build. Measure bundle sizes and loading times. Validate that optimizations work effectively in production environment."
           }
         ]
       }
     ],
     "metadata": {
       "created": "2025-06-18T17:53:26.166Z",
-      "updated": "2025-06-24T09:03:52.085Z",
+      "updated": "2025-06-24T14:50:41.061Z",
       "description": "Tasks for master context"
     }
   }

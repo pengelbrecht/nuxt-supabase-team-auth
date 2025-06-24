@@ -36,7 +36,7 @@ export default defineNuxtModule<ModuleOptions>({
     },
   },
   defaults: {
-    debug: false,
+    debug: undefined, // Will be auto-detected based on Nuxt dev mode
     redirectTo: '/dashboard',
     emailTemplates: {},
   },
@@ -44,12 +44,19 @@ export default defineNuxtModule<ModuleOptions>({
     const resolver = createResolver(import.meta.url)
 
     // Merge options with runtime config
+    // Debug mode hierarchy: explicit option > env var > nuxt dev mode
+    const debugMode = options.debug !== undefined 
+      ? options.debug 
+      : process.env.TEAM_AUTH_DEBUG === 'true' 
+        ? true 
+        : nuxt.options.dev
+    
     nuxt.options.runtimeConfig.public.teamAuth = defu(
       nuxt.options.runtimeConfig.public.teamAuth || {},
       {
         supabaseUrl: options.supabaseUrl || process.env.SUPABASE_URL,
         supabaseKey: options.supabaseKey || process.env.SUPABASE_ANON_KEY,
-        debug: options.debug,
+        debug: debugMode,
         redirectTo: options.redirectTo,
       },
     )
@@ -83,6 +90,10 @@ export default defineNuxtModule<ModuleOptions>({
       {
         name: 'useSession',
         from: resolver.resolve('./runtime/composables/useSession'),
+      },
+      {
+        name: 'useTeamAuthConfig',
+        from: resolver.resolve('./runtime/composables/useTeamAuthConfig'),
       },
     ])
 
