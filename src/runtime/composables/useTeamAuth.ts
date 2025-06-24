@@ -330,6 +330,10 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       })
       perfLogger.end('auth-update-complete-state-full')
     }
+    } catch (outerError) {
+      console.error('Auth state update failed:', getErrorForLogging(outerError))
+      perfLogger.end('auth-update-complete-state-full')
+    }
   }
 
   // Reset auth state
