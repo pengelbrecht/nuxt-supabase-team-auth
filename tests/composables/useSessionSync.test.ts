@@ -356,6 +356,8 @@ describe('useSessionSync', () => {
 
   describe('Impersonation Conflict Resolution', () => {
     it('should handle impersonation conflicts', () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
       mockIsImpersonating.value = true
       mockImpersonationExpiresAt.value = new Date(Date.now() + 30 * 60 * 1000)
 
@@ -396,6 +398,7 @@ describe('useSessionSync', () => {
         expect.stringContaining('resolving_conflict'),
       )
 
+      consoleWarnSpy.mockRestore()
       cleanup()
     })
   })
@@ -523,6 +526,7 @@ describe('useSessionSync', () => {
   describe('Edge Cases', () => {
     it('should handle malformed storage data gracefully', () => {
       const onStateUpdate = vi.fn()
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       const cleanup = sessionSync.initializeSessionSync(
         mockCurrentUser,
@@ -544,7 +548,12 @@ describe('useSessionSync', () => {
       }).not.toThrow()
 
       expect(onStateUpdate).not.toHaveBeenCalled()
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Failed to handle cross-tab session sync:',
+        expect.any(SyntaxError),
+      )
 
+      consoleErrorSpy.mockRestore()
       cleanup()
     })
 

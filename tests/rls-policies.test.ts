@@ -1,13 +1,22 @@
-import { describe, it, expect, beforeAll, afterEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import { createTestSupabaseClient, validateTestEnvironment, TEST_ENV } from './helpers/test-env'
 
 describe('RLS Policies', () => {
   let serviceClient: ReturnType<typeof createClient>
+  let consoleWarnSpy: any
 
   beforeAll(() => {
     console.log('[RLS-POLICIES] beforeAll: Starting RLS test setup')
     console.log(`[RLS-POLICIES] beforeAll: Test run timestamp: ${new Date().toISOString()}`)
+
+    // Suppress GoTrueClient warnings during tests
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation((message) => {
+      if (typeof message === 'string' && message.includes('Multiple GoTrueClient instances')) {
+        return // Suppress this specific warning
+      }
+      console.log(message) // Allow other warnings through
+    })
 
     // Validate environment in CI
     validateTestEnvironment()
@@ -37,11 +46,6 @@ describe('RLS Policies', () => {
     const originalTeamIds = [
       'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', // Alpha Team
       'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', // Beta Team
-    ]
-
-    const originalUserIds = [
-      ...originalAlphaMembers,
-      ...originalBetaMembers,
     ]
 
     // Remove any additional team members that were added during tests
@@ -78,6 +82,13 @@ describe('RLS Policies', () => {
       .update({ role: 'admin' })
       .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
       .eq('user_id', '33333333-3333-3333-3333-333333333333') // Alpha Admin back to admin role
+  })
+
+  afterAll(() => {
+    // Restore console.warn spy
+    if (consoleWarnSpy) {
+      consoleWarnSpy.mockRestore()
+    }
   })
 
   describe('Data Verification (Service Role)', () => {

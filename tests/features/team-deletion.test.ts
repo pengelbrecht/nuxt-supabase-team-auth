@@ -1,9 +1,27 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, vi } from 'vitest'
 import { createTestSupabaseClient } from '../helpers/test-env'
 import { TestUserFactory } from '../helpers/user-factory'
 
 describe('Team Deletion', () => {
   let userFactory: TestUserFactory
+  let consoleWarnSpy: any
+
+  beforeAll(() => {
+    // Suppress GoTrueClient warnings during tests
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation((message) => {
+      if (typeof message === 'string' && message.includes('Multiple GoTrueClient instances')) {
+        return // Suppress this specific warning
+      }
+      console.log(message) // Allow other warnings through
+    })
+  })
+
+  afterAll(() => {
+    // Restore console.warn spy
+    if (consoleWarnSpy) {
+      consoleWarnSpy.mockRestore()
+    }
+  })
 
   beforeEach(async () => {
     userFactory = new TestUserFactory()

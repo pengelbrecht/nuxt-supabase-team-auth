@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
 import { userFactory } from '../helpers/user-factory'
 import { createTestSupabaseClient, validateTestEnvironment } from '../helpers/test-env'
 
@@ -17,8 +17,16 @@ describe('Native Invitations Integration Tests', () => {
   let testTeam: any
   let teamOwner: any
   let teamAdmin: any
+  let consoleWarnSpy: any
 
   beforeAll(async () => {
+    // Suppress GoTrueClient warnings during tests
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation((message) => {
+      if (typeof message === 'string' && message.includes('Multiple GoTrueClient instances')) {
+        return // Suppress this specific warning
+      }
+      console.log(message) // Allow other warnings through
+    })
     console.log('[NATIVE-INVITATIONS] beforeAll: Starting setup')
 
     // Validate environment in CI
@@ -82,6 +90,11 @@ describe('Native Invitations Integration Tests', () => {
     }
 
     console.log('[NATIVE-INVITATIONS] afterAll: Cleanup complete')
+
+    // Restore console.warn spy
+    if (consoleWarnSpy) {
+      consoleWarnSpy.mockRestore()
+    }
   })
 
   beforeEach(async () => {

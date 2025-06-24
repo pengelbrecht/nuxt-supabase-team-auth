@@ -390,6 +390,8 @@ describe('Middleware Integration Tests', () => {
 
   describe('Error Handling and Edge Cases', () => {
     it('should handle invalid roles gracefully', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       const invalidRoleMiddleware = createRequireRoleMiddleware('invalid_role' as any)
 
       vi.mocked(useTeamAuth).mockReturnValue({
@@ -402,6 +404,8 @@ describe('Middleware Integration Tests', () => {
       const _result = await invalidRoleMiddleware(mockRoute)
 
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=invalid_role')
+
+      consoleErrorSpy.mockRestore()
     })
 
     // Skipping this test as import.meta.server is hard to mock in Vitest

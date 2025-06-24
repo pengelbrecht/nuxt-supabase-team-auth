@@ -294,6 +294,8 @@ describe('useTeamAuth', () => {
     })
 
     it('should handle sign up errors', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       // Mock $fetch to return error response
       mockFetch.mockResolvedValue({
         success: false,
@@ -307,6 +309,16 @@ describe('useTeamAuth', () => {
           code: 'SIGNUP_FAILED',
           message: 'Email already registered',
         })
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Sign up with team failed:',
+        expect.objectContaining({
+          code: 'SIGNUP_FAILED',
+          message: 'Email already registered',
+        }),
+      )
+
+      consoleErrorSpy.mockRestore()
     })
 
     it('should sign in with email and password', async () => {
@@ -327,6 +339,8 @@ describe('useTeamAuth', () => {
     })
 
     it('should handle sign in errors', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
         data: { session: null, user: null },
         error: { message: 'Invalid credentials' },
@@ -339,6 +353,16 @@ describe('useTeamAuth', () => {
           code: 'SIGNIN_FAILED',
           message: 'Invalid credentials',
         })
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Sign in failed:',
+        expect.objectContaining({
+          code: 'SIGNIN_FAILED',
+          message: 'Invalid credentials',
+        }),
+      )
+
+      consoleErrorSpy.mockRestore()
     })
 
     it('should sign out successfully', async () => {
@@ -621,6 +645,8 @@ describe('useTeamAuth', () => {
     })
 
     it('should reject impersonation for non-super admin', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       // Set up authenticated regular user state (not super admin)
       setupAuthenticatedState({ role: 'member' })
 
@@ -641,6 +667,13 @@ describe('useTeamAuth', () => {
 
       await expect(startImpersonation('target-user-123', 'Support'))
         .rejects.toThrow('Only super admins can start impersonation')
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Start impersonation failed:',
+        expect.any(Error),
+      )
+
+      consoleErrorSpy.mockRestore()
     })
 
     it('should stop impersonation and restore original session', async () => {
