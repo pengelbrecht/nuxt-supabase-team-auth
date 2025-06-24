@@ -20,7 +20,7 @@ describe('RLS Policies', () => {
 
   afterEach(async () => {
     // Clean up any test data that was inserted during tests
-    // Remove any members from Alpha team that aren't part of the original seed data
+    // First clean up team members
     const originalAlphaMembers = [
       '11111111-1111-1111-1111-111111111111', // Super Admin (super@a.test)
       '22222222-2222-2222-2222-222222222222', // Alpha Owner (owner@a.test)
@@ -28,25 +28,43 @@ describe('RLS Policies', () => {
       '44444444-4444-4444-4444-444444444444', // Alpha Member (member@a.test)
     ]
 
-    // Remove any additional members that were added during tests
-    await serviceClient
-      .from('team_members')
-      .delete()
-      .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
-      .not('user_id', 'in', `(${originalAlphaMembers.map(id => `"${id}"`).join(',')})`)
-
-    // Clean up any test data from Beta team as well if needed
     const originalBetaMembers = [
       '55555555-5555-5555-5555-555555555555', // Beta Owner (owner@b.test)
       '66666666-6666-6666-6666-666666666666', // Beta Admin (admin@b.test)
       '77777777-7777-7777-7777-777777777777', // Beta Member (member@b.test)
     ]
 
+    const originalTeamIds = [
+      'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', // Alpha Team
+      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', // Beta Team
+    ]
+
+    const originalUserIds = [
+      ...originalAlphaMembers,
+      ...originalBetaMembers,
+    ]
+
+    // Remove any additional team members that were added during tests
+    await serviceClient
+      .from('team_members')
+      .delete()
+      .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+      .not('user_id', 'in', `(${originalAlphaMembers.map(id => `"${id}"`).join(',')})`)
+
     await serviceClient
       .from('team_members')
       .delete()
       .eq('team_id', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')
       .not('user_id', 'in', `(${originalBetaMembers.map(id => `"${id}"`).join(',')})`)
+
+    // Remove any extra teams that were created during tests
+    await serviceClient
+      .from('teams')
+      .delete()
+      .not('id', 'in', `(${originalTeamIds.map(id => `"${id}"`).join(',')})`)
+
+    // Remove any extra users/profiles that were created during tests
+    await serviceClient.auth.admin.deleteUser('99999999-9999-9999-9999-999999999999').catch(() => {})
 
     // Reset any modified roles back to their original state
     await serviceClient
