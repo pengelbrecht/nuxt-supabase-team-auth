@@ -56,9 +56,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
-import { usePerformance } from '../composables/usePerformance'
 import SettingsModal from './SettingsModal.vue'
 import CompanySettingsDialog from './CompanySettingsDialog.vue'
 import TeamMembersDialog from './TeamMembersDialog.vue'
@@ -88,18 +87,6 @@ const {
   clearSuccessFlag,
   stopImpersonation,
 } = useTeamAuth()
-
-// Performance monitoring
-const { 
-  trackComponentLifecycle, 
-  trackAuth, 
-  start, 
-  end,
-  isEnabled: performanceEnabled 
-} = usePerformance()
-
-// Track component lifecycle performance
-trackComponentLifecycle(true)
 
 // Modal state
 const showSettingsModal = ref(false)
@@ -165,20 +152,7 @@ const handleSettingsError = (error: string) => {
 
 // Dropdown menu items for Nuxt UI v3
 const dropdownItems = computed(() => {
-  // Track dropdown computation performance
-  if (performanceEnabled.value) {
-    start('dropdown-computation', { 
-      hasUser: !!currentUser.value,
-      showName: props.showName,
-      isAdmin: isAdmin.value,
-      isSuperAdmin: isSuperAdmin.value 
-    })
-  }
-
   if (!currentUser.value) {
-    if (performanceEnabled.value) {
-      end('dropdown-computation')
-    }
     return [
       {
         label: 'Not signed in',
@@ -268,28 +242,16 @@ const dropdownItems = computed(() => {
     label: 'Sign Out',
     icon: 'i-lucide-log-out',
     onSelect: async () => {
-      await trackAuth.stateChange('signed-in', 'signing-out', { component: 'UserButton' })
-      
       try {
         await signOut()
-        trackAuth.stateChange('signing-out', 'signed-out', { component: 'UserButton' })
-        
         // Redirect to home page after sign out
         await navigateTo('/')
-      } catch (error) {
-        trackAuth.stateChange('signing-out', 'sign-out-error', { 
-          component: 'UserButton', 
-          error: error instanceof Error ? error.message : 'Unknown error'
-        })
+      }
+      catch (error) {
         throw error
       }
     },
   })
-
-  // End dropdown computation tracking
-  if (performanceEnabled.value) {
-    end('dropdown-computation')
-  }
 
   return items
 })

@@ -3,7 +3,6 @@ import type { SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js
 import type { User, Profile, Team, TeamMember, TeamAuth } from '../types'
 import { useSessionSync } from './useSessionSync'
 import { useSession } from './useSession'
-import { getGlobalPerformanceLogger, timeAsync } from '../utils/performance'
 
 interface _TeamAuthError {
   code: string
@@ -206,73 +205,64 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
   // Update complete auth state atomically using updateAuthState helper
   const updateCompleteAuthState = async (user: SupabaseUser) => {
-    const perfLogger = getGlobalPerformanceLogger()
-    perfLogger.start('auth-update-complete-state-full', 'auth', { 
-      userId: user.id,
-      impersonating: authState.value.impersonating,
-      stoppingImpersonation: authState.value.stoppingImpersonation
-    })
-
     try {
       // For impersonation scenarios, immediately update with user data
       // and use data from impersonation response to avoid hanging queries
       if (authState.value.impersonating && authState.value.impersonatedUser) {
-      const impersonatedData = authState.value.impersonatedUser
-      updateAuthState({
-        user: {
-          id: user.id,
-          email: user.email!,
-          user_metadata: user.user_metadata,
-        },
-        profile: {
-          id: impersonatedData.id,
-          full_name: impersonatedData.full_name,
-          email: impersonatedData.email,
-        } as User,
-        team: impersonatedData.team
-          ? {
-              id: impersonatedData.team.id,
-              name: impersonatedData.team.name,
-            } as Team
-          : null,
-        role: impersonatedData.role,
-        loading: false,
-      })
-      return
-    }
+        const impersonatedData = authState.value.impersonatedUser
+        updateAuthState({
+          user: {
+            id: user.id,
+            email: user.email!,
+            user_metadata: user.user_metadata,
+          },
+          profile: {
+            id: impersonatedData.id,
+            full_name: impersonatedData.full_name,
+            email: impersonatedData.email,
+          } as User,
+          team: impersonatedData.team
+            ? {
+                id: impersonatedData.team.id,
+                name: impersonatedData.team.name,
+              } as Team
+            : null,
+          role: impersonatedData.role,
+          loading: false,
+        })
+        return
+      }
 
-    // For stopping impersonation, immediately update with minimal data
-    // and skip database queries that might hang during session switch
-    if (authState.value.stoppingImpersonation) {
-      updateAuthState({
-        user: {
-          id: user.id,
-          email: user.email!,
-          user_metadata: user.user_metadata,
-        },
-        profile: null, // Will be populated by background refresh if needed
-        team: null, // Will be populated by background refresh if needed
-        role: null, // Will be populated by background refresh if needed
-        stoppingImpersonation: false, // Clear the flag
-        loading: false,
-      })
-      perfLogger.end('auth-update-complete-state-full')
-      return
-    }
+      // For stopping impersonation, immediately update with minimal data
+      // and skip database queries that might hang during session switch
+      if (authState.value.stoppingImpersonation) {
+        updateAuthState({
+          user: {
+            id: user.id,
+            email: user.email!,
+            user_metadata: user.user_metadata,
+          },
+          profile: null, // Will be populated by background refresh if needed
+          team: null, // Will be populated by background refresh if needed
+          role: null, // Will be populated by background refresh if needed
+          stoppingImpersonation: false, // Clear the flag
+          loading: false,
+        })
+        return
+      }
 
-    try {
+      try {
       // Fetch all data in parallel for normal (non-impersonation) scenarios
-      perfLogger.start('auth-database-queries', 'database', { operation: 'parallel-profile-team-fetch' })
-      const [profileResult, teamResult] = await Promise.all([
-        getClient()
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single(),
+        const [profileResult, teamResult] = await Promise.all([
+          getClient()
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single(),
 
-        getClient()
-          .from('team_members')
-          .select(`
+          getClient()
+            .from('team_members')
+            .select(`
             role,
             teams!inner (
               id, name, created_at, company_name,
@@ -281,58 +271,55 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
               company_country, company_vat_number
             )
           `)
-          .eq('user_id', user.id)
-          .single(),
-      ])
-      perfLogger.end('auth-database-queries')
+            .eq('user_id', user.id)
+            .single(),
+        ])
 
-      // Use updateAuthState for immediate, consistent updates
-      updateAuthState({
-        user: {
-          id: user.id,
-          email: user.email!,
-          user_metadata: user.user_metadata,
-        },
-        profile: profileResult.data || null,
-        team: teamResult.data
-          ? {
-              id: teamResult.data.teams.id,
-              name: teamResult.data.teams.name,
-              created_at: teamResult.data.teams.created_at,
-              company_name: teamResult.data.teams.company_name,
-              company_address_line1: teamResult.data.teams.company_address_line1,
-              company_address_line2: teamResult.data.teams.company_address_line2,
-              company_city: teamResult.data.teams.company_city,
-              company_state: teamResult.data.teams.company_state,
-              company_postal_code: teamResult.data.teams.company_postal_code,
-              company_country: teamResult.data.teams.company_country,
-              company_vat_number: teamResult.data.teams.company_vat_number,
-            }
-          : null,
-        role: teamResult.data?.role || null,
-        loading: false,
-      })
-      perfLogger.end('auth-update-complete-state-full')
+        // Use updateAuthState for immediate, consistent updates
+        updateAuthState({
+          user: {
+            id: user.id,
+            email: user.email!,
+            user_metadata: user.user_metadata,
+          },
+          profile: profileResult.data || null,
+          team: teamResult.data
+            ? {
+                id: teamResult.data.teams.id,
+                name: teamResult.data.teams.name,
+                created_at: teamResult.data.teams.created_at,
+                company_name: teamResult.data.teams.company_name,
+                company_address_line1: teamResult.data.teams.company_address_line1,
+                company_address_line2: teamResult.data.teams.company_address_line2,
+                company_city: teamResult.data.teams.company_city,
+                company_state: teamResult.data.teams.company_state,
+                company_postal_code: teamResult.data.teams.company_postal_code,
+                company_country: teamResult.data.teams.company_country,
+                company_vat_number: teamResult.data.teams.company_vat_number,
+              }
+            : null,
+          role: teamResult.data?.role || null,
+          loading: false,
+        })
+      }
+      catch (error) {
+        console.error('Failed to update auth state:', getErrorForLogging(error))
+        // Update with partial data using same helper
+        updateAuthState({
+          user: {
+            id: user.id,
+            email: user.email!,
+            user_metadata: user.user_metadata,
+          },
+          profile: null,
+          team: null,
+          role: null,
+          loading: false,
+        })
+      }
     }
-    catch (error) {
-      console.error('Failed to update auth state:', getErrorForLogging(error))
-      // Update with partial data using same helper
-      updateAuthState({
-        user: {
-          id: user.id,
-          email: user.email!,
-          user_metadata: user.user_metadata,
-        },
-        profile: null,
-        team: null,
-        role: null,
-        loading: false,
-      })
-      perfLogger.end('auth-update-complete-state-full')
-    }
-    } catch (outerError) {
+    catch (outerError) {
       console.error('Auth state update failed:', getErrorForLogging(outerError))
-      perfLogger.end('auth-update-complete-state-full')
     }
   }
 
@@ -359,19 +346,12 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       return
     }
 
-    const perfLogger = getGlobalPerformanceLogger()
-    perfLogger.start('auth-initialization', 'auth', { stage: 'start' })
-
     try {
       // Get initial session
-      perfLogger.start('auth-get-session', 'auth')
       const { data: { session } } = await getClient().auth.getSession()
-      perfLogger.end('auth-get-session')
 
       if (session?.user) {
-        perfLogger.start('auth-update-complete-state', 'auth', { userId: session.user.id })
         await updateCompleteAuthState(session.user)
-        perfLogger.end('auth-update-complete-state')
       }
       else {
         // No active session - clear any stale impersonation state
@@ -424,12 +404,10 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       }
 
       authState.value.initialized = true
-      perfLogger.end('auth-initialization')
     }
     catch (error) {
       console.error('Auth initialization failed:', getErrorForLogging(error))
       authState.value = { ...authState.value, loading: false }
-      perfLogger.end('auth-initialization')
     }
   }
 

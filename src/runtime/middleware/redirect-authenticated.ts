@@ -12,17 +12,17 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (isLoading.value) {
     let attempts = 0
     const maxAttempts = 20 // 2 seconds max instead of 5
-    
+
     while (isLoading.value && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 100))
       attempts++
-      
+
       // Early exit if we have enough data for redirect decisions
       if (currentUser.value !== undefined) {
         break
       }
     }
-    
+
     // If still loading, proceed anyway to avoid hanging
     if (isLoading.value && attempts >= maxAttempts) {
       console.warn('[Team Auth] Auth loading timeout in redirect middleware, proceeding anyway')
@@ -76,17 +76,17 @@ export function createRedirectAuthenticated(
     if (isLoading.value) {
       let attempts = 0
       const maxAttempts = 20 // 2 seconds max instead of 5
-      
+
       while (isLoading.value && attempts < maxAttempts) {
         await new Promise(resolve => setTimeout(resolve, 100))
         attempts++
-        
+
         // Early exit if we have enough data for redirect decisions
         if (currentUser.value !== undefined) {
           break
         }
       }
-      
+
       // If still loading, proceed anyway to avoid hanging
       if (isLoading.value && attempts >= maxAttempts) {
         console.warn('[Team Auth] Auth loading timeout in custom redirect middleware, proceeding anyway')

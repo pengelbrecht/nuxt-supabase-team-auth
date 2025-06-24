@@ -45,12 +45,12 @@ export default defineNuxtModule<ModuleOptions>({
 
     // Merge options with runtime config
     // Debug mode hierarchy: explicit option > env var > nuxt dev mode
-    const debugMode = options.debug !== undefined 
-      ? options.debug 
-      : process.env.TEAM_AUTH_DEBUG === 'true' 
-        ? true 
+    const debugMode = options.debug !== undefined
+      ? options.debug
+      : process.env.TEAM_AUTH_DEBUG === 'true'
+        ? true
         : nuxt.options.dev
-    
+
     nuxt.options.runtimeConfig.public.teamAuth = defu(
       nuxt.options.runtimeConfig.public.teamAuth || {},
       {
@@ -94,10 +94,6 @@ export default defineNuxtModule<ModuleOptions>({
       {
         name: 'useTeamAuthConfig',
         from: resolver.resolve('./runtime/composables/useTeamAuthConfig'),
-      },
-      {
-        name: 'usePerformance',
-        from: resolver.resolve('./runtime/composables/usePerformance'),
       },
     ])
 
