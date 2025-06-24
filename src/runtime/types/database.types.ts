@@ -245,6 +245,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_all_test_data: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          users_deleted: number
+          teams_deleted: number
+        }[]
+      }
+      cleanup_test_team: {
+        Args: { team_id_param: string }
+        Returns: undefined
+      }
       debug_user_context: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -264,6 +275,13 @@ export type Database = {
           role: Database['public']['Enums']['team_role']
           joined_at: string
           full_name: string
+          email: string
+        }[]
+      }
+      get_test_user_ids: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_id: string
           email: string
         }[]
       }
@@ -404,11 +422,3 @@ export const Constants = {
     },
   },
 } as const
-
-// Convenience type aliases
-export type DbProfile = Tables<'profiles'>
-export type DbTeam = Tables<'teams'>
-export type DbTeamMember = Tables<'team_members'>
-export type DbInvite = Tables<'invites'>
-export type DbImpersonationSession = Tables<'impersonation_sessions'>
-export type TeamRole = Enums<'team_role'>

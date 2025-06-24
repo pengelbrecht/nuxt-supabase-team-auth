@@ -143,14 +143,10 @@
               :ui="{ value: 'capitalize', item: 'capitalize' }"
               @update:model-value="(newRole: string) => handleRoleChange(member, newRole)"
             />
-            <UBadge
+            <RoleBadge
               v-else
-              :color="['super_admin', 'owner'].includes(member.role) ? 'secondary' : getRoleColor(member.role)"
-              variant="soft"
-              :size="['super_admin', 'owner'].includes(member.role) ? 'lg' : 'sm'"
-            >
-              {{ formatRole(member.role) }}
-            </UBadge>
+              :role="member.role"
+            />
 
             <UDropdownMenu
               :items="getMemberActions(member)"
@@ -257,6 +253,7 @@ import { useTeamAuth } from '../composables/useTeamAuth'
 import type { Profile } from '../types'
 import ConfirmationModal from './ConfirmationModal.vue'
 import EditUserModal from './EditUserModal.vue'
+import RoleBadge from './RoleBadge.vue'
 
 // Team member with profile data
 interface TeamMemberWithProfile {
@@ -427,16 +424,6 @@ const formatRole = (role: string | null | undefined) => {
   if (!role) return 'Unknown'
   if (role === 'super_admin') return 'Super Admin'
   return role.charAt(0).toUpperCase() + role.slice(1)
-}
-
-const getRoleColor = (role: string | null | undefined) => {
-  if (!role) return 'gray'
-  switch (role) {
-    case 'super_admin': return 'red'
-    case 'owner': return 'purple'
-    case 'admin': return 'blue'
-    default: return 'gray'
-  }
 }
 
 const getMemberInitials = (member: TeamMemberWithProfile) => {

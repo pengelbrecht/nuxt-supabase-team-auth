@@ -1,20 +1,15 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
 interface StopImpersonationRequest {
   admin_user_id?: string
   target_user_id?: string
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Handle OPTIONS requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok')
   }
 
   try {
@@ -25,7 +20,7 @@ serve(async (req) => {
         JSON.stringify({ error: 'Missing authorization header' }),
         {
           status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' },
         },
       )
     }
@@ -65,7 +60,7 @@ serve(async (req) => {
         JSON.stringify({ error: 'Invalid or expired token' }),
         {
           status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' },
         },
       )
     }
@@ -108,7 +103,7 @@ serve(async (req) => {
         }),
         {
           status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' },
         },
       )
     }
@@ -121,7 +116,7 @@ serve(async (req) => {
         }),
         {
           status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' },
         },
       )
     }
@@ -141,7 +136,7 @@ serve(async (req) => {
         }),
         {
           status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' },
         },
       )
     }
@@ -161,7 +156,7 @@ serve(async (req) => {
         message: `Successfully ended ${sessions.length} impersonation session(s)`,
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
       },
     )
   }
@@ -175,7 +170,7 @@ serve(async (req) => {
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
       },
     )
   }
