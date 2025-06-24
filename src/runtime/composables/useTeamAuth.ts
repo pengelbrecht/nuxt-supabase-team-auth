@@ -13,8 +13,6 @@ interface ImpersonationStorageData {
   targetUser: User
   expiresAt: string
   sessionId: string
-  originalAccessToken: string
-  originalRefreshToken: string
 }
 
 // Helper function to safely extract error for logging
@@ -83,8 +81,6 @@ const loadImpersonationFromStorage = () => {
           impersonatedUser: data.targetUser,
           impersonationExpiresAt: new Date(data.expiresAt),
           impersonationSessionId: data.sessionId,
-          originalAccessToken: data.originalAccessToken,
-          originalRefreshToken: data.originalRefreshToken,
         }
       }
       else {
@@ -110,8 +106,6 @@ const saveImpersonationToStorage = (data: ImpersonationStorageData) => {
       sessionId: data.impersonationSessionId,
       targetUser: data.impersonatedUser,
       expiresAt: data.impersonationExpiresAt?.toISOString(),
-      originalAccessToken: data.originalAccessToken,
-      originalRefreshToken: data.originalRefreshToken,
     }
     localStorage.setItem(IMPERSONATION_STORAGE_KEY, JSON.stringify(storageData))
   }
@@ -138,8 +132,6 @@ const createInitialAuthState = () => {
     impersonationExpiresAt: impersonationState.impersonationExpiresAt || null,
     originalUser: null as User | null, // Store the super admin
     impersonationSessionId: impersonationState.impersonationSessionId || null,
-    originalAccessToken: impersonationState.originalAccessToken || null, // Store original session for restore
-    originalRefreshToken: impersonationState.originalRefreshToken || null, // Store original refresh token
     justStartedImpersonation: false, // UI flag for modal dismissal
     stoppingImpersonation: false, // Flag to indicate stopping in progress
 
@@ -417,20 +409,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   // Initialize on client-side only
   if (import.meta.client && !authState.value.initialized) {
     initializeAuth()
-  }
-
-  // Impersonation composable
-  const _useImpersonationComposable = () => {
-    try {
-      return useImpersonation()
-    }
-    catch {
-      // Return mock if not available
-      return {
-        startImpersonation: async () => { throw new Error('Impersonation not available') },
-        stopImpersonation: async () => { throw new Error('Impersonation not available') },
-      }
-    }
   }
 
   return {
@@ -1262,11 +1240,10 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         }
 
         // IMMEDIATE state update (like useImpersonation pattern)
+        // Note: No longer storing admin tokens - server handles restoration via JWT cookie + magic link
         updateAuthState({
           // Keep current user for now, auth listener will update it
           originalUser,
-          originalAccessToken: session.access_token, // Store for stop impersonation
-          originalRefreshToken: session.refresh_token, // Store for session restore
           impersonating: true,
           impersonatedUser: response.impersonation.target_user,
           impersonationExpiresAt: new Date(response.impersonation.expires_at),
@@ -1326,8 +1303,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
             impersonatedUser: null,
             impersonationExpiresAt: null,
             impersonationSessionId: null,
-            originalAccessToken: null,
-            originalRefreshToken: null,
             originalUser: null,
             loading: false,
           })
@@ -1343,20 +1318,16 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           return
         }
 
-        await $fetch('/api/stop-impersonation', {
+        // Call stop impersonation API - server handles admin session restoration via magic link
+        const response = await $fetch('/api/stop-impersonation', {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
           body: {
             sessionId: authState.value.impersonationSessionId,
-            originalAccessToken: authState.value.originalAccessToken,
           },
         })
-
-        // Store original tokens before clearing state
-        const originalAccessToken = authState.value.originalAccessToken
-        const originalRefreshToken = authState.value.originalRefreshToken
 
         // Set flag to indicate we're stopping impersonation
         updateAuthState({
@@ -1369,25 +1340,36 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           impersonatedUser: null,
           impersonationExpiresAt: null,
           impersonationSessionId: null,
-          originalAccessToken: null,
-          originalRefreshToken: null,
           originalUser: null,
           loading: false,
         })
 
-        // Restore original session - this is critical!
-        if (originalAccessToken && originalRefreshToken) {
+        // Server provides restored admin session via magic link approach
+        if (response.session) {
           try {
             await getClient().auth.setSession({
-              access_token: originalAccessToken,
-              refresh_token: originalRefreshToken,
+              access_token: response.session.access_token,
+              refresh_token: response.session.refresh_token,
             })
+
+            // Schedule a role refresh after session is stable
+            // This ensures UserButton menu items update properly
+            setTimeout(async () => {
+              try {
+                const { data: { session } } = await getClient().auth.getSession()
+                if (session?.user) {
+                  await updateCompleteAuthState(session.user)
+                }
+              }
+              catch (error) {
+                console.warn('Failed to refresh auth state after impersonation end:', error)
+              }
+            }, 100)
           }
           catch (error) {
-            console.warn('Failed to restore session with stored tokens:', error)
+            console.warn('Failed to restore admin session:', error)
             // Clear the flag on error - auth listener will handle the state
             updateAuthState({ stoppingImpersonation: false })
-            // Don't force reload - let the auth state management handle recovery
           }
         }
 

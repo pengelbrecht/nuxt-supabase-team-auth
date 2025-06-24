@@ -131,8 +131,6 @@ describe('useTeamAuth', () => {
       impersonationExpiresAt: null,
       originalUser: null,
       impersonationSessionId: null,
-      originalAccessToken: null,
-      originalRefreshToken: null,
       justStartedImpersonation: false,
       stoppingImpersonation: false,
 
@@ -683,7 +681,6 @@ describe('useTeamAuth', () => {
         },
         body: {
           sessionId: 'session-123',
-          originalAccessToken: null, // Will be null in our mock
         },
       })
 

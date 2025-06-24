@@ -1,4 +1,5 @@
 import { createError } from 'h3'
+import jwt from 'jsonwebtoken'
 import { createServiceRoleClient, getCurrentUser } from '../utils/supabase'
 
 export default defineEventHandler(async (event) => {
@@ -94,15 +95,18 @@ export default defineEventHandler(async (event) => {
     }
 
     // Create impersonation session log
+    const insertData = {
+      admin_user_id: user.id,
+      target_user_id: targetUserId,
+      reason: reason.trim(),
+      started_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutes
+    }
+    console.log('Inserting impersonation session with data:', { ...insertData })
+
     const { data: sessionLog, error: logError } = await adminClient
       .from('impersonation_sessions')
-      .insert({
-        admin_user_id: user.id,
-        target_user_id: targetUserId,
-        reason: reason.trim(),
-        started_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutes
-      })
+      .insert(insertData)
       .select()
       .single()
 
@@ -176,16 +180,41 @@ export default defineEventHandler(async (event) => {
 
     console.log('Impersonation session created successfully')
 
-    // Get the current user's session to preserve it
-    const currentAuthHeader = getHeader(event, 'authorization')
-    if (!currentAuthHeader) {
+    // Store admin email in JWT-signed cookie for session termination
+    // This replaces the complex refresh token storage approach
+    const adminEmail = user.email
+    if (!adminEmail) {
       throw createError({
-        statusCode: 401,
-        message: 'No authorization header found',
+        statusCode: 400,
+        message: 'Admin user does not have a valid email address',
       })
     }
 
-    // Return the impersonation data
+    // Create a simple JWT with admin email for impersonation termination
+    const jwtSecret = process.env.SUPABASE_JWT_SECRET || 'fallback-secret-for-dev'
+
+    const impersonationToken = jwt.sign(
+      {
+        admin_email: adminEmail,
+        admin_id: user.id,
+        session_id: sessionLog.id,
+        exp: Math.floor(Date.now() / 1000) + (30 * 60), // 30 minutes
+      },
+      jwtSecret,
+    )
+
+    // Store the JWT in an httpOnly cookie
+    setCookie(event, 'admin-impersonation', impersonationToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 60, // 30 minutes, same as impersonation session
+      path: '/',
+    })
+
+    console.log('Stored admin impersonation token in secure cookie')
+
+    // Return the impersonation data (without sensitive tokens)
     return {
       success: true,
       impersonation: {
@@ -201,13 +230,10 @@ export default defineEventHandler(async (event) => {
       },
       // New session for the impersonated user
       session: sessionData.session,
-      // Original session to preserve
-      originalSession: {
-        access_token: currentAuthHeader.replace('Bearer ', ''),
-        user: {
-          id: user.id,
-          email: user.email,
-        },
+      // Only return admin user ID (tokens stored securely server-side)
+      originalUser: {
+        id: user.id,
+        email: user.email,
       },
     }
   }

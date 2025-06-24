@@ -9,6 +9,7 @@ export class TestUserFactory {
   private supabase: SupabaseClient
   private createdUsers: string[] = []
   private createdTeams: string[] = []
+  private testTeamId: string | null = null
 
   constructor() {
     this.supabase = createTestSupabaseClient('service')
@@ -231,52 +232,108 @@ export class TestUserFactory {
   }
 
   /**
+   * Get or create a dedicated test team for all test users
+   */
+  private async getTestTeam(): Promise<string> {
+    if (this.testTeamId) {
+      return this.testTeamId
+    }
+
+    // Try to find existing test team
+    const { data: existingTeam } = await this.supabase
+      .from('teams')
+      .select('id')
+      .eq('name', '__TEST_TEAM__')
+      .single()
+
+    if (existingTeam) {
+      this.testTeamId = existingTeam.id
+      return this.testTeamId
+    }
+
+    // Create new test team
+    const { data: newTeam, error } = await this.supabase
+      .from('teams')
+      .insert({ name: '__TEST_TEAM__' })
+      .select('id')
+      .single()
+
+    if (error || !newTeam) {
+      throw new Error(`Failed to create test team: ${error?.message}`)
+    }
+
+    this.testTeamId = newTeam.id
+    this.createdTeams.push(newTeam.id)
+    console.log(`[USER-FACTORY] Created test team: ${this.testTeamId}`)
+    return this.testTeamId
+  }
+
+  /**
    * Clean up all users and teams created by this factory
-   * Now works properly with the improved ensure_team_has_owner trigger
+   * Uses a strategy of putting all test users in a single team then deleting everything
    */
   async cleanup(): Promise<void> {
-    console.log(`[USER-FACTORY] cleanup: Starting cleanup. Teams: ${this.createdTeams.length}, Users: ${this.createdUsers.length}`)
+    const originalTeamCount = this.createdTeams.length
+    const originalUserCount = this.createdUsers.length
 
-    // With the improved trigger, we can delete teams directly and it will cascade properly
-    // The trigger now allows cascade deletes when the team itself is being deleted
+    console.log(`[USER-FACTORY] cleanup: Starting cleanup. Teams: ${originalTeamCount}, Users: ${originalUserCount}`)
 
-    console.log(`[USER-FACTORY] cleanup: Deleting ${this.createdTeams.length} teams...`)
-    for (const teamId of this.createdTeams) {
-      try {
-        // Delete team directly - the improved trigger allows cascade deletes
-        const { error } = await this.supabase
-          .from('teams')
-          .delete()
-          .eq('id', teamId)
-
-        if (error) {
-          console.error(`[USER-FACTORY] cleanup: Error deleting team ${teamId}:`, JSON.stringify(error, null, 2))
-        }
-      }
-      catch (error) {
-        console.error(`[USER-FACTORY] cleanup: Failed to delete team ${teamId}:`, error)
-      }
+    if (originalTeamCount === 0 && originalUserCount === 0) {
+      console.log(`[USER-FACTORY] cleanup: Nothing to cleanup`)
+      return
     }
-    const teamsDeleted = this.createdTeams.length
-    this.createdTeams = []
 
-    // Delete users - this will clean up auth.users and any remaining data
-    console.log(`[USER-FACTORY] cleanup: Deleting ${this.createdUsers.length} users...`)
+    // Strategy: Delete all test users first (which cascades to team_members and profiles)
+    // Then delete any teams we created
+
+    console.log(`[USER-FACTORY] cleanup: Step 1 - Deleting ${originalUserCount} users...`)
+    let usersDeleted = 0
     for (const userId of this.createdUsers) {
       try {
         const { error } = await this.supabase.auth.admin.deleteUser(userId)
         if (error) {
           console.error(`[USER-FACTORY] cleanup: Error deleting user ${userId}:`, error)
         }
+        else {
+          usersDeleted++
+        }
       }
       catch (error) {
         console.error(`[USER-FACTORY] cleanup: Failed to delete user ${userId}:`, error)
       }
     }
-    const usersDeleted = this.createdUsers.length
     this.createdUsers = []
 
-    console.log(`[USER-FACTORY] cleanup: Complete. Deleted ${teamsDeleted} teams and ${usersDeleted} users`)
+    // Step 2: Clean up teams (including test team if we created it)
+    console.log(`[USER-FACTORY] cleanup: Step 2 - Cleaning up ${originalTeamCount} teams...`)
+    let teamsDeleted = 0
+    for (const teamId of this.createdTeams) {
+      try {
+        // Use the SQL cleanup function to bypass constraints
+        const { error } = await this.supabase.rpc('cleanup_test_team', { team_id_param: teamId })
+        if (error) {
+          console.error(`[USER-FACTORY] cleanup: Error cleaning up team ${teamId}:`, error)
+        }
+        else {
+          teamsDeleted++
+        }
+      }
+      catch (error) {
+        console.error(`[USER-FACTORY] cleanup: Failed to cleanup team ${teamId}:`, error)
+      }
+    }
+    this.createdTeams = []
+    this.testTeamId = null
+
+    console.log(`[USER-FACTORY] cleanup: Complete. Successfully deleted ${usersDeleted}/${originalUserCount} users and ${teamsDeleted}/${originalTeamCount} teams`)
+
+    // Verify cleanup worked
+    if (usersDeleted < originalUserCount) {
+      console.warn(`[USER-FACTORY] cleanup: WARNING - Only ${usersDeleted} of ${originalUserCount} users were deleted`)
+    }
+    if (teamsDeleted < originalTeamCount) {
+      console.warn(`[USER-FACTORY] cleanup: WARNING - Only ${teamsDeleted} of ${originalTeamCount} teams were deleted`)
+    }
   }
 
   /**

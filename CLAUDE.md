@@ -10,6 +10,20 @@
 - **Always use `pnpm`** - NOT npm or yarn
 - Commands: `pnpm install`, `pnpm run dev`, `pnpm run build`, etc.
 
+## Server Routes Architecture
+- **Server routes belong in `/src/runtime/server`** - All API routes are part of the module
+- **Playground uses symlinks** - Files in `/playground/server` are symlinked to `/src/runtime/server`
+- This avoids duplicating files and ensures module code stays in the correct location
+- When adding new server routes, create them in `/src/runtime/server` then symlink to playground:
+  ```bash
+  # Add new route to module
+  # /src/runtime/server/api/new-route.post.ts
+  
+  # Symlink to playground for testing
+  cd playground/server/api
+  ln -sf ../../../src/runtime/server/api/new-route.post.ts new-route.post.ts
+  ```
+
 ## Database Architecture (Established - Don't Change)
 - **`public.profiles`** table stores user profile data (full_name, avatar_url, etc.)
 - **`public.team_members`** table handles team memberships and roles only

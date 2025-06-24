@@ -53,13 +53,17 @@ describe('Native Invitations Integration Tests', () => {
     // Additionally, clean up any invitations created during tests that the factory doesn't track
     try {
       const { data: allUsers } = await serviceClient.auth.admin.listUsers()
-      const pendingInvitations = allUsers.users.filter(u =>
-        !u.email_confirmed_at && u.email?.includes('test-invite-'),
+      // Clean up ANY test users with test email patterns, regardless of confirmation status
+      const testUsers = allUsers.users.filter(u =>
+        u.email?.includes('test-invite-')
+        || u.email?.includes('test-malformed-')
+        || u.email?.includes('test-invalid-')
+        || (u.email?.includes('@example.com') && u.email?.includes('test-')),
       )
 
-      if (pendingInvitations.length > 0) {
-        console.log(`[NATIVE-INVITATIONS] afterAll: Cleaning up ${pendingInvitations.length} pending invitations`)
-        for (const user of pendingInvitations) {
+      if (testUsers.length > 0) {
+        console.log(`[NATIVE-INVITATIONS] afterAll: Cleaning up ${testUsers.length} test users`)
+        for (const user of testUsers) {
           await serviceClient.auth.admin.deleteUser(user.id)
         }
       }
@@ -75,9 +79,11 @@ describe('Native Invitations Integration Tests', () => {
     // Clean up any pending test invitations before each test
     const { data: allUsers } = await serviceClient.auth.admin.listUsers()
 
-    // Find and delete any unconfirmed test users with test-invite- prefix
+    // Find and delete any test users from this test suite, regardless of confirmation status
     for (const user of allUsers.users) {
-      if (!user.email_confirmed_at && user.email?.includes('test-invite-')) {
+      if (user.email?.includes('test-invite-')
+        || user.email?.includes('test-malformed-')
+        || user.email?.includes('test-invalid-')) {
         await serviceClient.auth.admin.deleteUser(user.id)
       }
     }

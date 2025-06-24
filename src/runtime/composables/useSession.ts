@@ -35,7 +35,7 @@ function setupAuthListener() {
       }
     })
   }
-  catch (error) {
+  catch {
     // Client not ready yet, will be set up on first getSession call
     console.debug('Auth listener setup deferred - client not ready')
   }
