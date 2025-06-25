@@ -8,7 +8,8 @@
 Drop-in Nuxt 3 module for team-based authentication with Supabase.
 
 - ✨ **Team-based authentication** - Built-in support for multi-user teams
-- 🔐 **Role-based access control** - Owner, admin, member roles with fine-grained permissions
+- 🔐 **Role-based access control** - Owner, admin, member roles with
+  fine-grained permissions
 - 👥 **User impersonation** - Super admin impersonation with audit logging
 - 📧 **Native invitations** - Supabase-native invitation system
 - 🚀 **Zero configuration** - Works out of the box with sensible defaults
@@ -28,7 +29,8 @@ This module requires the following peer dependencies:
 
 ### Prerequisites
 
-This module requires a **working Nuxt UI application**. If you don't have one, create it first:
+This module requires a **working Nuxt UI application**. If you don't have one,
+create it first:
 
 ```bash
 # Create a new Nuxt UI app (recommended)
@@ -47,7 +49,7 @@ pnpm add nuxt-supabase-team-auth
 
 ### 2. Configure Nuxt
 
-Add our module to your `nuxt.config.ts` (Nuxt UI should already be configured):
+Add our module to your `nuxt.config.ts`:
 
 ```typescript
 // nuxt.config.ts
@@ -62,11 +64,21 @@ export default defineNuxtConfig({
     supabaseUrl: process.env.SUPABASE_URL,
     supabaseKey: process.env.SUPABASE_ANON_KEY,
     redirectTo: '/dashboard',      // Where to go after login
-    loginPage: '/',                // Where to redirect when auth required (optional, defaults to '/signin')
+    loginPage: '/',                // Where to redirect when auth required
     debug: true                    // Enable debug mode in development
   }
 })
 ```
+
+#### Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `supabaseUrl` | `string` | - | Your Supabase project URL |
+| `supabaseKey` | `string` | - | Your Supabase anon key |
+| `redirectTo` | `string` | `'/dashboard'` | Where to redirect after auth |
+| `loginPage` | `string` | `'/signin'` | Where to redirect when auth required |
+| `debug` | `boolean` | Auto-detected | Enable debug logging |
 
 ### 3. Add Required App Structure
 
@@ -92,7 +104,7 @@ SUPABASE_ANON_KEY=your-anon-key                  # Your Supabase anon key
 SUPABASE_SERVICE_KEY=your-service-key            # For server operations
 ```
 
-### 5. Ready to Use!
+### 5. Ready to Use
 
 You can now use the auth components in your pages:
 
@@ -101,8 +113,8 @@ You can now use the auth components in your pages:
 <template>
   <div>
     <SignedOut>
-      <AuthSignIn @signed-in="handleSignedIn" />
-      <AuthSignUpWithTeam @signed-up="handleSignedUp" />
+      <AuthSignIn @success="handleSignedIn" />
+      <AuthSignUpWithTeam @success="handleSignedUp" />
     </SignedOut>
 
     <SignedIn>
@@ -123,188 +135,282 @@ const handleSignedUp = () => {
 </script>
 ```
 
-## Basic Usage
+## Components Reference
 
 ### Authentication Components
 
-```vue
-<template>
-  <div>
-    <!-- Show different content based on auth state -->
-    <SignedIn>
-      <UserButton />
-      <p>Welcome, {{ currentUser.email }}!</p>
-    </SignedIn>
-    
-    <SignedOut>
-      <AuthSignIn />
-    </SignedOut>
-  </div>
-</template>
+| Component | Description | Key Props | Purpose |
+|-----------|-------------|-----------|---------|
+| `<AuthSignIn />` | Email/password sign-in form | `title`, `subtitle`, `showSocialLogin` | User authentication |
+| `<AuthSignUpWithTeam />` | Sign-up form with team creation | `title`, `subtitle`, `showSocialLogin` | New user onboarding |
+| `<UserButton />` | User avatar with dropdown menu | `size`, `showName` | User menu and settings |
 
-<script setup>
-const { currentUser } = useTeamAuth()
-</script>
+### Conditional Rendering Components  
+
+| Component | Description | Key Props | Purpose |
+|-----------|-------------|-----------|---------|
+| `<SignedIn>` | Shows content only when authenticated | None (slots only) | Conditional auth content |
+| `<SignedOut>` | Shows content only when not authenticated | None (slots only) | Login/public content |
+
+### User Interface Components
+
+| Component | Description | Key Props | Purpose |
+|-----------|-------------|-----------|---------|
+| `<ImpersonationBanner />` | Warning banner during impersonation | None (auto-shows) | Impersonation indicator |
+| `<RoleBadge />` | Visual role indicator | `role`, `size`, `variant` | Display user permissions |
+| `<UserCard />` | User profile display card | User data props | Team member listings |
+
+### Team Management Components
+
+| Component | Description | Key Props | Purpose |
+|-----------|-------------|-----------|---------|
+| `<TeamMembersDialog />` | Team member management modal | `modelValue` | Team member management |
+| `<TeamForm />` | Team creation/editing form | Team data props | Team settings management |
+| `<ProfileForm />` | User profile editing form | Profile data props | User account management |
+
+### Dialog & Modal Components
+
+| Component | Description | Key Props | Purpose |
+|-----------|-------------|-----------|---------|
+| `<DialogBox />` | Base modal component | `modelValue`, `title`, `subtitle` | Custom dialogs |
+| `<FormDialog />` | Modal with form controls | `modelValue`, `title`, `hasChanges` | Form-based dialogs |
+| `<ConfirmDialog />` | Confirmation modal | `modelValue`, `title`, `message` | User confirmations |
+| `<SettingsModal />` | User/team settings modal | `modelValue`, `tab` | Settings management |
+
+### Specialized Components  
+
+| Component | Description | Key Props | Purpose |
+|-----------|-------------|-----------|---------|
+| `<TeamAuthConfirmation />` | Email confirmation handler | Confirmation data | Email verification |
+| `<SuperAdminImpersonationContent />` | Impersonation control panel | None | Super admin controls |
+
+### Component Usage Examples
+
+```vue
+<!-- Basic authentication -->
+<SignedOut>
+  <AuthSignIn @success="handleSignIn" />
+</SignedOut>
+
+<SignedIn>
+  <UserButton :show-name="true" size="md" />
+</SignedIn>
+
+<!-- Team management -->
+<TeamMembersDialog v-model="showTeamDialog" />
+
+<!-- Role display -->
+<RoleBadge :role="user.role" size="sm" />
+
+<!-- Impersonation indicator (auto-shows) -->
+<ImpersonationBanner />
+
+<!-- Custom dialogs -->
+<FormDialog 
+  v-model="showForm"
+  title="Edit Settings"
+  :has-changes="formChanged"
+  @save="handleSave"
+>
+  <!-- Form content -->
+</FormDialog>
 ```
 
-### Team Management
+## Composables API
 
-```vue
-<script setup>
-const { currentTeam, currentRole, inviteMember } = useTeamAuth()
+### `useTeamAuth()`
 
-// Invite a new team member
-await inviteMember('newuser@example.com', 'member')
+The primary composable for team-based authentication and management:
 
-// Check permissions
-const canInvite = ['owner', 'admin'].includes(currentRole.value)
-</script>
+```typescript
+const {
+  // Authentication state
+  currentUser,           // Ref<User | null>
+  currentTeam,          // Ref<Team | null>
+  currentRole,          // Ref<Role | null>
+  teamMembers,          // Ref<TeamMember[]>
+  isLoading,            // Ref<boolean>
+  
+  // Authentication methods
+  signIn,               // (email: string, password: string) => Promise<void>
+  signOut,              // () => Promise<void>
+  signUpWithTeam,       // (email: string, password: string, teamName: string) => Promise<void>
+  
+  // Team management
+  inviteMember,         // (email: string, role: Role) => Promise<void>
+  updateMemberRole,     // (userId: string, newRole: Role) => Promise<void>
+  removeMember,         // (userId: string) => Promise<void>
+  
+  // Impersonation (Super Admin only)
+  startImpersonation,   // (targetUserId: string, reason: string) => Promise<void>
+  stopImpersonation,    // () => Promise<void>
+  isImpersonating,      // Ref<boolean>
+  impersonatedUser,     // Ref<User | null>
+  originalUser          // Ref<User | null>
+} = useTeamAuth()
 ```
 
-### Protected Pages with Middleware
+### Role Hierarchy
 
-The module provides several middleware options for protecting routes:
+```typescript
+type Role = 'super_admin' | 'owner' | 'admin' | 'member'
+```
+
+- **Super Admin** - Platform-wide access and impersonation
+- **Owner** - Full team control, can manage all members
+- **Admin** - Can invite members and manage team settings  
+- **Member** - Basic team access
+
+### Error Handling
+
+All methods throw structured errors:
+
+```typescript
+interface AuthError {
+  code: string
+  message: string
+}
+```
+
+Common error codes: `SIGNIN_FAILED`, `SIGNUP_FAILED`, `PERMISSION_DENIED`,
+`TEAM_NOT_FOUND`, `USER_NOT_FOUND`
+
+## Middleware
+
+The module provides middleware for route protection:
+
+### Available Middleware
+
+| Middleware | Purpose | Usage |
+|------------|---------|-------|
+| `require-auth` | Requires any authenticated user | Basic protected routes |
+| `require-team` | Requires team membership | Team-specific pages |
+| `require-role` | Requires specific roles | Admin/owner only pages |
+| `redirect-authenticated` | Redirects authenticated users | Login pages |
+| `impersonation` | Handles impersonation sessions | Super admin features |
+
+### Middleware Examples
 
 ```vue
-<!-- pages/dashboard.vue - Require any authenticated user -->
+<!-- Require authentication -->
 <script setup>
 definePageMeta({
   middleware: 'require-auth'
 })
-
-const { currentUser, currentTeam } = useTeamAuth()
 </script>
-```
 
-```vue
-<!-- pages/admin.vue - Require specific role -->
+<!-- Require specific role -->
 <script setup>
 definePageMeta({
   middleware: 'require-role',
-  // Additional middleware options can be passed via route meta
+  requireRole: ['admin', 'owner']
+})
+</script>
+
+<!-- Redirect if already signed in -->
+<script setup>
+definePageMeta({
+  middleware: 'redirect-authenticated'
 })
 </script>
 ```
 
-**Available Middleware:**
-- `require-auth` - Requires authenticated user (redirects to `loginPage` if not signed in)
-- `require-team` - Requires team membership
-- `require-role` - Requires specific role (configure via meta)
-- `redirect-authenticated` - Redirects authenticated users (useful for login pages)
-- `impersonation` - Handles impersonation sessions
+## Server API
 
-### Server API Routes
+The module automatically provides server API endpoints:
 
-The module automatically adds server API routes for team operations:
+### Authentication Endpoints
 
-```typescript
-// Available automatically:
-// POST /api/signup-with-team
-// POST /api/invite-member  
-// POST /api/accept-invite
-// POST /api/impersonate (super admin only)
-// POST /api/stop-impersonation
-```
+| Endpoint | Method | Purpose | Authorization |
+|----------|--------|---------|---------------|
+| `/api/signup-with-team` | POST | Create user + team | None |
+| `/api/invite-member` | POST | Invite team member | Owner/Admin |
+| `/api/accept-invite` | POST | Accept invitation | None |
 
-## Components
+### Impersonation Endpoints
 
-### Authentication Components
-- `<AuthSignIn />` - Sign in form with email/password
-- `<AuthSignUpWithTeam />` - Sign up form with team creation
-- `<UserButton />` - User avatar with dropdown menu
-- `<SignedIn>` / `<SignedOut>` - Conditional rendering based on auth state
+| Endpoint | Method | Purpose | Authorization |
+|----------|--------|---------|---------------|
+| `/api/impersonate` | POST | Start impersonation | Super Admin |
+| `/api/stop-impersonation` | POST | End impersonation | Super Admin |
 
-### Team Management Components  
-- `<TeamForm />` - Team creation and editing
-- `<TeamMembersDialog />` - Team member management
-- `<ImpersonationBanner />` - Shows when impersonating users
-- `<ProfileForm />` - User profile editing
-
-### Utility Components
-- `<DialogBox />` - Base modal component
-- `<FormDialog />` - Modal with form controls
-- `<ConfirmDialog />` - Confirmation modal
-
-## Composables
-
-### `useTeamAuth()`
-
-The main composable for authentication and team management:
+### Example API Usage
 
 ```typescript
-const {
-  // Auth state
-  currentUser,
-  currentTeam,
-  currentRole,
-  isLoading,
-  
-  // Authentication
-  signIn,
-  signOut,
-  signUpWithTeam,
-  
-  // Team management
-  inviteMember,
-  updateMemberRole,
-  removeMember,
-  
-  // Impersonation (super admin only)
-  startImpersonation,
-  stopImpersonation,
-  isImpersonating
-} = useTeamAuth()
-```
+// Sign up with team
+const response = await $fetch('/api/signup-with-team', {
+  method: 'POST',
+  body: {
+    email: 'user@example.com',
+    password: 'securepassword',
+    teamName: 'My Team'
+  }
+})
 
-### `useSupabaseClient()`
-
-Access the configured Supabase client:
-
-```typescript
-const supabase = useSupabaseClient()
-const { data } = await supabase.from('teams').select('*')
-```
-
-## Configuration
-
-Configure the module in your `nuxt.config.ts`:
-
-```typescript
-export default defineNuxtConfig({
-  modules: ['nuxt-supabase-team-auth'],
-  teamAuth: {
-    // Supabase configuration
-    supabaseUrl: process.env.SUPABASE_URL,
-    supabaseKey: process.env.SUPABASE_ANON_KEY,
-    
-    // Redirect after authentication
-    redirectTo: '/dashboard',
-    
-    // Enable debug mode
-    debug: process.env.NODE_ENV === 'development',
-    
-    // Custom email templates
-    emailTemplates: {
-      invite: 'custom-invite-template',
-      welcome: 'custom-welcome-template'
-    }
+// Invite member (requires auth headers)
+await $fetch('/api/invite-member', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`
+  },
+  body: {
+    email: 'newmember@example.com',
+    role: 'member',
+    teamId: 'team-id'
   }
 })
 ```
 
-## Database Setup
+## User Impersonation
 
-The module requires specific Supabase database tables and policies. Use the CLI to set up your database:
+Super admins can temporarily act as other users for support and debugging:
 
-```bash
-# Initialize the module in your Supabase project
-npx team-auth init
+### Impersonation Features
 
-# Apply migrations
-npx team-auth migrate
+- **Audit Logging** - All sessions logged with reason and timestamps
+- **Time Limits** - Automatic session expiry (30 minutes default)
+- **Visual Indicators** - Clear banner when impersonating
+- **Session Isolation** - Original session preserved and restored
+
+### Impersonation Usage
+
+```vue
+<script setup>
+const { 
+  startImpersonation, 
+  stopImpersonation, 
+  isImpersonating,
+  currentRole 
+} = useTeamAuth()
+
+// Check permission
+const canImpersonate = computed(() => 
+  currentRole.value === 'super_admin'
+)
+
+// Start impersonation
+const impersonateUser = async (userId) => {
+  await startImpersonation(userId, 'Customer support request')
+}
+
+// Stop impersonation  
+const endImpersonation = async () => {
+  await stopImpersonation()
+}
+</script>
+
+<template>
+  <!-- Impersonation banner shows automatically -->
+  <ImpersonationBanner />
+  
+  <!-- Impersonation controls for super admins -->
+  <SuperAdminImpersonationContent v-if="canImpersonate" />
+</template>
 ```
 
-Or manually apply the migrations from the `supabase/migrations` directory.
+## Database Setup
+
+The module requires specific Supabase database tables and policies:
 
 ### Required Tables
 
@@ -313,100 +419,79 @@ Or manually apply the migrations from the `supabase/migrations` directory.
 - `profiles` - User profile data
 - `impersonation_sessions` - Audit log for impersonation
 
-## Security Features
+### Setup Commands
 
-### Row Level Security (RLS)
-- Users can only access their own team data
-- Role-based permissions for team operations
-- Super admin access controls for impersonation
+```bash
+# Initialize database (apply migrations)
+supabase db reset
 
-### Role Hierarchy
-- **Super Admin** - Platform-wide access and impersonation
-- **Owner** - Full team control, can manage all members
-- **Admin** - Can invite members and manage team settings  
-- **Member** - Basic team access
-
-### Impersonation Audit
-- All impersonation sessions are logged
-- Time-limited sessions with automatic expiry
-- Reason tracking for compliance
-
-## Middleware
-
-The module provides middleware for route protection:
-
-- `auth.global.ts` - Global authentication check
-- `require-auth.ts` - Require authenticated user
-- `require-role.ts` - Require specific role
-- `require-team.ts` - Require team membership
-- `impersonation.ts` - Handle impersonation sessions
-
-## Examples
-
-### Custom Authentication Flow
-
-```vue
-<template>
-  <div>
-    <form @submit="handleSignUp">
-      <input v-model="email" type="email" required />
-      <input v-model="password" type="password" required />
-      <input v-model="teamName" placeholder="Team name" required />
-      <button type="submit" :disabled="isLoading">
-        {{ isLoading ? 'Creating...' : 'Create Team' }}
-      </button>
-    </form>
-  </div>
-</template>
-
-<script setup>
-const { signUpWithTeam, isLoading } = useTeamAuth()
-
-const email = ref('')
-const password = ref('')
-const teamName = ref('')
-
-const handleSignUp = async () => {
-  try {
-    await signUpWithTeam(email.value, password.value, teamName.value)
-    await navigateTo('/dashboard')
-  } catch (error) {
-    console.error('Sign up failed:', error)
-  }
-}
-</script>
+# Or manually apply migrations from your migrations directory
 ```
 
-### Team Member Management
+## Team Management Examples
+
+### Basic Team Operations
 
 ```vue
-<template>
-  <div>
-    <h2>Team Members</h2>
-    <div v-for="member in teamMembers" :key="member.user_id">
-      <span>{{ member.user.email }}</span>
-      <RoleBadge :role="member.role" />
-      <button 
-        v-if="canPromote(member)" 
-        @click="promoteMember(member.user_id)"
-      >
-        Promote
-      </button>
-    </div>
-  </div>
-</template>
-
 <script setup>
-const { teamMembers, currentRole, updateMemberRole } = useTeamAuth()
+const {
+  currentTeam,
+  currentRole,
+  teamMembers,
+  inviteMember,
+  updateMemberRole,
+  removeMember
+} = useTeamAuth()
 
-const canPromote = (member) => {
-  return currentRole.value === 'owner' && member.role === 'member'
+// Permission checks
+const canInviteMembers = computed(() => 
+  ['owner', 'admin'].includes(currentRole.value)
+)
+
+// Invite new member
+const handleInvite = async (email, role) => {
+  try {
+    await inviteMember(email, role)
+    console.log('Invitation sent successfully')
+  } catch (error) {
+    console.error('Failed to invite:', error.message)
+  }
 }
 
+// Promote member
 const promoteMember = async (userId) => {
   await updateMemberRole(userId, 'admin')
 }
+
+// Remove member
+const handleRemove = async (userId) => {
+  const confirmed = confirm('Remove this member?')
+  if (confirmed) {
+    await removeMember(userId)
+  }
+}
 </script>
+
+<template>
+  <div>
+    <h2>{{ currentTeam?.name }}</h2>
+    <p>Your role: <RoleBadge :role="currentRole" /></p>
+    
+    <!-- Team member list -->
+    <div v-for="member in teamMembers" :key="member.user_id">
+      <UserCard :user="member.user" :role="member.role" />
+      <UButton 
+        v-if="canInviteMembers && member.role === 'member'"
+        @click="promoteMember(member.user_id)"
+      >
+        Promote to Admin
+      </UButton>
+    </div>
+    
+    <!-- Invite new member -->
+    <TeamMembersDialog v-if="canInviteMembers" />
+  </div>
+</template>
 ```
 
 ## Troubleshooting
@@ -414,7 +499,9 @@ const promoteMember = async (userId) => {
 ### Common Integration Issues
 
 #### Module Order Doesn't Matter
-Module order in your `nuxt.config.ts` does **not** affect functionality - both of these work identically:
+
+Module order in your `nuxt.config.ts` does **not** affect functionality:
+
 ```typescript
 // Both work the same way
 modules: ['@nuxt/ui', 'nuxt-supabase-team-auth']
@@ -422,14 +509,14 @@ modules: ['nuxt-supabase-team-auth', '@nuxt/ui']
 ```
 
 #### Missing Nuxt UI Setup
-If you see errors about missing components or context providers:
+
+If you see errors about missing components:
 
 ```bash
 # Ensure you started with a Nuxt UI app
 pnpm create nuxt@latest my-app -t ui
 
-# Or verify your app.vue has the UApp wrapper
-# app.vue should contain:
+# Verify app.vue has UApp wrapper:
 <template>
   <UApp>
     <NuxtPage />
@@ -438,31 +525,36 @@ pnpm create nuxt@latest my-app -t ui
 ```
 
 #### Server API Errors
+
 If you see errors like `undefined/functions/v1/...`:
 
-1. **Check environment variables** - Ensure your `.env` file has correct Supabase values
-2. **Restart dev server** - Environment changes require restart
+1. **Check environment variables** - Ensure `.env` has correct Supabase values
+2. **Restart dev server** - Environment changes require restart  
 3. **Verify Supabase is running** - Local development needs `supabase start`
 
 #### Middleware Errors
+
 If you see `Unknown route middleware: 'require-auth'`:
 
 1. **Restart dev server** - Middleware changes require full restart
-2. **Verify module installation** - Run `pnpm install` to ensure module is properly linked
+2. **Verify module installation** - Run `pnpm install`
 
 #### SSR Hydration Issues
-If you see hydration mismatches, they're handled automatically by our components. The module uses `ClientOnly` wrappers where needed.
+
+Hydration mismatches are handled automatically by our components using `ClientOnly` wrappers where needed.
 
 ### Version Compatibility
 
 This module is tested with:
+
 - **Nuxt**: `^3.17.5`
-- **@nuxt/ui**: `^3.1.3`
+- **@nuxt/ui**: `^3.1.3`  
 - **@nuxt/icon**: `^1.2.49`
 
 ### Common Patterns
 
 #### Starting Fresh
+
 ```bash
 # Create new Nuxt UI app
 pnpm create nuxt@latest my-team-app -t ui
@@ -477,7 +569,9 @@ pnpm add nuxt-supabase-team-auth
 ```
 
 #### Integration Testing
+
 Use our minimal test app as reference:
+
 - `test-projects/minimal-nuxt-ui-app/` - Working integration example
 - Shows proper component usage and middleware setup
 
@@ -502,7 +596,8 @@ pnpm run build
 
 ## Contributing
 
-Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTING.md) before submitting a PR.
+Contributions are welcome! Please read our [contributing guidelines]
+(CONTRIBUTING.md) before submitting a PR.
 
 ## License
 

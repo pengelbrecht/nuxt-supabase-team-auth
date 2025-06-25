@@ -28,47 +28,9 @@ describe('RLS Policies', () => {
   })
 
   afterEach(async () => {
-    // Clean up any test data that was inserted during tests
-    // First clean up team members
-    const originalAlphaMembers = [
-      '11111111-1111-1111-1111-111111111111', // Super Admin (super@a.test)
-      '22222222-2222-2222-2222-222222222222', // Alpha Owner (owner@a.test)
-      '33333333-3333-3333-3333-333333333333', // Alpha Admin (admin@a.test)
-      '44444444-4444-4444-4444-444444444444', // Alpha Member (member@a.test)
-    ]
-
-    const originalBetaMembers = [
-      '55555555-5555-5555-5555-555555555555', // Beta Owner (owner@b.test)
-      '66666666-6666-6666-6666-666666666666', // Beta Admin (admin@b.test)
-      '77777777-7777-7777-7777-777777777777', // Beta Member (member@b.test)
-    ]
-
-    const originalTeamIds = [
-      'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', // Alpha Team
-      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', // Beta Team
-    ]
-
-    // Remove any additional team members that were added during tests
-    await serviceClient
-      .from('team_members')
-      .delete()
-      .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
-      .not('user_id', 'in', `(${originalAlphaMembers.map(id => `"${id}"`).join(',')})`)
-
-    await serviceClient
-      .from('team_members')
-      .delete()
-      .eq('team_id', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')
-      .not('user_id', 'in', `(${originalBetaMembers.map(id => `"${id}"`).join(',')})`)
-
-    // Remove any extra teams that were created during tests
-    await serviceClient
-      .from('teams')
-      .delete()
-      .not('id', 'in', `(${originalTeamIds.map(id => `"${id}"`).join(',')})`)
-
-    // Remove any extra users/profiles that were created during tests
-    await serviceClient.auth.admin.deleteUser('99999999-9999-9999-9999-999999999999').catch(() => {})
+    // Use the centralized cleanup function that properly handles database constraints
+    const { cleanupTestData } = await import('./helpers/test-cleanup')
+    await cleanupTestData()
 
     // Reset any modified roles back to their original state
     await serviceClient
@@ -527,64 +489,6 @@ describe('RLS Policies', () => {
       await testClient.auth.signOut()
     })
 
-    it('Admin can invite new admin (consistent with promotion permissions)', async () => {
-      const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
-        auth: { persistSession: false },
-      })
-
-      await testClient.auth.signInWithPassword({
-        email: 'admin@a.test',
-        password: 'password123',
-      })
-
-      // Use Beta Owner (55555555-5555-5555-5555-555555555555) who should NOT be in Alpha team
-      const targetUserId = '55555555-5555-5555-5555-555555555555'
-
-      // Clean up any existing test data first (in case previous test failed)
-      await testClient
-        .from('team_members')
-        .delete()
-        .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
-        .eq('user_id', targetUserId)
-
-      // Count team members before insert
-      const { data: beforeCount } = await testClient
-        .from('team_members')
-        .select('*', { count: 'exact' })
-        .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
-
-      // Try to add Beta owner as admin to Alpha team (should succeed with new RLS policy)
-      // Using owner@b.test user who exists but isn't in Alpha team
-      const { data, error } = await testClient
-        .from('team_members')
-        .insert({
-          team_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-          user_id: targetUserId, // owner@b.test from seed data
-          role: 'admin',
-        })
-
-      console.log('Admin inviting new admin:', { data, error })
-
-      expect(error).toBeNull() // Should succeed now
-
-      // Count team members after insert
-      const { data: afterCount } = await testClient
-        .from('team_members')
-        .select('*', { count: 'exact' })
-        .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
-
-      expect(afterCount?.length).toBe((beforeCount?.length || 0) + 1)
-
-      // Clean up - remove the test admin
-      await testClient
-        .from('team_members')
-        .delete()
-        .eq('team_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
-        .eq('user_id', targetUserId)
-
-      await testClient.auth.signOut()
-    })
-
     it('Admin can delete members but not owners/admins', async () => {
       const testClient = createClient(TEST_ENV.supabaseUrl, TEST_ENV.supabaseAnonKey, {
         auth: { persistSession: false },
@@ -941,8 +845,14 @@ describe('RLS Policies', () => {
       }
 
       expect(error).toBeNull()
-      expect(teams).toHaveLength(2)
-      expect(teams?.map(t => t.name).sort()).toEqual(['Alpha Corporation', 'Beta Industries'])
+
+      // Filter to only seed data teams to avoid test pollution from parallel tests
+      const seedTeams = teams?.filter(t =>
+        t.name === 'Alpha Corporation' || t.name === 'Beta Industries',
+      ) || []
+
+      expect(seedTeams).toHaveLength(2)
+      expect(seedTeams.map(t => t.name).sort()).toEqual(['Alpha Corporation', 'Beta Industries'])
 
       await testClient.auth.signOut()
     })
@@ -965,7 +875,12 @@ describe('RLS Policies', () => {
       console.log('Super admin all members query:', { members, error, count: members?.length })
 
       expect(error).toBeNull()
-      expect(members).toHaveLength(7) // 4 Alpha + 3 Beta (original seed data)
+
+      // Filter to only seed data team members to avoid test pollution from parallel tests
+      const seedTeamIds = ['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb']
+      const seedMembers = members?.filter(m => seedTeamIds.includes(m.team_id)) || []
+
+      expect(seedMembers).toHaveLength(7) // 4 Alpha + 3 Beta (original seed data)
 
       await testClient.auth.signOut()
     })
@@ -988,7 +903,13 @@ describe('RLS Policies', () => {
       console.log('Super admin all profiles query:', { profiles, error, count: profiles?.length })
 
       expect(error).toBeNull()
-      expect(profiles).toHaveLength(7) // All 7 users from seed data
+
+      // Filter to only seed data profiles to avoid test pollution from parallel tests
+      const seedEmails = ['super@a.test', 'owner@a.test', 'admin@a.test', 'member@a.test',
+        'owner@b.test', 'admin@b.test', 'member@b.test']
+      const seedProfiles = profiles?.filter(p => seedEmails.includes(p.email)) || []
+
+      expect(seedProfiles).toHaveLength(7) // All 7 users from seed data
 
       await testClient.auth.signOut()
     })

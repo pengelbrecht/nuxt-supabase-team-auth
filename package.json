@@ -29,6 +29,8 @@
     "release": "npm run lint && npm run test && npm run prepack && changelogen --release && npm publish && git push --follow-tags",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "lint:md": "pnpm dlx markdownlint-cli README.md",
+    "lint:md:fix": "pnpm dlx markdownlint-cli --fix README.md",
     "test": "vitest run",
     "test:watch": "vitest watch",
     "test:types": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit",
