@@ -463,7 +463,7 @@
         "id": 8,
         "title": "Implement Email System with Magic Link Strategy",
         "description": "Build robust email delivery system with magic link authentication and configurable SMTP options",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           3
         ],
@@ -544,7 +544,7 @@
               6
             ],
             "details": "Ensure that the acceptInvite() method is correctly called when a user accepts an invitation on the /accept-invite page. Handle any errors and provide user feedback as necessary.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test the integration by simulating invitation acceptance and verifying that the user is correctly added to the team. Check for proper error handling and user feedback."
           },
           {
@@ -555,7 +555,7 @@
               7
             ],
             "details": "Perform end-to-end testing of the entire invitation process, including sending invitations, accepting them via the /accept-invite page, and verifying team membership completion.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Use a test environment to simulate the entire invitation flow. Verify that all steps function correctly and that users are successfully added to teams. Check for any issues in the flow and ensure all components work together seamlessly."
           },
           {
@@ -566,7 +566,7 @@
               4
             ],
             "details": "Implement a display table in TeamForm.vue to show pending invitations with their current status. Add functionality to revoke or resend invitations directly from the UI. Ensure the UI is intuitive and provides real-time updates on invitation status.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test the UI for displaying pending invitations, revoking, and resending functionality. Verify that actions are correctly reflected in the backend and that the UI updates in real-time."
           }
         ]
@@ -917,7 +917,7 @@
         "description": "Analyze the current project structure and package it as a Nuxt module following best practices.",
         "details": "1. Research Nuxt module packaging best practices, focusing on structure, configuration, and distribution.\n2. Examine the current codebase to identify components, utilities, and configurations that should be exposed as part of the module versus those that should remain internal.\n3. Define the module's entry points and ensure compatibility with both ESM and CJS.\n4. Plan and implement a build process that compiles the module for distribution, including bundling and minification.\n5. Set up npm/pnpm scripts for building, testing, and publishing the module.\n6. Ensure the package.json is correctly configured with metadata, dependencies, and peer dependencies.\n7. Document the module's API, installation instructions, and usage examples.\n8. Consider versioning strategy and semantic versioning for future updates.",
         "testStrategy": "1. Verify the module can be installed and used in a fresh Nuxt 3 project.\n2. Test the module's API to ensure all exposed functions and components work as expected.\n3. Run integration tests to confirm the module integrates smoothly with existing Nuxt 3 applications.\n4. Use tools like np and npm pack to simulate publishing and ensure the package is correctly structured.\n5. Validate the module's compatibility with both ESM and CJS environments.\n6. Review documentation for accuracy and completeness, ensuring it covers all aspects of installation and usage.",
-        "status": "in-progress",
+        "status": "done",
         "dependencies": [
           1,
           4,
@@ -939,7 +939,7 @@
             "title": "Create test project that uses the module",
             "description": "Set up a separate test project to validate the module works correctly when installed as a dependency",
             "details": "1. Create a fresh Nuxt 3 project in a separate directory\\n2. Install the packaged module as a dependency\\n3. Configure the module in the test project\\n4. Implement basic team authentication features using the module\\n5. Test all major module functionality (signup, signin, team management)\\n6. Validate that the module doesn't conflict with other Nuxt modules\\n7. Test development and production builds",
-            "status": "in-progress",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 36
           },
@@ -948,7 +948,7 @@
             "title": "Test Supabase integration with existing project",
             "description": "Validate how the module integrates with projects that already have Supabase configured",
             "details": "1. Set up a test project with existing Supabase configuration\\n2. Install and configure the team auth module\\n3. Verify that module doesn't conflict with existing Supabase setup\\n4. Test database schema migration and integration\\n5. Validate RLS policies work alongside existing policies\\n6. Ensure auth flows don't interfere with existing authentication\\n7. Document any configuration requirements or conflicts\\n8. Test edge cases where tables or policies might already exist",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 36
           },
@@ -957,7 +957,7 @@
             "title": "Test Supabase integration with fresh project",
             "description": "Validate how the module works with projects that don't have any existing Supabase configuration",
             "details": "1. Create a fresh Nuxt 3 project without Supabase\\n2. Install the team auth module\\n3. Test the module's ability to bootstrap Supabase configuration\\n4. Verify automatic database schema setup and migrations\\n5. Test the complete setup flow from scratch\\n6. Validate that all required dependencies are properly installed\\n7. Ensure the module provides clear setup instructions\\n8. Test both local development and production deployment scenarios\\n9. Document the complete setup process for new projects",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 36
           },
@@ -966,7 +966,7 @@
             "title": "Create comprehensive module documentation",
             "description": "Develop complete documentation for the module including API reference, setup guides, and examples",
             "details": "1. Create README.md with installation and quick start guide\\n2. Document module configuration options and environment variables\\n3. Create API reference for all exposed components, composables, and utilities\\n4. Write setup guides for both fresh and existing Supabase projects\\n5. Document database schema requirements and migrations\\n6. Create usage examples for common scenarios (signup, team management, etc.)\\n7. Document troubleshooting common issues\\n8. Create migration guide from standalone to module usage\\n9. Document TypeScript types and interfaces\\n10. Add JSDoc comments to all public APIs",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 36
           },
@@ -975,7 +975,7 @@
             "title": "Document Required Pages for Implementing Applications",
             "description": "Create comprehensive documentation about pages that implementing applications must create, including the /accept-invite page and other required authentication pages",
             "details": "1. Document required pages like /accept-invite with URL parameters, implementation examples, and integration patterns\n2. Provide complete code examples for each required page\n3. Document optional pages and common patterns\n4. Include error handling and UX guidance",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 36
           }
@@ -1390,11 +1390,234 @@
             "testStrategy": "Compare performance metrics between `pnpm run dev` and production build. Measure bundle sizes and loading times. Validate that optimizations work effectively in production environment."
           }
         ]
+      },
+      {
+        "id": 42,
+        "title": "Set Up Module Distribution and Release Management",
+        "description": "Establish comprehensive GitHub-based distribution pipeline with versioned releases, package publishing configuration, and automated workflows to enable public consumption of the Nuxt module.",
+        "details": "Configure complete distribution pipeline for the Nuxt module:\n\n1. **GitHub Release Configuration**:\n   - Set up semantic versioning with git tags\n   - Configure GitHub releases with proper changelog generation\n   - Add release notes templates and asset packaging\n\n2. **Package.json Distribution Setup**:\n   - Configure 'files' array to include only necessary distribution files\n   - Set up proper 'main', 'module', and 'types' entry points\n   - Add 'publishConfig' for GitHub Packages or npm registry\n   - Configure 'repository', 'bugs', and 'homepage' fields\n\n3. **GitHub Actions Workflow**:\n   - Create release workflow triggered by version tags\n   - Add automated testing before release\n   - Configure changelog generation from conventional commits\n   - Set up asset building and packaging\n\n4. **Test Project Migration**:\n   - Update ./test-projects/ to install from GitHub releases instead of local file references\n   - Modify package.json dependencies to use GitHub repository URLs with version tags\n   - Add validation scripts to ensure remote installation works correctly\n\n5. **Distribution Validation**:\n   - Create end-to-end test for complete installation flow\n   - Test module loading, component registration, and runtime functionality\n   - Validate TypeScript definitions are properly exported\n   - Ensure all runtime dependencies are correctly specified",
+        "testStrategy": "1. Test semantic versioning workflow by creating test tags and verifying GitHub releases are generated correctly. 2. Validate package.json configuration by running 'npm pack' and inspecting the generated tarball contents. 3. Test GitHub Actions workflow in a separate branch to ensure release automation works without affecting main branch. 4. Update test project to install from a test GitHub release and verify all module functionality works identically to local development. 5. Run full test suite against the distributed version to ensure no functionality is lost in packaging. 6. Test installation in a fresh Nuxt project to validate the complete user experience. 7. Verify TypeScript definitions are properly exported by testing import statements and type checking in the test project.",
+        "status": "pending",
+        "dependencies": [
+          1,
+          5
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Configure package.json for Distribution",
+            "description": "Set up package.json with proper fields for GitHub releases and NPM publishing, including entry points, file inclusions, and repository metadata.",
+            "dependencies": [],
+            "details": "Update package.json to include: 'files' array specifying src/runtime, dist, and package.json; set 'main' to './dist/module.mjs', 'types' to './dist/types.d.ts'; add 'repository', 'bugs', 'homepage' fields pointing to GitHub; configure 'publishConfig' for registry settings; ensure 'keywords' and 'description' are publication-ready.",
+            "status": "pending",
+            "testStrategy": "Validate package.json structure with npm pack --dry-run to see what files would be included"
+          },
+          {
+            "id": 2,
+            "title": "Implement Semantic Versioning and Git Tag Management",
+            "description": "Set up semantic versioning workflow with proper git tagging strategy and version bump automation for consistent releases.",
+            "dependencies": [
+              1
+            ],
+            "details": "Configure semantic versioning using conventional commits; set up scripts for version bumping (patch/minor/major); create git tag creation workflow; ensure version in package.json syncs with git tags; add pre-release and beta versioning support.",
+            "status": "pending",
+            "testStrategy": "Test version bump scripts locally and verify git tags are created correctly with proper semver format"
+          },
+          {
+            "id": 3,
+            "title": "Create GitHub Actions Release Workflow",
+            "description": "Build automated GitHub Actions workflow that triggers on version tags to create releases with changelogs and built assets.",
+            "dependencies": [
+              2
+            ],
+            "details": "Create .github/workflows/release.yml that triggers on version tags (v*); include steps for: dependency installation, module building, testing, changelog generation from conventional commits, GitHub release creation with built assets, and optional NPM publishing.",
+            "status": "pending",
+            "testStrategy": "Test workflow with a pre-release tag to ensure all steps execute correctly without publishing"
+          },
+          {
+            "id": 4,
+            "title": "Set Up Release Notes and Changelog Generation",
+            "description": "Configure automated changelog generation and release notes templates for consistent and informative releases.",
+            "dependencies": [
+              3
+            ],
+            "details": "Set up conventional-changelog or similar tool for automatic changelog generation; create GitHub release templates in .github/release-template.md; configure categorized changelog sections (Features, Bug Fixes, Breaking Changes); ensure commit message conventions are documented.",
+            "status": "pending",
+            "testStrategy": "Generate test changelog from existing commits to verify formatting and categorization"
+          },
+          {
+            "id": 5,
+            "title": "Update Test Projects for Remote Installation",
+            "description": "Modify test projects to install the module from GitHub releases instead of local file references, enabling end-to-end distribution testing.",
+            "dependencies": [
+              1,
+              3
+            ],
+            "details": "Update ./test-projects/*/package.json to reference GitHub repository with version tags (e.g., 'github:user/repo#v1.0.0'); create validation scripts to test installation, module loading, and runtime functionality; add CI step to test against latest release.",
+            "status": "pending",
+            "testStrategy": "Create test script that installs from GitHub release, runs build, and validates all module features work correctly"
+          },
+          {
+            "id": 6,
+            "title": "Create End-to-End Distribution Validation Pipeline",
+            "description": "Establish comprehensive testing pipeline that validates the complete distribution flow from release creation to module consumption.",
+            "dependencies": [
+              4,
+              5
+            ],
+            "details": "Create validation script that: creates a test release, installs module in fresh project, tests component loading and TypeScript definitions, validates runtime functionality, and verifies dependency resolution; add GitHub Actions job to run validation on each release.",
+            "status": "pending",
+            "testStrategy": "Run complete validation pipeline with a test release to ensure all distribution aspects work correctly from end to end"
+          }
+        ]
+      },
+      {
+        "id": 43,
+        "title": "Complete CLI Tool Functionality for Module Distribution",
+        "description": "Finish implementing the CLI tool for the nuxt-supabase-team-auth module, including missing commands, testing, and proper package distribution integration.",
+        "details": "Complete the CLI tool implementation for the nuxt-supabase-team-auth module:\n\n1. **Review Current CLI Implementation**:\n   - Audit existing CLI code in the codebase to identify incomplete functionality\n   - Document current command structure and identify missing commands\n   - Review CLI entry point configuration and module integration\n\n2. **Implement Missing CLI Commands**:\n   - Implement `init` command to scaffold team auth configuration in target projects\n   - Create database migration commands for setting up required tables and RLS policies\n   - Add `configure` command for setting up Supabase integration and environment variables\n   - Implement validation commands to check project setup and configuration\n\n3. **CLI Command Functionality**:\n   - `team-auth init`: Create necessary config files, add required dependencies\n   - `team-auth migrate`: Run database migrations for profiles, teams, team_members tables\n   - `team-auth configure`: Interactive setup for Supabase URL, anon key, service role\n   - `team-auth validate`: Check configuration completeness and database connectivity\n\n4. **Package Distribution Integration**:\n   - Ensure CLI binary is properly configured in package.json 'bin' field\n   - Set up proper CLI entry point with shebang and executable permissions\n   - Configure build process to include CLI in distribution bundle\n   - Test CLI installation and execution from npm/pnpm install\n\n5. **Documentation and Help System**:\n   - Implement comprehensive help text for each command\n   - Create usage examples and troubleshooting guides\n   - Add command-line argument validation and error messaging\n   - Document CLI integration in module README",
+        "testStrategy": "1. **CLI Command Testing**:\n   - Test each CLI command in isolation with various argument combinations\n   - Create test projects and verify `init` command creates correct file structure\n   - Test database migration commands against clean Supabase instances\n   - Verify configuration commands properly handle environment variables\n\n2. **Package Distribution Testing**:\n   - Test CLI installation via `npm pack` and local installation\n   - Verify CLI binary is executable and accessible from PATH\n   - Test CLI functionality after module installation in test projects\n   - Validate help text and error messaging for all commands\n\n3. **Integration Testing**:\n   - Test complete workflow: init -> configure -> migrate -> validate\n   - Verify CLI-generated projects work with the module correctly\n   - Test CLI behavior with existing projects and configuration conflicts\n   - Validate CLI works across different Node.js versions and operating systems\n\n4. **Error Handling Testing**:\n   - Test CLI behavior with invalid Supabase credentials\n   - Verify graceful handling of network errors during migration\n   - Test CLI response to missing dependencies or configuration files",
+        "status": "pending",
+        "dependencies": [
+          1,
+          42
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Audit Existing CLI Implementation and Identify Gaps",
+            "description": "Review the current CLI codebase to understand what functionality exists and what needs to be implemented or completed.",
+            "dependencies": [],
+            "details": "Examine src/cli directory structure, analyze existing command definitions, check package.json bin configuration, identify incomplete or missing commands (likely init, migrate, configure, validate), and document the current CLI entry point and module integration patterns.",
+            "status": "pending",
+            "testStrategy": "Manual testing of existing CLI commands and verification of package.json bin field configuration"
+          },
+          {
+            "id": 2,
+            "title": "Implement Core CLI Commands (init and configure)",
+            "description": "Create the foundational CLI commands for project initialization and Supabase configuration setup.",
+            "dependencies": [
+              1
+            ],
+            "details": "Implement 'team-auth init' command to scaffold config files and add dependencies to target projects. Create 'team-auth configure' command for interactive Supabase setup (URL, anon key, service role). Use inquirer or similar for interactive prompts. Handle file creation, environment variable setup, and dependency management.",
+            "status": "pending",
+            "testStrategy": "Test commands in fresh Nuxt projects, verify config file creation, validate environment variable setup"
+          },
+          {
+            "id": 3,
+            "title": "Implement Database Migration and Validation Commands",
+            "description": "Create CLI commands for database setup and project validation to complete the core functionality.",
+            "dependencies": [
+              2
+            ],
+            "details": "Implement 'team-auth migrate' command to run database migrations for profiles, teams, and team_members tables with RLS policies. Create 'team-auth validate' command to check configuration completeness, database connectivity, and proper setup. Include error handling and informative feedback for setup issues.",
+            "status": "pending",
+            "testStrategy": "Test migration commands against local Supabase instances, verify table creation and RLS policies, test validation against various project states"
+          },
+          {
+            "id": 4,
+            "title": "Configure CLI Distribution and Package Integration",
+            "description": "Ensure the CLI tool is properly packaged and distributed with the module for end-user installation.",
+            "dependencies": [
+              3
+            ],
+            "details": "Configure package.json 'bin' field for CLI binary, set up proper CLI entry point with shebang and executable permissions, ensure build process includes CLI in distribution bundle, test CLI installation via npm/pnpm install, and verify global CLI access after module installation.",
+            "status": "pending",
+            "testStrategy": "Test CLI installation from published package, verify global command availability, test in different environments (local install vs global install)"
+          },
+          {
+            "id": 5,
+            "title": "Implement Help System and Documentation",
+            "description": "Add comprehensive help text, command validation, and usage documentation for all CLI commands.",
+            "dependencies": [
+              4
+            ],
+            "details": "Implement help text for each command with usage examples, add command-line argument validation with clear error messages, create troubleshooting guides for common issues, document CLI integration in module README with setup workflows, and add version and help flags for the main CLI entry point.",
+            "status": "pending",
+            "testStrategy": "Test help text display, validate error message clarity, verify documentation accuracy against actual CLI behavior"
+          }
+        ]
+      },
+      {
+        "id": 44,
+        "title": "Complete and Test Social Authentication (Google OAuth) Integration",
+        "description": "Complete the Google OAuth authentication implementation by creating the missing callback handler and ensuring proper integration with the team system and user profile management.",
+        "status": "pending",
+        "dependencies": [
+          1,
+          3,
+          4,
+          5,
+          6,
+          10
+        ],
+        "priority": "high",
+        "details": "Complete the Google OAuth authentication implementation for the nuxt-supabase-team-auth module:\n\n**CURRENT STATE ANALYSIS**:\n- AuthSignIn and AuthSignUpWithTeam components already have Google OAuth buttons implemented\n- Both use Supabase's signInWithOAuth() method correctly\n- AuthSignIn redirects to `/auth/callback` for simple login flow\n- AuthSignUpWithTeam redirects to `/auth/callback?mode=signup&team_name=...` for complex signup with team creation\n- **MISSING**: No auth callback page/handler exists to process these redirects\n\n**IMPLEMENTATION REQUIREMENTS**:\n\n1. **Create Auth Callback Handler**:\n   - Implement `/auth/callback` page to handle OAuth return flows\n   - Parse URL parameters to distinguish between signin and signup modes\n   - Handle Supabase session exchange and user authentication\n   - Route users appropriately based on authentication flow type\n\n2. **Complete Google Signup Flow**:\n   - Extract team_name from callback URL parameters for signup flow\n   - Create team after Google authentication completes successfully\n   - Map Google profile data (name, email, avatar) to public.profiles table\n   - Ensure new Google users are properly added to their created teams\n   - Handle Google avatar capture and storage in user profiles\n\n3. **Verify Google Login Flow**:\n   - Ensure existing Google users can authenticate through callback handler\n   - Verify proper session management and team membership loading\n   - Confirm user routing to dashboard after successful authentication\n\n4. **Profile Integration**:\n   - Ensure Google avatar URLs are properly captured and stored\n   - Verify ProfileForm works correctly for Google-authenticated users\n   - Handle profile picture sync from Google profile data\n\n5. **Error Handling**:\n   - Handle OAuth errors and cancellations gracefully\n   - Implement proper error messages for authentication failures\n   - Manage edge cases like existing email conflicts\n\n6. **Testing and Validation**:\n   - Test complete signup flow: Google OAuth → callback → team creation\n   - Test complete login flow: Google OAuth → callback → dashboard\n   - Verify team system integration works with Google users\n   - Validate profile data consistency and avatar handling",
+        "testStrategy": "1. **Callback Handler Testing**:\n   - Test `/auth/callback` page handles both signin and signup modes\n   - Verify URL parameter parsing for team_name extraction\n   - Confirm Supabase session exchange works correctly\n   - Test routing logic for different authentication flows\n\n2. **Google Signup Flow Testing**:\n   - Test complete flow: AuthSignUpWithTeam → Google OAuth → callback → team creation\n   - Verify team_name from form is preserved through OAuth flow\n   - Confirm Google profile data (name, email, avatar) is captured\n   - Test new user is properly added to created team with correct role\n\n3. **Google Login Flow Testing**:\n   - Test existing Google user login through AuthSignIn component\n   - Verify callback handler properly authenticates existing users\n   - Confirm team membership loading and dashboard access\n   - Test session persistence and user state management\n\n4. **Profile Integration Testing**:\n   - Verify Google avatar URLs are stored in public.profiles table\n   - Test ProfileForm functionality with Google-authenticated users\n   - Confirm profile picture display and update capabilities\n   - Test avatar fallback behavior if Google avatar unavailable\n\n5. **Error Scenario Testing**:\n   - Test OAuth cancellation and error handling\n   - Verify proper error messages for authentication failures\n   - Test edge cases like network connectivity issues\n   - Confirm graceful handling of existing email conflicts\n\n6. **End-to-End Integration Testing**:\n   - Test complete user journeys in playground environment\n   - Verify team operations work correctly for Google users\n   - Test impersonation system with Google-authenticated users\n   - Confirm RBAC and permission system integration\n\n7. **Cross-Browser Validation**:\n   - Test Google OAuth flow across different browsers\n   - Verify mobile authentication experience\n   - Test with various Google account types (personal, workspace)",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Auth Callback Page Handler",
+            "description": "Implement the missing `/auth/callback` page to handle Google OAuth returns for both signin and signup flows.",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Create `/auth/callback` page in the module that handles OAuth returns from Google. Parse URL parameters to determine flow type (signin vs signup with team_name). Implement Supabase session exchange to complete authentication. Handle routing logic to direct users to appropriate destinations (dashboard for signin, team setup completion for signup). Ensure proper error handling for OAuth failures and cancellations.",
+            "testStrategy": "Test callback page with both signin and signup URL patterns. Verify session exchange works and users are properly authenticated. Test error scenarios and proper error handling."
+          },
+          {
+            "id": 2,
+            "title": "Complete Google Signup with Team Creation Flow",
+            "description": "Implement team creation logic in the callback handler for Google OAuth signup flows.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "details": "Extract team_name from callback URL parameters for signup mode. After successful Google authentication, create the team using the preserved team_name. Map Google profile data (name, email, avatar_url) to public.profiles table. Ensure the new Google user is added to the created team with owner role. Handle Google avatar URL capture and storage. Implement proper error handling for team creation failures.",
+            "testStrategy": "Test complete signup flow from AuthSignUpWithTeam through Google OAuth to team creation. Verify team_name preservation, profile data mapping, and team membership assignment. Test Google avatar capture and storage."
+          },
+          {
+            "id": 3,
+            "title": "Verify and Test Google Login Flow",
+            "description": "Ensure existing Google users can authenticate properly through the callback handler.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "details": "Test that existing Google users can successfully authenticate through AuthSignIn component. Verify the callback handler properly processes login flow without team creation. Ensure proper session management and team membership loading for existing users. Confirm user routing to dashboard after successful authentication. Test that user context and team switching work correctly for Google users.",
+            "testStrategy": "Test login flow for existing Google users. Verify session state, team membership loading, and dashboard access. Test user context switching and team operations for Google-authenticated users."
+          },
+          {
+            "id": 4,
+            "title": "Validate Profile Integration and Avatar Handling",
+            "description": "Ensure Google profile data and avatars are properly integrated with the profile system.",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "details": "Verify Google avatar URLs are properly captured during authentication and stored in public.profiles.avatar_url. Test that ProfileForm component works correctly for Google-authenticated users. Ensure avatar display works in UserButton and other components. Implement proper fallback behavior when Google avatar is unavailable. Test profile picture updates and ensure consistency across the application.",
+            "testStrategy": "Test avatar capture during Google authentication. Verify avatar display in UserButton and ProfileForm. Test profile updates for Google users and ensure avatar handling works correctly across all components."
+          },
+          {
+            "id": 5,
+            "title": "End-to-End Testing and Documentation",
+            "description": "Conduct comprehensive testing of the complete Google OAuth integration and document the implementation.",
+            "status": "pending",
+            "dependencies": [
+              2,
+              3,
+              4
+            ],
+            "details": "Perform thorough end-to-end testing of both Google signup and login flows in the playground environment. Test error scenarios, edge cases, and cross-browser compatibility. Verify team system integration works correctly with Google users. Test impersonation and RBAC systems with Google-authenticated users. Document the callback handler implementation and any setup requirements. Create troubleshooting guide for common Google OAuth issues.",
+            "testStrategy": "Comprehensive testing of complete user journeys: new Google user signup with team creation, existing Google user login, profile management, team operations, and admin features. Test across multiple browsers and devices. Document all test cases and results."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-06-18T17:53:26.166Z",
-      "updated": "2025-06-24T18:03:14.559Z",
+      "updated": "2025-06-25T07:49:26.953Z",
       "description": "Tasks for master context"
     }
   }
