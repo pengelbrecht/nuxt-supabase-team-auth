@@ -21,7 +21,7 @@
 
         <ClientOnly>
           <UAvatar
-            :src="currentUser?.user_metadata?.avatar_url || undefined"
+            :src="currentProfile?.avatar_url || currentUser?.user_metadata?.avatar_url || undefined"
             :alt="currentProfile?.full_name || currentUser?.user_metadata?.name || currentUser?.email || 'User'"
             :size="props.size"
             :icon="!currentUser ? 'i-lucide-user' : undefined"

@@ -99,23 +99,13 @@ import { useTeamAuth } from '../../composables/useTeamAuth'
 const route = useRoute()
 const router = useRouter()
 
-// Clean up OAuth hash after processing to prevent Vue Router warnings
-// This is purely cosmetic - the warning doesn't break functionality
-onMounted(() => {
-  if (import.meta.client && window.location.hash.includes('access_token=')) {
-    // Clean after a reasonable delay to ensure Supabase has processed the tokens
-    setTimeout(() => {
-      const cleanUrl = window.location.href.split('#')[0]
-      window.history.replaceState({}, document.title, cleanUrl + window.location.search)
-    }, 2000) // 2 second delay to be safe
-  }
-})
+// We'll clean up the hash after processing in the main onMounted
 
 // Reactive state
 const status = ref<'processing' | 'success' | 'error'>('processing')
 const errorMessage = ref('')
 const teamName = ref('')
-const mode = ref<'signin' | 'signup' | 'unknown'>('unknown')
+const mode = ref<'signin' | 'signup' | 'invite-link' | 'unknown'>('unknown')
 
 // Get the team auth composable
 const { signUpWithTeam: _signUpWithTeam } = useTeamAuth()
@@ -135,9 +125,20 @@ onMounted(async () => {
     }
 
     // Determine the flow mode
-    mode.value = queryMode === 'signup' ? 'signup' : 'signin'
+    if (queryMode === 'signup') {
+      mode.value = 'signup'
+    }
+    else if (queryMode === 'invite-link') {
+      mode.value = 'invite-link'
+    }
+    else {
+      mode.value = 'signin'
+    }
 
     console.log('OAuth callback - Mode:', mode.value, 'Team name:', team_name)
+
+    // Give Supabase a moment to process the OAuth tokens from the URL hash
+    await new Promise(resolve => setTimeout(resolve, 100))
 
     // Wait for OAuth session to be established (simple polling - more reliable than events)
     let session = null
@@ -168,7 +169,11 @@ onMounted(async () => {
 
     // Handle different modes
     if (mode.value === 'signup' && team_name) {
+      console.log('Calling handleGoogleSignupWithTeam with user:', session.user.email, 'team:', team_name)
       await handleGoogleSignupWithTeam(session.user, team_name as string)
+    }
+    else if (mode.value === 'invite-link') {
+      await handleGoogleInviteLink(session.user, route.query.team_id as string)
     }
     else if (mode.value === 'signin') {
       await handleGoogleSignin(session.user)
@@ -182,7 +187,72 @@ onMounted(async () => {
     status.value = 'error'
     errorMessage.value = error.message || 'An unexpected error occurred during authentication'
   }
+  finally {
+    // Clean up OAuth hash after processing to prevent Vue Router warnings
+    if (import.meta.client && window.location.hash.includes('access_token=')) {
+      setTimeout(() => {
+        const cleanUrl = window.location.href.split('#')[0]
+        window.history.replaceState({}, document.title, cleanUrl + window.location.search)
+      }, 2000)
+    }
+  }
 })
+
+// Update profile with Google data from linked identity
+const updateProfileWithGoogleData = async (user: any) => {
+  try {
+    console.log('Updating profile with Google data for user:', user.email)
+
+    // Get fresh user data with identities
+    const { data: { user: freshUser }, error: userError } = await supabase.auth.getUser()
+
+    if (userError || !freshUser) {
+      console.warn('Failed to get fresh user data for profile update')
+      return
+    }
+
+    // Look for Google identity in user's identities
+    const googleIdentity = freshUser.identities?.find(identity => identity.provider === 'google')
+
+    if (!googleIdentity?.identity_data) {
+      console.warn('No Google identity found for profile update')
+      return
+    }
+
+    const googleData = googleIdentity.identity_data
+    console.log('Found Google identity data:', googleData)
+
+    // Extract profile data
+    const fullName = googleData.name || googleData.full_name
+    let avatarUrl = googleData.picture || googleData.avatar_url
+
+    // Upgrade avatar URL to higher resolution
+    if (avatarUrl && avatarUrl.includes('=s96-c')) {
+      avatarUrl = avatarUrl.replace('=s96-c', '=s256-c')
+    }
+
+    if (fullName || avatarUrl) {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          ...(fullName && { full_name: fullName }),
+          ...(avatarUrl && { avatar_url: avatarUrl }),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id)
+
+      if (updateError) {
+        console.error('Failed to update profile with Google data:', updateError)
+      }
+      else {
+        console.log('Profile updated with Google data:', { fullName, avatarUrl })
+      }
+    }
+  }
+  catch (error) {
+    console.error('Error updating profile with Google data:', error)
+  }
+}
 
 // Wait for team membership to be available (handles cloud database timing)
 const waitForTeamMembership = async (session: any, maxAttempts = 10, delayMs = 500) => {
@@ -219,6 +289,7 @@ const waitForTeamMembership = async (session: any, maxAttempts = 10, delayMs = 5
 // Handle Google signup with team creation
 const handleGoogleSignupWithTeam = async (user: any, teamNameParam: string) => {
   try {
+    console.log('=== INSIDE handleGoogleSignupWithTeam ===')
     console.log('Processing Google signup with team creation for:', user.email)
 
     // Get the current session for authorization
@@ -229,6 +300,7 @@ const handleGoogleSignupWithTeam = async (user: any, teamNameParam: string) => {
 
     // Call the existing Edge Function for team creation
     // This will handle creating the team and adding the user as owner
+    console.log('About to call /api/signup-with-team')
     const response = await $fetch('/api/signup-with-team', {
       method: 'POST',
       headers: {
@@ -284,13 +356,69 @@ const handleGoogleSignin = async (user: any) => {
   }
 }
 
+// Handle Google OAuth for invitation link flow
+const handleGoogleInviteLink = async (user: any, teamId: string) => {
+  try {
+    console.log('Processing Google OAuth for invitation link:', user.email, 'Team ID:', teamId)
+
+    if (!teamId) {
+      throw new Error('Missing team ID for invitation link')
+    }
+
+    // Get the current session for authorization
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) {
+      throw new Error('No valid session found for team joining')
+    }
+
+    // Call the accept-invite API to add user to team
+    const response = await $fetch('/api/accept-invite', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: {
+        team_id: teamId,
+      },
+    })
+
+    if (response.success) {
+      teamName.value = response.team?.name || 'the team'
+      console.log('User added to team successfully:', teamName.value)
+
+      // Wait for team membership to be available in the database
+      await waitForTeamMembership(session)
+
+      // Update profile with Google data from linked identity
+      await updateProfileWithGoogleData(session.user)
+
+      // Force refresh of auth state to load the new team data AND updated profile
+      const { refreshAuthState } = useTeamAuth()
+      await refreshAuthState()
+
+      status.value = 'success'
+    }
+    else {
+      throw new Error(response.error || 'Failed to join team')
+    }
+  }
+  catch (error: any) {
+    console.error('Google invite link error:', error)
+    throw new Error(`Team joining failed: ${error.message}`)
+  }
+}
+
 // UI helper methods
 const getStatusTitle = () => {
   if (status.value === 'processing') {
-    return mode.value === 'signup' ? 'Creating Your Team...' : 'Signing You In...'
+    if (mode.value === 'signup') return 'Creating Your Team...'
+    if (mode.value === 'invite-link') return 'Joining Team...'
+    return 'Signing You In...'
   }
   else if (status.value === 'success') {
-    return mode.value === 'signup' ? 'Team Created!' : 'Welcome Back!'
+    if (mode.value === 'signup') return 'Team Created!'
+    if (mode.value === 'invite-link') return 'Team Joined!'
+    return 'Welcome Back!'
   }
   else {
     return 'Authentication Error'
@@ -301,6 +429,9 @@ const getProcessingMessage = () => {
   if (mode.value === 'signup') {
     return 'Creating your team and setting up your account...'
   }
+  else if (mode.value === 'invite-link') {
+    return 'Adding you to the team...'
+  }
   else {
     return 'Completing your sign in...'
   }
@@ -309,6 +440,9 @@ const getProcessingMessage = () => {
 const getSuccessMessage = () => {
   if (mode.value === 'signup') {
     return 'Your team has been created successfully!'
+  }
+  else if (mode.value === 'invite-link') {
+    return 'Successfully joined the team!'
   }
   else {
     return 'Successfully signed in with Google!'

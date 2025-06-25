@@ -1,0 +1,328 @@
+<template>
+  <div class="space-y-6">
+    <!-- Alert for messages -->
+    <UAlert
+      v-if="message"
+      :color="messageType"
+      :title="messageType === 'error' ? 'Error' : 'Success'"
+      :description="message"
+      :icon="messageType === 'error' ? 'i-heroicons-exclamation-triangle' : 'i-heroicons-check-circle'"
+    />
+
+    <!-- User info display -->
+    <div
+      v-if="email"
+      class="text-center space-y-2 pb-4 border-b border-gray-200 dark:border-gray-700"
+    >
+      <p class="text-sm text-gray-600 dark:text-gray-400">
+        Setting up account for:
+      </p>
+      <p class="font-medium text-gray-900 dark:text-gray-100">
+        {{ email }}
+      </p>
+      <p
+        v-if="teamName"
+        class="text-sm text-gray-600 dark:text-gray-400"
+      >
+        Joining team: <span class="font-medium">{{ teamName }}</span>
+      </p>
+    </div>
+
+    <!-- Password Setup Form -->
+    <UForm
+      :schema="passwordSchema"
+      :state="form"
+      class="space-y-4"
+      @submit="handlePasswordSetup"
+    >
+      <!-- Password Field -->
+      <UFormField
+        label="Password"
+        name="password"
+        required
+        description="Must be at least 8 characters long"
+      >
+        <UInput
+          v-model="form.password"
+          :type="showPassword ? 'text' : 'password'"
+          placeholder="Enter your password"
+          autocomplete="new-password"
+          :disabled="isLoading"
+          icon="i-heroicons-lock-closed"
+          size="lg"
+          tabindex="1"
+          :ui="{ trailing: { padding: { sm: 'pe-2' } } }"
+        >
+          <template #trailing>
+            <UButton
+              type="button"
+              variant="ghost"
+              size="sm"
+              color="gray"
+              tabindex="-1"
+              :icon="showPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+              :aria-label="showPassword ? 'Hide password' : 'Show password'"
+              @click="showPassword = !showPassword"
+            />
+          </template>
+        </UInput>
+      </UFormField>
+
+      <!-- Confirm Password Field -->
+      <UFormField
+        label="Confirm Password"
+        name="confirmPassword"
+        required
+      >
+        <UInput
+          v-model="form.confirmPassword"
+          :type="showConfirmPassword ? 'text' : 'password'"
+          placeholder="Confirm your password"
+          autocomplete="new-password"
+          :disabled="isLoading"
+          icon="i-heroicons-lock-closed"
+          size="lg"
+          tabindex="2"
+          :ui="{ trailing: { padding: { sm: 'pe-2' } } }"
+        >
+          <template #trailing>
+            <UButton
+              type="button"
+              variant="ghost"
+              size="sm"
+              color="gray"
+              tabindex="-1"
+              :icon="showConfirmPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+              :aria-label="showConfirmPassword ? 'Hide password' : 'Show password'"
+              @click="showConfirmPassword = !showConfirmPassword"
+            />
+          </template>
+        </UInput>
+      </UFormField>
+
+      <!-- Full Name Field (optional for profile) -->
+      <UFormField
+        label="Full Name"
+        name="fullName"
+        description="Optional - you can update this later"
+      >
+        <UInput
+          v-model="form.fullName"
+          placeholder="Enter your full name"
+          :disabled="isLoading"
+          icon="i-heroicons-user"
+          size="lg"
+          tabindex="3"
+        />
+      </UFormField>
+
+      <!-- Submit Button -->
+      <UButton
+        type="submit"
+        :loading="isLoading"
+        color="primary"
+        size="lg"
+        block
+        class="mt-6"
+      >
+        Set Password & Join Team
+      </UButton>
+    </UForm>
+
+    <!-- Social Login Alternative -->
+    <div
+      v-if="showSocialLogin"
+      class="space-y-4"
+    >
+      <!-- Divider -->
+      <div class="flex items-center">
+        <div class="flex-1 border-t border-gray-300 dark:border-gray-600" />
+        <div class="font-medium text-gray-500 dark:text-gray-400 flex mx-3 whitespace-nowrap">
+          <span class="text-sm">Or continue with</span>
+        </div>
+        <div class="flex-1 border-t border-gray-300 dark:border-gray-600" />
+      </div>
+
+      <!-- Google Button -->
+      <UButton
+        type="button"
+        variant="outline"
+        size="lg"
+        block
+        :disabled="isLoading"
+        :loading="isGoogleLoading"
+        class="justify-center"
+        @click="handleGoogleLink"
+      >
+        <template #leading>
+          <Icon
+            name="logos:google-icon"
+            class="w-5 h-5"
+          />
+        </template>
+        Link Google Account Instead
+      </UButton>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import * as v from 'valibot'
+import type { FormSubmitEvent } from '@nuxt/ui'
+
+interface PasswordSetupFormProps {
+  /** User's email address */
+  email?: string
+  /** Team name they're joining */
+  teamName?: string
+  /** Show social login options */
+  showSocialLogin?: boolean
+}
+
+interface PasswordSetupForm {
+  password: string
+  confirmPassword: string
+  fullName: string
+}
+
+const _props = withDefaults(defineProps<PasswordSetupFormProps>(), {
+  email: '',
+  teamName: '',
+  showSocialLogin: true,
+})
+
+const emit = defineEmits<{
+  'success': []
+  'error': [error: string]
+  'social-link': [provider: string]
+}>()
+
+// Get Supabase client
+const supabase = useSupabaseClient()
+
+// Form state
+const form = reactive<PasswordSetupForm>({
+  password: '',
+  confirmPassword: '',
+  fullName: '',
+})
+
+// Validation schema using Valibot
+const passwordSchema = v.object({
+  password: v.pipe(
+    v.string(),
+    v.minLength(8, 'Password must be at least 8 characters'),
+    v.regex(/[A-Z]/, 'Password must contain at least one uppercase letter'),
+    v.regex(/[a-z]/, 'Password must contain at least one lowercase letter'),
+    v.regex(/\d/, 'Password must contain at least one number'),
+  ),
+  confirmPassword: v.pipe(
+    v.string(),
+    v.custom(value => value === form.password, 'Passwords do not match'),
+  ),
+  fullName: v.optional(v.string()),
+})
+
+// UI state
+const isLoading = ref(false)
+const isGoogleLoading = ref(false)
+const showPassword = ref(false)
+const showConfirmPassword = ref(false)
+const message = ref('')
+const messageType = ref<'error' | 'success'>('error')
+
+// Handle password setup
+const handlePasswordSetup = async (event: FormSubmitEvent<any>) => {
+  try {
+    isLoading.value = true
+    message.value = ''
+
+    // Update user's password
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: event.data.password,
+    })
+
+    if (updateError) {
+      throw new Error(updateError.message)
+    }
+
+    // Update profile if full name was provided
+    if (event.data.fullName) {
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: user.id,
+            full_name: event.data.fullName,
+            updated_at: new Date().toISOString(),
+          })
+
+        if (profileError) {
+          console.error('Profile update error:', profileError)
+          // Don't throw here, password was set successfully
+        }
+      }
+    }
+
+    // Success!
+    message.value = 'Password set successfully!'
+    messageType.value = 'success'
+
+    // Emit success after a short delay
+    setTimeout(() => {
+      emit('success')
+    }, 1000)
+  }
+  catch (error: any) {
+    console.error('Password setup error:', error)
+    message.value = error.message || 'Failed to set password'
+    messageType.value = 'error'
+    emit('error', error.message || 'Failed to set password')
+  }
+  finally {
+    isLoading.value = false
+  }
+}
+
+// Handle Google account linking
+const handleGoogleLink = async () => {
+  try {
+    isGoogleLoading.value = true
+
+    // Get current session to preserve team metadata
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      throw new Error('No valid session found')
+    }
+
+    // For invited users, use linkIdentity instead of signInWithOAuth
+    // This links Google to the existing invited user account
+    const { error } = await supabase.auth.linkIdentity({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?mode=invite-link&team_id=${session.user.user_metadata?.team_id}`,
+      },
+    })
+
+    if (error) {
+      throw error
+    }
+
+    // If successful, the user will be redirected to Google OAuth
+    // After OAuth completes, they'll come back and we can proceed
+    emit('social-link', 'google')
+  }
+  catch (error: any) {
+    console.error('Google link error:', error)
+    message.value = error.message || 'Failed to link Google account'
+    messageType.value = 'error'
+  }
+  finally {
+    isGoogleLoading.value = false
+  }
+}
+</script>

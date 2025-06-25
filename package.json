@@ -87,6 +87,11 @@
     "vue-router": "^4.5.1",
     "vue-tsc": "^2.1.6"
   },
+  "pnpm": {
+    "overrides": {
+      "esbuild": ">=0.25.0"
+    }
+  },
   "keywords": [
     "nuxt",
     "nuxt3",
