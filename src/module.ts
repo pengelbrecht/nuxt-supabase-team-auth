@@ -174,6 +174,15 @@ export default defineNuxtModule<ModuleOptions>({
       })
     })
 
+    // Add pages
+    nuxt.hook('pages:extend', (pages) => {
+      pages.push({
+        name: 'auth-callback',
+        path: '/auth/callback',
+        file: resolver.resolve('./runtime/pages/auth/callback.vue'),
+      })
+    })
+
     // Add type declarations
     nuxt.hook('prepare:types', (options) => {
       options.references.push({

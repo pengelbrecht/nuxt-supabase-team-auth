@@ -16,66 +16,6 @@
       </slot>
     </template>
 
-    <!-- Social Login Buttons -->
-    <div
-      v-if="showSocialLogin"
-      class="space-y-3 mb-4"
-    >
-      <slot name="social-buttons">
-        <UButton
-          v-if="googleAuth"
-          type="button"
-          variant="outline"
-          size="lg"
-          block
-          :disabled="isLoading"
-          :loading="isGoogleLoading"
-          class="justify-center"
-          @click="handleGoogleSignUp"
-        >
-          <template #leading>
-            <Icon
-              name="logos:google-icon"
-              class="w-5 h-5"
-            />
-          </template>
-          Continue with Google
-        </UButton>
-
-        <UButton
-          v-if="githubAuth"
-          type="button"
-          variant="outline"
-          size="lg"
-          block
-          :disabled="isLoading"
-          :loading="isGithubLoading"
-          class="justify-center"
-          @click="handleGithubSignUp"
-        >
-          <template #leading>
-            <Icon
-              name="logos:github-icon"
-              class="w-5 h-5"
-            />
-          </template>
-          Continue with GitHub
-        </UButton>
-      </slot>
-    </div>
-
-    <!-- Divider -->
-    <div
-      v-if="showSocialLogin"
-      class="flex items-center my-8"
-    >
-      <div class="flex-1 border-t border-gray-300 dark:border-gray-600" />
-      <div class="font-medium text-gray-500 dark:text-gray-400 flex mx-3 whitespace-nowrap">
-        <span class="text-sm">Or continue with email</span>
-      </div>
-      <div class="flex-1 border-t border-gray-300 dark:border-gray-600" />
-    </div>
-
     <UForm
       :schema="signUpSchema"
       :state="form"
@@ -98,6 +38,72 @@
           size="lg"
         />
       </UFormField>
+
+      <!-- Social Login Buttons -->
+      <div
+        v-if="showSocialLogin"
+        class="space-y-3"
+      >
+        <div class="text-center">
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+            Choose how you'd like to create your team
+          </p>
+        </div>
+
+        <slot name="social-buttons">
+          <UButton
+            v-if="googleAuth"
+            type="button"
+            variant="outline"
+            size="lg"
+            block
+            :disabled="isLoading || !form.teamName.trim() || isGoogleLoading"
+            :loading="isGoogleLoading"
+            class="justify-center"
+            @click="handleGoogleSignUp"
+          >
+            <template #leading>
+              <Icon
+                name="logos:google-icon"
+                class="w-5 h-5"
+              />
+            </template>
+            Create "{{ form.teamName || 'team' }}" with Google
+          </UButton>
+
+          <UButton
+            v-if="githubAuth"
+            type="button"
+            variant="outline"
+            size="lg"
+            block
+            :disabled="isLoading || !form.teamName.trim() || isGithubLoading"
+            :loading="isGithubLoading"
+            class="justify-center"
+            @click="handleGithubSignUp"
+          >
+            <template #leading>
+              <Icon
+                name="logos:github-icon"
+                class="w-5 h-5"
+              />
+            </template>
+            Create "{{ form.teamName || 'team' }}" with GitHub
+          </UButton>
+        </slot>
+      </div>
+
+      <!-- Divider -->
+      <div
+        v-if="showSocialLogin"
+        class="flex items-center my-6"
+      >
+        <div class="flex-1 border-t border-gray-300 dark:border-gray-600" />
+        <div class="font-medium text-gray-500 dark:text-gray-400 flex mx-3 whitespace-nowrap">
+          <span class="text-sm">Or create with email</span>
+        </div>
+        <div class="flex-1 border-t border-gray-300 dark:border-gray-600" />
+      </div>
 
       <!-- Email Field -->
       <UFormField
@@ -249,7 +255,7 @@
         block
         class="mt-6"
       >
-        {{ submitText }}
+        Create "{{ form.teamName || 'team' }}" with email
       </UButton>
     </UForm>
 
@@ -317,7 +323,7 @@ interface SignUpForm {
 
 const props = withDefaults(defineProps<AuthSignUpProps>(), {
   title: 'Create your team',
-  subtitle: 'Get started with your team workspace in seconds.',
+  subtitle: 'Choose your team name and preferred signup method.',
   cardClass: 'w-full max-w-md',
   submitText: 'Create team',
   autoFocus: true,
@@ -326,7 +332,7 @@ const props = withDefaults(defineProps<AuthSignUpProps>(), {
   githubAuth: false,
   requireTermsAcceptance: true,
   showMarketingConsent: true,
-  teamNameHelp: 'Choose a name for your team workspace',
+  teamNameHelp: 'This will be your team workspace name regardless of signup method',
   passwordHelp: 'Must be at least 8 characters with numbers and letters',
 })
 

@@ -19,11 +19,14 @@ interface Props {
   size?: 'xs' | 'sm' | 'md' | 'lg'
   /** Badge variant (default: soft) */
   variant?: 'solid' | 'outline' | 'soft' | 'subtle'
+  /** Whether this is a pending invitation */
+  pending?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   size: undefined,
   variant: 'soft',
+  pending: false,
 })
 
 // Computed properties
@@ -34,6 +37,9 @@ const formattedRole = computed(() => {
 })
 
 const badgeColor = computed(() => {
+  // Pending invitations get orange color
+  if (props.pending) return 'orange'
+
   if (!props.role) return 'neutral'
 
   // Standard role colors using valid Nuxt UI color names

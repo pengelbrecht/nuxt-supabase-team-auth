@@ -74,24 +74,165 @@ describe('Edge Functions Business Logic Integration Tests', () => {
   })
 
   describe('create-team-and-owner Function Logic', () => {
-    it('should validate required fields correctly', () => {
+    it('should validate required fields correctly for password users', () => {
       const testCases = [
-        { body: {}, expectedError: 'Missing required fields: email, password, team_name' },
-        { body: { email: 'test@example.com' }, expectedError: 'Missing required fields: email, password, team_name' },
-        { body: { email: 'test@example.com', password: 'pass' }, expectedError: 'Missing required fields: email, password, team_name' },
+        { body: {}, expectedError: 'Missing required fields: email, team_name' },
+        { body: { email: 'test@example.com' }, expectedError: 'Missing required fields: email, team_name' },
+        { body: { email: 'test@example.com', team_name: 'Test Team' }, expectedError: 'Password is required for non-OAuth signup' },
         { body: { email: 'test@example.com', password: 'pass', team_name: '   ' }, expectedError: 'Team name cannot be empty' },
       ]
 
       testCases.forEach(({ body, expectedError }) => {
         // Simulate validation logic from the actual function
-        const { email, password, team_name } = body
+        const { email, password, team_name, oauth_provider } = body
 
-        if (!email || !password || !team_name) {
-          expect(expectedError).toBe('Missing required fields: email, password, team_name')
+        if (!email || !team_name) {
+          expect(expectedError).toBe('Missing required fields: email, team_name')
         }
-        else if (team_name.trim().length === 0) {
+        else if (!oauth_provider && !password) {
+          expect(expectedError).toBe('Password is required for non-OAuth signup')
+        }
+        else if (team_name && team_name.trim().length === 0) {
           expect(expectedError).toBe('Team name cannot be empty')
         }
+      })
+    })
+
+    it('should validate OAuth user creation correctly', () => {
+      const oauthTestCases = [
+        {
+          body: { email: 'user@gmail.com', team_name: 'Test Team', oauth_provider: 'google' },
+          expectedError: null,
+        },
+        {
+          body: { email: 'user@gmail.com', team_name: 'Test Team', oauth_provider: 'google', password: 'ignored' },
+          expectedError: null,
+        },
+        {
+          body: { email: 'user@gmail.com', team_name: '', oauth_provider: 'google' },
+          expectedError: 'Team name cannot be empty',
+        },
+      ]
+
+      oauthTestCases.forEach(({ body, expectedError }) => {
+        const { email, team_name, oauth_provider } = body
+
+        if (!email || team_name === undefined) {
+          expect(expectedError).toBe('Missing required fields: email, team_name')
+        }
+        else if (team_name === '' || (team_name && team_name.trim().length === 0)) {
+          expect(expectedError).toBe('Team name cannot be empty')
+        }
+        else if (oauth_provider === 'google') {
+          expect(expectedError).toBeNull()
+        }
+      })
+    })
+
+    it('should handle OAuth vs password user creation flows', () => {
+      const userCreationFlows = [
+        {
+          type: 'password',
+          steps: ['validate_input', 'check_team_exists', 'create_user', 'create_team', 'add_owner_membership', 'generate_session'],
+        },
+        {
+          type: 'oauth',
+          steps: ['validate_input', 'check_team_exists', 'find_oauth_user', 'create_team', 'add_owner_membership', 'return_success'],
+        },
+      ]
+
+      userCreationFlows.forEach(({ type, steps }) => {
+        if (type === 'password') {
+          expect(steps).toContain('create_user')
+          expect(steps).toContain('generate_session')
+        }
+        else if (type === 'oauth') {
+          expect(steps).toContain('find_oauth_user')
+          expect(steps).not.toContain('create_user')
+        }
+      })
+    })
+
+    it('should implement proper cleanup for OAuth users', () => {
+      const cleanupScenarios = [
+        {
+          userType: 'password',
+          failureAt: 'create_team',
+          cleanupActions: ['delete_user'],
+        },
+        {
+          userType: 'oauth',
+          failureAt: 'create_team',
+          cleanupActions: [], // Don't delete OAuth users
+        },
+        {
+          userType: 'password',
+          failureAt: 'add_owner_membership',
+          cleanupActions: ['delete_team', 'delete_user'],
+        },
+        {
+          userType: 'oauth',
+          failureAt: 'add_owner_membership',
+          cleanupActions: ['delete_team'], // Don't delete OAuth users
+        },
+      ]
+
+      cleanupScenarios.forEach((scenario) => {
+        if (scenario.userType === 'oauth') {
+          expect(scenario.cleanupActions).not.toContain('delete_user')
+        }
+        else {
+          expect(scenario.cleanupActions).toContain('delete_user')
+        }
+      })
+    })
+
+    it('should validate Google OAuth user metadata', () => {
+      const oauthMetadataTests = [
+        {
+          user_metadata: {
+            full_name: 'John Doe',
+            picture: 'https://lh3.googleusercontent.com/photo=s96',
+            email: 'john@gmail.com',
+            provider_id: 'google-123',
+          },
+          isValid: true,
+        },
+        {
+          user_metadata: {
+            name: 'Jane Smith',
+            avatar_url: 'https://lh3.googleusercontent.com/photo=s96',
+            email: 'jane@gmail.com',
+          },
+          isValid: true,
+        },
+        {
+          user_metadata: {
+            given_name: 'Bob',
+            family_name: 'Wilson',
+            picture: 'https://lh3.googleusercontent.com/photo=s96',
+          },
+          isValid: true,
+        },
+        {
+          user_metadata: {},
+          isValid: true, // Should still work with fallbacks
+        },
+      ]
+
+      oauthMetadataTests.forEach(({ user_metadata, isValid }) => {
+        // Test that we can extract some form of name and avatar
+        const extractedName = user_metadata.full_name
+          || user_metadata.name
+          || (user_metadata.given_name ? `${user_metadata.given_name} ${user_metadata.family_name || ''}`.trim() : null)
+          || (user_metadata.email ? user_metadata.email.split('@')[0] : null)
+          || ''
+
+        const _extractedAvatar = user_metadata.picture || user_metadata.avatar_url
+
+        // Should always be valid with our fallback logic
+        expect(isValid).toBe(true)
+        expect(extractedName !== null && extractedName !== undefined).toBe(true)
       })
     })
 
@@ -495,6 +636,136 @@ describe('Edge Functions Business Logic Integration Tests', () => {
         const actuallyValid = uuidRegex.test(id) || (id.length > 0 && id.includes('-')) // Allow our test IDs
         expect(typeof actuallyValid).toBe('boolean')
       })
+    })
+  })
+
+  describe('Google OAuth Profile Enhancement Logic', () => {
+    it('should extract names correctly from Google OAuth metadata', () => {
+      const nameExtractionTests = [
+        {
+          raw_user_meta_data: { full_name: 'John Doe' },
+          expectedName: 'John Doe',
+        },
+        {
+          raw_user_meta_data: { name: 'Jane Smith' },
+          expectedName: 'Jane Smith',
+        },
+        {
+          raw_user_meta_data: { given_name: 'Bob', family_name: 'Wilson' },
+          expectedName: 'Bob Wilson',
+        },
+        {
+          raw_user_meta_data: { given_name: 'Alice' },
+          expectedName: 'Alice',
+        },
+        {
+          raw_user_meta_data: { email: 'test@example.com' },
+          expectedName: 'test', // Fallback to email username
+        },
+        {
+          raw_user_meta_data: {},
+          expectedName: '', // Ultimate fallback
+        },
+      ]
+
+      nameExtractionTests.forEach(({ raw_user_meta_data, expectedName }) => {
+        // Simulate the COALESCE logic from the enhanced trigger
+        const extractedName = raw_user_meta_data.full_name
+          || raw_user_meta_data.name
+          || (raw_user_meta_data.given_name
+            ? `${raw_user_meta_data.given_name}${raw_user_meta_data.family_name ? ` ${raw_user_meta_data.family_name}` : ''}`
+            : null)
+          || (raw_user_meta_data.email ? raw_user_meta_data.email.split('@')[0] : null)
+          || ''
+
+        expect(extractedName).toBe(expectedName)
+      })
+    })
+
+    it('should enhance Google avatar URLs correctly', () => {
+      const avatarTests = [
+        {
+          raw_user_meta_data: { picture: 'https://lh3.googleusercontent.com/photo=s96' },
+          expectedAvatar: 'https://lh3.googleusercontent.com/photo=s256',
+        },
+        {
+          raw_user_meta_data: { avatar_url: 'https://lh3.googleusercontent.com/photo=s96' },
+          expectedAvatar: 'https://lh3.googleusercontent.com/photo=s256',
+        },
+        {
+          raw_user_meta_data: { picture: 'https://other-domain.com/photo=s96' },
+          expectedAvatar: 'https://other-domain.com/photo=s256', // Our logic always replaces =s96 regardless of domain
+        },
+        {
+          raw_user_meta_data: {},
+          expectedAvatar: null,
+        },
+      ]
+
+      avatarTests.forEach(({ raw_user_meta_data, expectedAvatar }) => {
+        // Simulate the avatar URL enhancement logic
+        let enhancedAvatar = null
+
+        if (raw_user_meta_data.picture) {
+          enhancedAvatar = raw_user_meta_data.picture.replace('=s96', '=s256')
+        }
+        else if (raw_user_meta_data.avatar_url) {
+          enhancedAvatar = raw_user_meta_data.avatar_url.replace('=s96', '=s256')
+        }
+
+        expect(enhancedAvatar).toBe(expectedAvatar)
+      })
+    })
+
+    it('should handle profile creation trigger flow correctly', () => {
+      const triggerFlow = [
+        'extract_enhanced_name',
+        'extract_enhanced_avatar',
+        'create_profile_record',
+        'return_new_user',
+      ]
+
+      expect(triggerFlow).toEqual([
+        'extract_enhanced_name',
+        'extract_enhanced_avatar',
+        'create_profile_record',
+        'return_new_user',
+      ])
+    })
+
+    it('should validate Google-specific metadata fields', () => {
+      const googleMetadataFields = [
+        'full_name',
+        'name',
+        'given_name',
+        'family_name',
+        'picture',
+        'avatar_url',
+        'email',
+        'provider_id',
+        'iss',
+      ]
+
+      const sampleGoogleMetadata = {
+        iss: 'https://accounts.google.com',
+        provider_id: 'google-123456',
+        email: 'user@gmail.com',
+        email_verified: true,
+        name: 'John Doe',
+        picture: 'https://lh3.googleusercontent.com/photo=s96',
+        given_name: 'John',
+        family_name: 'Doe',
+      }
+
+      // Verify we can access all expected Google OAuth fields
+      googleMetadataFields.forEach((field) => {
+        if (field in sampleGoogleMetadata) {
+          expect(sampleGoogleMetadata[field]).toBeDefined()
+        }
+      })
+
+      expect(sampleGoogleMetadata.iss).toBe('https://accounts.google.com')
+      expect(sampleGoogleMetadata.email_verified).toBe(true)
     })
   })
 

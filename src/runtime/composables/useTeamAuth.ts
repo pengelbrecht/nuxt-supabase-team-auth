@@ -614,9 +614,12 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
         try {
           console.log('invite: step 2 - getting session')
-          const { getSession } = useSession()
-          const session = await getSession()
-          if (session?.access_token) {
+          // Use direct Supabase client instead of useSession which might be hanging
+          const { data: { session }, error: sessionError } = await getClient().auth.getSession()
+          if (sessionError) {
+            console.warn('Session error:', sessionError)
+          }
+          else if (session?.access_token) {
             headers['Authorization'] = `Bearer ${session.access_token}`
           }
           console.log('invite: step 3 - session obtained')
@@ -678,7 +681,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         if (!response.success) {
           throw { code: 'GET_INVITATIONS_FAILED', message: response.message || 'Failed to fetch invitations' }
         }
-
         return response.invitations || []
       }
       catch (error: unknown) {

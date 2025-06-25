@@ -8,12 +8,24 @@ import { navigateTo } from '#app'
 export default defineNuxtRouteMiddleware(async (to) => {
   const { currentUser, isLoading } = useTeamAuth()
 
-  // Wait for auth state to load
+  // More efficient auth loading wait with early exit
   if (isLoading.value) {
     let attempts = 0
-    while (isLoading.value && attempts < 50) { // 5 seconds max
+    const maxAttempts = 20 // 2 seconds max (20 * 100ms)
+
+    while (isLoading.value && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 100))
       attempts++
+
+      // Early exit if we have enough data for auth decisions
+      if (currentUser.value !== undefined) {
+        break
+      }
+    }
+
+    // If still loading after timeout, proceed anyway to avoid hanging
+    if (isLoading.value && attempts >= maxAttempts) {
+      console.warn('[Team Auth] Auth loading timeout in require-auth middleware, proceeding anyway')
     }
   }
 

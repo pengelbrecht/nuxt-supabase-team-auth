@@ -3,8 +3,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 interface CreateTeamRequest {
   email: string
-  password: string
+  password?: string // Optional for Google OAuth users
   team_name: string
+  oauth_provider?: string // 'google' for OAuth users
+  user_metadata?: any // Google profile data for OAuth users
 }
 
 serve(async (req) => {
@@ -26,13 +28,42 @@ serve(async (req) => {
       },
     )
 
-    // Parse request body
-    const { email, password, team_name }: CreateTeamRequest = await req.json()
+    // For OAuth users, also create a client with the user's session
+    const authHeader = req.headers.get('Authorization')
+    let userSupabase = null
 
-    // Validate input
-    if (!email || !password || !team_name) {
+    if (authHeader) {
+      userSupabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        {
+          global: {
+            headers: {
+              Authorization: authHeader,
+            },
+          },
+        },
+      )
+    }
+
+    // Parse request body
+    const { email, password, team_name, oauth_provider }: CreateTeamRequest = await req.json()
+
+    // Validate input - password not required for OAuth users
+    if (!email || !team_name) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: email, password, team_name' }),
+        JSON.stringify({ error: 'Missing required fields: email, team_name' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
+    // For non-OAuth users, password is required
+    if (!oauth_provider && !password) {
+      return new Response(
+        JSON.stringify({ error: 'Password is required for non-OAuth signup' }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
@@ -68,38 +99,81 @@ serve(async (req) => {
       )
     }
 
-    // Create user account
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true, // Auto-confirm email for this flow
-    })
+    let userId: string
+    let authData: any
 
-    if (authError || !authData.user) {
-      // Check if it's a duplicate email error
-      if (authError?.message?.includes('already been registered')) {
+    if (oauth_provider === 'google') {
+      // For Google OAuth users, get the current authenticated user from the session
+      if (!userSupabase) {
         return new Response(
           JSON.stringify({
-            error: 'EMAIL_ALREADY_EXISTS',
-            message: 'A user with this email address already exists',
+            error: 'MISSING_AUTH_TOKEN',
+            message: 'Authorization token required for OAuth signup',
           }),
           {
-            status: 409,
+            status: 401,
             headers: { 'Content-Type': 'application/json' },
           },
         )
       }
 
-      return new Response(
-        JSON.stringify({ error: 'Failed to create user account', details: authError?.message }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        },
-      )
-    }
+      const { data: { user }, error: getUserError } = await userSupabase.auth.getUser()
 
-    const userId = authData.user.id
+      if (getUserError || !user) {
+        return new Response(
+          JSON.stringify({
+            error: 'OAUTH_USER_NOT_FOUND',
+            message: 'Could not get authenticated user from session',
+          }),
+          {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        )
+      }
+
+      userId = user.id
+      authData = { user }
+
+      console.log('Found authenticated Google OAuth user:', user.email, 'ID:', userId)
+    }
+    else {
+      // Create new user account for password-based signup
+      const createUserResult = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true, // Auto-confirm email for this flow
+      })
+
+      if (createUserResult.error || !createUserResult.data.user) {
+        // Check if it's a duplicate email error
+        if (createUserResult.error?.message?.includes('already been registered')) {
+          return new Response(
+            JSON.stringify({
+              error: 'EMAIL_ALREADY_EXISTS',
+              message: 'A user with this email address already exists',
+            }),
+            {
+              status: 409,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          )
+        }
+
+        return new Response(
+          JSON.stringify({ error: 'Failed to create user account', details: createUserResult.error?.message }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        )
+      }
+
+      userId = createUserResult.data.user.id
+      authData = createUserResult.data
+
+      console.log('Created new password user:', email, 'ID:', userId)
+    }
 
     // Start transaction: Create team and add owner
     const { data: team, error: teamError } = await supabaseAdmin
@@ -111,8 +185,10 @@ serve(async (req) => {
       .single()
 
     if (teamError || !team) {
-      // Cleanup: Delete the created user if team creation fails
-      await supabaseAdmin.auth.admin.deleteUser(userId)
+      // Cleanup: Only delete user if it was created for password signup (not OAuth)
+      if (oauth_provider !== 'google') {
+        await supabaseAdmin.auth.admin.deleteUser(userId)
+      }
 
       return new Response(
         JSON.stringify({ error: 'Failed to create team', details: teamError?.message }),
@@ -133,9 +209,11 @@ serve(async (req) => {
       })
 
     if (memberError) {
-      // Cleanup: Delete team and user if member addition fails
+      // Cleanup: Delete team and user (if password signup) if member addition fails
       await supabaseAdmin.from('teams').delete().eq('id', team.id)
-      await supabaseAdmin.auth.admin.deleteUser(userId)
+      if (oauth_provider !== 'google') {
+        await supabaseAdmin.auth.admin.deleteUser(userId)
+      }
 
       return new Response(
         JSON.stringify({ error: 'Failed to add user as team owner', details: memberError.message }),

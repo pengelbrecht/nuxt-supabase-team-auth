@@ -1561,7 +1561,7 @@
             "id": 1,
             "title": "Create Auth Callback Page Handler",
             "description": "Implement the missing `/auth/callback` page to handle Google OAuth returns for both signin and signup flows.",
-            "status": "pending",
+            "status": "in-progress",
             "dependencies": [],
             "details": "Create `/auth/callback` page in the module that handles OAuth returns from Google. Parse URL parameters to determine flow type (signin vs signup with team_name). Implement Supabase session exchange to complete authentication. Handle routing logic to direct users to appropriate destinations (dashboard for signin, team setup completion for signup). Ensure proper error handling for OAuth failures and cancellations.",
             "testStrategy": "Test callback page with both signin and signup URL patterns. Verify session exchange works and users are properly authenticated. Test error scenarios and proper error handling."
@@ -1613,11 +1613,96 @@
             "testStrategy": "Comprehensive testing of complete user journeys: new Google user signup with team creation, existing Google user login, profile management, team operations, and admin features. Test across multiple browsers and devices. Document all test cases and results."
           }
         ]
+      },
+      {
+        "id": 45,
+        "title": "Implement Invitation Flow Password Setting and Forgot Password Functionality",
+        "description": "Complete the invitation flow by creating a password setting UI for invited users and implement forgot password functionality using Supabase's built-in password reset mechanisms.",
+        "details": "Implement complete invitation flow with password setting and forgot password functionality:\n\n1. **Auth Confirmation Page Implementation**:\n   - Create `/auth/confirm` page to handle email confirmation links\n   - Parse URL parameters for token type (invite_confirmation vs password_reset)\n   - Handle Supabase session exchange for confirmation tokens\n   - Route users to appropriate flows based on confirmation type\n\n2. **Invitation Password Setting Flow**:\n   - Create PasswordSetupForm component for new invited users\n   - Validate that user is in pending invitation state\n   - Allow password setting with confirmation field\n   - Automatically activate team membership after password is set\n   - Handle edge cases: expired invitations, already activated accounts\n\n3. **Social Account Linking Option**:\n   - Add social OAuth buttons to password setup form\n   - Allow users to link Google account instead of setting password\n   - Maintain team invitation context during OAuth flow\n   - Handle profile data merging from OAuth providers\n\n4. **Forgot Password Implementation**:\n   - Add 'Forgot Password' link to AuthSignIn component\n   - Create ForgotPasswordForm component with email input\n   - Integrate with Supabase's resetPasswordForEmail() method\n   - Create password reset confirmation page\n   - Implement ResetPasswordForm for new password entry\n\n5. **Email Template Integration**:\n   - Ensure invitation emails link to correct confirmation page\n   - Configure Supabase email templates for password reset\n   - Add proper redirect URLs for different confirmation types\n\n6. **Error Handling and UX**:\n   - Handle expired tokens gracefully\n   - Provide clear error messages for various failure scenarios\n   - Add loading states for all async operations\n   - Implement proper form validation with Nuxt UI components",
+        "testStrategy": "1. **Invitation Flow Testing**:\n   - Test complete invitation flow: send invite → receive email → click link → set password → access team\n   - Verify expired invitation tokens are handled correctly\n   - Test social account linking during invitation confirmation\n   - Confirm team membership is activated after password setting\n\n2. **Password Reset Testing**:\n   - Test forgot password flow: request reset → receive email → click link → set new password → sign in\n   - Verify password reset tokens expire correctly\n   - Test edge cases: invalid tokens, already used tokens\n   - Confirm new password meets security requirements\n\n3. **Integration Testing**:\n   - Test OAuth flow integration with invitation context\n   - Verify profile data is properly merged during social linking\n   - Test navigation between different auth states\n   - Confirm proper session management throughout flows\n\n4. **Security Testing**:\n   - Verify tokens cannot be reused after confirmation\n   - Test token expiration handling\n   - Confirm proper authorization checks for password setting\n   - Test CSRF protection on password reset forms\n\n5. **Email Integration Testing**:\n   - Verify correct email templates are used for different scenarios\n   - Test redirect URLs work correctly from email links\n   - Confirm email delivery for both invitation and password reset flows",
+        "status": "pending",
+        "dependencies": [
+          8,
+          44
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Auth Confirmation Page with Token Handling",
+            "description": "Implement the `/auth/confirm` page that handles email confirmation links for both invitation confirmations and password reset flows.",
+            "dependencies": [],
+            "details": "Create `/src/runtime/pages/auth/confirm.vue` page that parses URL parameters to determine token type (invite_confirmation vs password_reset). Use Supabase's `auth.exchangeCodeForSession()` to handle confirmation tokens. Route users to appropriate next steps based on confirmation type - password setup for invitations, password reset form for forgot password flow. Include proper error handling for invalid/expired tokens.",
+            "status": "pending",
+            "testStrategy": "Test with valid invitation tokens, password reset tokens, expired tokens, and invalid tokens. Verify routing works correctly for different token types."
+          },
+          {
+            "id": 2,
+            "title": "Build Password Setup Form for Invited Users",
+            "description": "Create a PasswordSetupForm component specifically for users who have been invited to teams and need to set their initial password.",
+            "dependencies": [
+              1
+            ],
+            "details": "Create `/src/runtime/components/PasswordSetupForm.vue` with password and confirm password fields using UForm validation. Validate that user is in pending invitation state by checking team_members table. Use Supabase's `auth.updateUser()` to set password. After successful password setting, update team_members record to activate membership (remove pending status). Handle edge cases like expired invitations and already activated accounts.",
+            "status": "pending",
+            "testStrategy": "Test password validation rules, successful password setting, team membership activation, and error handling for expired/invalid invitations."
+          },
+          {
+            "id": 3,
+            "title": "Add Social OAuth Integration to Password Setup",
+            "description": "Extend the password setup flow to allow invited users to link their Google account instead of setting a password.",
+            "dependencies": [
+              2
+            ],
+            "details": "Add Google OAuth button to PasswordSetupForm component. Implement OAuth flow that maintains team invitation context using session storage or URL parameters. Use Supabase's `auth.signInWithOAuth()` with Google provider. After OAuth success, merge profile data from Google (full_name, avatar_url) into the profiles table and activate team membership. Handle profile data conflicts and ensure proper session management.",
+            "status": "pending",
+            "testStrategy": "Test Google OAuth flow with invitation context, profile data merging, team membership activation, and error handling for OAuth failures."
+          },
+          {
+            "id": 4,
+            "title": "Implement Forgot Password Flow",
+            "description": "Add complete forgot password functionality including form, email sending, and password reset confirmation.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add 'Forgot Password' link to AuthSignIn component. Create `/src/runtime/components/ForgotPasswordForm.vue` with email input and UForm validation. Use Supabase's `auth.resetPasswordForEmail()` method with proper redirect URL to auth/confirm page. Create `/src/runtime/components/ResetPasswordForm.vue` for entering new password after confirmation. Integrate with the auth/confirm page to handle password reset tokens and route to ResetPasswordForm.",
+            "status": "pending",
+            "testStrategy": "Test email sending, password reset link functionality, new password setting, and error handling for invalid emails or expired reset tokens."
+          },
+          {
+            "id": 5,
+            "title": "Configure Email Templates and Error Handling",
+            "description": "Ensure proper email template configuration and implement comprehensive error handling and UX improvements across all flows.",
+            "dependencies": [
+              2,
+              3,
+              4
+            ],
+            "details": "Configure Supabase email templates for both invitation confirmations and password reset emails to use correct redirect URLs pointing to the auth/confirm page. Add comprehensive error handling for expired tokens, invalid confirmations, and network failures across all components. Implement proper loading states using local component state (not global auth loading). Add clear error messages and success feedback using UAlert components. Ensure all forms have proper validation and user feedback.",
+            "status": "pending",
+            "testStrategy": "Test email template links, error message display, loading states, form validation, and overall user experience flow from invitation email through password setup or reset completion."
+          }
+        ]
+      },
+      {
+        "id": 46,
+        "title": "Complete Invitation Flow with Password Setting Functionality",
+        "description": "Create a comprehensive invitation acceptance flow that allows invited users to set passwords and link social accounts, addressing the security gap where invited users currently bypass credential creation entirely.",
+        "details": "Implement complete invitation flow with password setting functionality:\n\n1. **Accept Invite Page Implementation**:\n   - Create `/auth/accept-invite` page to handle invitation tokens from email links\n   - Parse URL parameters for invitation_token and team context\n   - Validate invitation token and extract user/team information\n   - Handle expired or invalid tokens with appropriate error messages\n\n2. **Password Setting During Invitation**:\n   - Create InvitationPasswordForm component for new user password setup\n   - Integrate with Supabase auth.updateUser() for password creation\n   - Allow users to set password while confirming invitation acceptance\n   - Update user status from 'invited' to 'active' after password setup\n\n3. **Social Account Linking Integration**:\n   - Add Google OAuth option during invitation acceptance flow\n   - Allow users to choose between password setup or social login\n   - Handle OAuth callback with invitation context preservation\n   - Link social accounts to existing invited user records\n\n4. **Forgot Password Integration**:\n   - Implement forgot password functionality using Supabase's resetPasswordForEmail()\n   - Create password reset confirmation page at `/auth/reset-password`\n   - Handle password reset tokens and allow new password creation\n   - Integrate with existing auth flow and redirect appropriately\n\n5. **Invitation Flow Completion**:\n   - Ensure team membership activation after successful authentication setup\n   - Redirect to appropriate team dashboard after invitation acceptance\n   - Send confirmation emails for successful invitation acceptance\n   - Update invitation status in database to prevent reuse",
+        "testStrategy": "1. **Complete Invitation Flow Testing**:\n   - Test full invitation journey: send invite → receive email → click link → set password → access team\n   - Verify expired invitation tokens show appropriate error messages\n   - Test social account linking during invitation acceptance process\n   - Confirm team membership is properly activated after authentication setup\n\n2. **Password Security Testing**:\n   - Test password strength requirements during invitation acceptance\n   - Verify password reset flow works for invited users who set passwords\n   - Test security edge cases like token reuse and manipulation\n   - Confirm proper session management after password creation\n\n3. **Integration Testing**:\n   - Test invitation flow integration with existing team management system\n   - Verify Google OAuth integration works within invitation context\n   - Test email delivery and link generation for invitation acceptance\n   - Confirm proper error handling for various failure scenarios\n\n4. **User Experience Testing**:\n   - Test responsive design of invitation acceptance forms\n   - Verify clear user guidance throughout the invitation process\n   - Test accessibility of invitation acceptance interface\n   - Confirm proper loading states and error messaging",
+        "status": "pending",
+        "dependencies": [
+          8,
+          44,
+          45
+        ],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-06-18T17:53:26.166Z",
-      "updated": "2025-06-25T07:49:26.953Z",
+      "updated": "2025-06-25T15:01:01.214Z",
       "description": "Tasks for master context"
     }
   }

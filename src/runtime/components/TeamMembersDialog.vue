@@ -71,20 +71,19 @@
 
           <!-- Role and Actions -->
           <div class="flex items-center gap-3">
-            <UBadge
-              color="orange"
+            <RoleBadge
+              :role="invitation.role"
               variant="soft"
-              size="sm"
-            >
-              {{ formatRole(invitation.role) }} (Pending)
-            </UBadge>
+              size="lg"
+              pending
+            />
 
             <UButton
               icon="i-lucide-x"
               color="red"
               variant="ghost"
               size="sm"
-              :loading="isRevokingInvite"
+              :loading="revokingInviteIds.has(invitation.id)"
               @click="handleRevokeInvitation(invitation)"
             >
               Revoke
@@ -286,7 +285,7 @@ const { currentUser, currentRole, currentTeam, teamMembers, inviteMember, getAva
 // Component state
 const isInviteLoading = ref(false)
 const isDeletingMember = ref(false)
-const isRevokingInvite = ref(false)
+const revokingInviteIds = ref<Set<string>>(new Set())
 const showInviteModal = ref(false)
 const showConfirmModal = ref(false)
 const memberToDelete = ref<TeamMemberWithProfile | null>(null)
@@ -313,8 +312,8 @@ const refreshPendingInvitations = async () => {
     pendingInvitationsLoading.value = true
     pendingInvitationsError.value = null
 
-    const response = await getPendingInvitations()
-    pendingInvitations.value = response?.invitations || []
+    const invitations = await getPendingInvitations()
+    pendingInvitations.value = invitations || []
   }
   catch (error: any) {
     console.error('Failed to fetch pending invitations:', error)
@@ -331,7 +330,7 @@ watch([currentTeam, currentUser], () => {
   if (currentTeam.value?.id && currentUser.value) {
     refreshPendingInvitations()
   }
-}, { immediate: false })
+}, { immediate: false, deep: false })
 
 // Manual refresh when dialog opens
 watch(() => props.modelValue, (isOpen) => {
@@ -677,8 +676,9 @@ const cancelDeleteMember = () => {
 // Handle revoking an invitation
 const handleRevokeInvitation = async (invitation: any) => {
   try {
-    isRevokingInvite.value = true
+    revokingInviteIds.value.add(invitation.id)
 
+    console.log('Revoking invitation:', invitation)
     await revokeInvite(invitation.id)
 
     toast.add({
@@ -699,7 +699,7 @@ const handleRevokeInvitation = async (invitation: any) => {
     })
   }
   finally {
-    isRevokingInvite.value = false
+    revokingInviteIds.value.delete(invitation.id)
   }
 }
 

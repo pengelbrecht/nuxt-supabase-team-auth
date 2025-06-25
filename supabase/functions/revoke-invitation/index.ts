@@ -7,6 +7,9 @@ interface RevokeInvitationRequest {
 }
 
 serve(async (req) => {
+  console.log('=== REVOKE INVITATION EDGE FUNCTION CALLED ===')
+  console.log('Method:', req.method)
+
   // Handle OPTIONS requests
   if (req.method === 'OPTIONS') {
     return new Response('ok')
@@ -68,9 +71,15 @@ serve(async (req) => {
     // Parse request body
     const { userId, teamId }: RevokeInvitationRequest = await req.json()
 
+    console.log('Revoke invitation request:', { userId, teamId })
+
     if (!userId || !teamId) {
+      console.log('Missing required fields:', { userId: !!userId, teamId: !!teamId })
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: userId, teamId' }),
+        JSON.stringify({
+          error: 'Missing required fields: userId, teamId',
+          debug: { userId: !!userId, teamId: !!teamId, receivedData: { userId, teamId } },
+        }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
@@ -96,9 +105,9 @@ serve(async (req) => {
       )
     }
 
-    if (!['owner', 'admin'].includes(membership.role)) {
+    if (!['owner', 'admin', 'super_admin'].includes(membership.role)) {
       return new Response(
-        JSON.stringify({ error: 'Only owners and admins can revoke invitations' }),
+        JSON.stringify({ error: 'Only owners, admins, and super_admins can revoke invitations' }),
         {
           status: 403,
           headers: { 'Content-Type': 'application/json' },
@@ -120,9 +129,38 @@ serve(async (req) => {
     }
 
     // Verify this is an unconfirmed invitation for the specified team
-    if (targetUser.user.email_confirmed_at !== null) {
+    console.log('=== FULL USER OBJECT DEBUG ===')
+    console.log('targetUser structure:', JSON.stringify(targetUser, null, 2))
+    console.log('targetUser.user:', JSON.stringify(targetUser.user, null, 2))
+
+    // Check confirmation fields - user is confirmed only if either field exists and has a date value
+    const emailConfirmedAt = targetUser.user.email_confirmed_at
+    const confirmedAt = targetUser.user.confirmed_at
+
+    // User is confirmed only if the fields exist and are not null/undefined
+    const isConfirmed = (emailConfirmedAt != null && emailConfirmedAt !== '')
+      || (confirmedAt != null && confirmedAt !== '')
+
+    console.log('Confirmation check:', {
+      emailConfirmedAt,
+      confirmedAt,
+      isConfirmed,
+      hasEmailConfirmedField: 'email_confirmed_at' in targetUser.user,
+      hasConfirmedAtField: 'confirmed_at' in targetUser.user,
+    })
+
+    if (isConfirmed) {
+      console.log('User has already confirmed their account')
       return new Response(
-        JSON.stringify({ error: 'User has already confirmed their account' }),
+        JSON.stringify({
+          error: 'User has already confirmed their account',
+          debug: {
+            email_confirmed_at: emailConfirmedAt,
+            confirmed_at: confirmedAt,
+            emailConfirmedAtType: typeof emailConfirmedAt,
+            confirmedAtType: typeof confirmedAt,
+          },
+        }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
@@ -131,6 +169,10 @@ serve(async (req) => {
     }
 
     if (targetUser.user.user_metadata?.team_id !== teamId) {
+      console.log('Team ID mismatch:', {
+        userTeamId: targetUser.user.user_metadata?.team_id,
+        requestedTeamId: teamId,
+      })
       return new Response(
         JSON.stringify({ error: 'Invitation is not for this team' }),
         {

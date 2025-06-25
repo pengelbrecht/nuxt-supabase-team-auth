@@ -8,12 +8,24 @@ import { navigateTo } from '#app'
 export default defineNuxtRouteMiddleware(async (to) => {
   const { currentUser, currentTeam, currentRole, isLoading } = useTeamAuth()
 
-  // Wait for auth state to load
+  // More efficient auth loading wait with early exit
   if (isLoading.value) {
     let attempts = 0
-    while (isLoading.value && attempts < 50) {
+    const maxAttempts = 20 // 2 seconds max (20 * 100ms)
+
+    while (isLoading.value && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 100))
       attempts++
+
+      // Early exit if we have enough data for team decisions
+      if (currentUser.value !== undefined && currentTeam.value !== undefined) {
+        break
+      }
+    }
+
+    // If still loading after timeout, proceed anyway to avoid hanging
+    if (isLoading.value && attempts >= maxAttempts) {
+      console.warn('[Team Auth] Auth loading timeout in require-team middleware, proceeding anyway')
     }
   }
 
@@ -54,12 +66,24 @@ export function createTeamAccessMiddleware(options: {
   return defineNuxtRouteMiddleware(async (to) => {
     const { currentUser, currentTeam, currentRole, isLoading } = useTeamAuth()
 
-    // Wait for auth state to load
+    // More efficient auth loading wait with early exit
     if (isLoading.value) {
       let attempts = 0
-      while (isLoading.value && attempts < 50) {
+      const maxAttempts = 20 // 2 seconds max (20 * 100ms)
+
+      while (isLoading.value && attempts < maxAttempts) {
         await new Promise(resolve => setTimeout(resolve, 100))
         attempts++
+
+        // Early exit if we have enough data for team decisions
+        if (currentUser.value !== undefined && currentTeam.value !== undefined) {
+          break
+        }
+      }
+
+      // If still loading after timeout, proceed anyway to avoid hanging
+      if (isLoading.value && attempts >= maxAttempts) {
+        console.warn('[Team Auth] Auth loading timeout in require-team custom middleware, proceeding anyway')
       }
     }
 

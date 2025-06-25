@@ -408,25 +408,59 @@ const endImpersonation = async () => {
 </template>
 ```
 
-## Database Setup
+## Database & Edge Functions Setup
 
-The module requires specific Supabase database tables and policies:
+The module requires both database schema and Edge Functions to be deployed to your Supabase project:
 
-### Required Tables
+### Required Database Tables
 
 - `teams` - Team information
 - `team_members` - Team membership and roles  
 - `profiles` - User profile data
 - `impersonation_sessions` - Audit log for impersonation
 
+### Required Edge Functions
+
+The module depends on 7 Edge Functions for team management and authentication:
+
+- `create-team-and-owner` - Team creation and OAuth signup
+- `accept-invite` - Team invitation acceptance
+- `invite-member` - Send team invitations
+- `revoke-invitation` - Cancel invitations
+- `get-pending-invitations` - List pending invites
+- `transfer-ownership` - Transfer team ownership
+- `stop-impersonation` - Super admin impersonation
+
 ### Setup Commands
 
+**For Local Development:**
 ```bash
-# Initialize database (apply migrations)
-supabase db reset
+# Start Supabase locally
+supabase start
 
-# Or manually apply migrations from your migrations directory
+# Apply database migrations
+supabase db reset
 ```
+
+**For Production/Cloud Deployment:**
+```bash
+# Link to your Supabase project
+supabase link --project-ref your-project-ref
+
+# Apply database migrations
+supabase db push
+
+# Deploy ALL Edge Functions (required!)
+supabase functions deploy
+
+# Or deploy individual functions:
+supabase functions deploy create-team-and-owner
+supabase functions deploy accept-invite
+supabase functions deploy invite-member
+# ... (deploy all 7 functions)
+```
+
+**⚠️ Important:** Both database migrations AND Edge Functions must be deployed for the module to work correctly. Missing Edge Functions will result in 404 errors when using team management features.
 
 ## Team Management Examples
 

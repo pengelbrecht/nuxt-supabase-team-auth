@@ -1,10 +1,69 @@
 {
-  "meta": {
-    "generatedAt": "2025-06-10T12:59:47.245Z",
-    "tasksAnalyzed": 0,
-    "thresholdScore": 5,
-    "projectName": "Taskmaster",
-    "usedResearch": false
-  },
-  "complexityAnalysis": []
+	"meta": {
+		"generatedAt": "2025-06-25T15:13:59.500Z",
+		"tasksAnalyzed": 7,
+		"totalTasks": 31,
+		"analysisCount": 7,
+		"thresholdScore": 5,
+		"projectName": "Taskmaster",
+		"usedResearch": false
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 37,
+			"taskTitle": "Roadmap - Future Enhancements",
+			"complexityScore": 3,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "This is already appropriately expanded as a container task with 15 well-defined subtasks covering CLI tools, i18n, documentation, MFA, performance optimization, repository setup, testing, and security hardening.",
+			"reasoning": "This is a container task that serves as a collection point for future enhancements. It's already well-expanded with 15 detailed subtasks covering various aspects like CLI tools, internationalization, documentation, MFA, performance optimization, and testing. No further expansion needed as it effectively organizes future work."
+		},
+		{
+			"taskId": 38,
+			"taskTitle": "Develop Unit Tests for Middleware Functions",
+			"complexityScore": 6,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Task is already well-expanded with 8 specific subtasks covering different middleware testing scenarios including protected routes, admin routes, team validation, owner-only routes, impersonation blocking, nested requirements, optional parameters, and concurrent execution.",
+			"reasoning": "Medium complexity task focused on testing middleware functions in isolation. Already has 8 well-defined subtasks covering specific testing scenarios. The task is appropriately scoped and expanded for implementation."
+		},
+		{
+			"taskId": 42,
+			"taskTitle": "Set Up Module Distribution and Release Management",
+			"complexityScore": 7,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Task is already comprehensively expanded with 6 subtasks covering package.json configuration, semantic versioning, GitHub Actions workflow, changelog generation, test project updates, and end-to-end validation pipeline.",
+			"reasoning": "High complexity task involving distribution pipeline setup with GitHub releases, package publishing, and automated workflows. Already has 6 detailed subtasks covering all aspects of the distribution process from package configuration to validation pipeline."
+		},
+		{
+			"taskId": 43,
+			"taskTitle": "Complete CLI Tool Functionality for Module Distribution",
+			"complexityScore": 8,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Task is already well-structured with 5 subtasks covering CLI audit, core command implementation, database migration commands, distribution configuration, and help system documentation.",
+			"reasoning": "High complexity task requiring CLI tool completion with multiple commands, database integration, and package distribution. Already has 5 comprehensive subtasks that break down the work into manageable pieces covering audit, implementation, and distribution aspects."
+		},
+		{
+			"taskId": 44,
+			"taskTitle": "Complete and Test Social Authentication (Google OAuth) Integration",
+			"complexityScore": 8,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Task is already well-expanded with 5 subtasks covering callback handler creation, team creation flow, login flow verification, profile integration, and comprehensive end-to-end testing.",
+			"reasoning": "High complexity task involving OAuth integration with team system and profile management. Already has 5 detailed subtasks that logically progress from callback handler implementation to complete integration testing. The breakdown covers all necessary components."
+		},
+		{
+			"taskId": 45,
+			"taskTitle": "Implement Invitation Flow Password Setting and Forgot Password Functionality",
+			"complexityScore": 7,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Task is already appropriately expanded with 5 subtasks covering auth confirmation page, password setup form, social OAuth integration, forgot password flow, and email template configuration.",
+			"reasoning": "Medium-high complexity task involving multiple authentication flows and email integration. Already has 5 well-defined subtasks that cover the complete invitation and password reset functionality from confirmation handling to error management."
+		},
+		{
+			"taskId": 46,
+			"taskTitle": "Complete Invitation Flow with Password Setting Functionality",
+			"complexityScore": 6,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down this task into subtasks covering: 1) Accept invite page creation with token validation, 2) Password setting form implementation, 3) Social account linking during invitation, and 4) Integration testing and flow completion.",
+			"reasoning": "Medium complexity task that overlaps significantly with Task 45 but focuses on the invitation acceptance flow specifically. Currently has no subtasks but should be broken down into 4 logical components to make implementation manageable and avoid confusion with the similar Task 45."
+		}
+	]
 }
