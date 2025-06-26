@@ -70,50 +70,6 @@ export type Database = {
         }
         Relationships: []
       }
-      invites: {
-        Row: {
-          created_at: string
-          email: string
-          expires_at: string
-          id: string
-          invited_by: string | null
-          role: Database['public']['Enums']['team_role']
-          status: string
-          team_id: string
-          token_hash: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          expires_at: string
-          id?: string
-          invited_by?: string | null
-          role?: Database['public']['Enums']['team_role']
-          status?: string
-          team_id: string
-          token_hash: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          expires_at?: string
-          id?: string
-          invited_by?: string | null
-          role?: Database['public']['Enums']['team_role']
-          status?: string
-          team_id?: string
-          token_hash?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'invites_team_id_fkey'
-            columns: ['team_id']
-            isOneToOne: false
-            referencedRelation: 'teams'
-            referencedColumns: ['id']
-          },
-        ]
-      }
       profiles: {
         Row: {
           avatar_url: string | null

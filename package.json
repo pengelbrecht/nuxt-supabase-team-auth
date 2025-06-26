@@ -18,8 +18,7 @@
   "files": [
     "dist",
     "runtime",
-    "migrations",
-    "functions"
+    "supabase"
   ],
   "scripts": {
     "build": "nuxt-module-build build",
@@ -42,6 +41,13 @@
     "types:generate": "supabase gen types typescript --local > src/runtime/types/database.types.ts",
     "types:check": "supabase gen types typescript --local | diff - src/runtime/types/database.types.ts",
     "types:update": "npm run types:generate && echo 'Supabase types updated! Consider running: npm run lint:fix'",
+    "db:start": "supabase start",
+    "db:reset": "supabase db reset --debug",
+    "db:clean": "psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -c \"SELECT cleanup_all_test_data();\"",
+    "db:clean-team": "node -e \"const teamId = process.argv[1]; if (!teamId) { console.log('Usage: pnpm db:clean-team <team-id>'); process.exit(1); } const { execSync } = require('child_process'); execSync(\\`psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -c \\\"SELECT cleanup_test_team('\\${teamId}');\\\"\\`, { stdio: 'inherit' });\"",
+    "db:status": "supabase status",
+    "cleanup": "pnpm db:clean",
+    "cleanup:all": "pnpm db:reset",
     "prepack": "nuxt-module-build build",
     "prepare": "nuxt-module-build build --stub"
   },

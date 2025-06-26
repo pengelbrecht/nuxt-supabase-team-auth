@@ -730,7 +730,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       }
     },
 
-    resendInvite: async (inviteId: string): Promise<void> => {
+    resendInvite: async (userId: string): Promise<void> => {
       if (!currentTeam.value) {
         throw new Error('No current team available')
       }
@@ -738,30 +738,23 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       try {
         authState.value = { ...authState.value, loading: true }
 
-        // Get the original invite
-        const { data: invite, error: fetchError } = await getClient()
-          .from('invites')
-          .select('email, role')
-          .eq('id', inviteId)
-          .eq('team_id', currentTeam.value.id)
-          .single()
+        // Get pending invitations from Supabase auth system
+        const pendingInvitations = await this.getPendingInvitations()
 
-        if (fetchError || !invite) {
-          throw { code: 'INVITE_NOT_FOUND', message: 'Invite not found' }
+        // Find the specific invitation by user ID
+        const invitation = pendingInvitations.find(inv => inv.id === userId)
+
+        if (!invitation) {
+          throw { code: 'INVITE_NOT_FOUND', message: 'Invitation not found' }
         }
 
-        // Delete the old invite
-        const { error: deleteError } = await getClient()
-          .from('invites')
-          .delete()
-          .eq('id', inviteId)
+        // Revoke the old invitation
+        await this.revokeInvite(userId)
 
-        if (deleteError) {
-          throw { code: 'DELETE_INVITE_FAILED', message: deleteError.message }
-        }
-
-        // Create a new invite using the invite member method
-        await this.inviteMember(invite.email, invite.role)
+        // Create a new invitation using the invite member method
+        // Extract role from user metadata or default to 'member'
+        const role = invitation.user_metadata?.team_role || 'member'
+        await this.inviteMember(invitation.email, role)
       }
       catch (error: unknown) {
         console.error('Resend invite failed:', error)
@@ -919,29 +912,30 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       try {
         authState.value = { ...authState.value, loading: true }
 
-        // Check if there are other members
-        const { data: members, error: membersError } = await getClient()
-          .from('team_members')
-          .select('user_id')
-          .eq('team_id', currentTeam.value.id)
-          .neq('user_id', currentUser.value?.id)
+        // Use the comprehensive delete-team Edge Function
+        const headers = await createAuthHeaders()
+        const response = await fetch(`${process.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-team`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            team_id: currentTeam.value.id,
+            confirm_deletion: true,
+          }),
+        })
 
-        if (membersError) {
-          throw { code: 'CHECK_MEMBERS_FAILED', message: membersError.message }
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw {
+            code: errorData.error || 'DELETE_TEAM_FAILED',
+            message: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+          }
         }
 
-        if (members && members.length > 0) {
-          throw { code: 'TEAM_HAS_MEMBERS', message: 'Cannot delete team with other members. Remove all members first.' }
-        }
+        const result = await response.json()
 
-        // Delete the team
-        const { error } = await getClient()
-          .from('teams')
-          .delete()
-          .eq('id', currentTeam.value.id)
-
-        if (error) {
-          throw { code: 'DELETE_TEAM_FAILED', message: error.message }
+        // Log deletion summary for debugging
+        if (result.members_removed > 0) {
+          console.log(`Team deletion completed: ${result.members_removed} members removed, team "${result.deleted_team.name}" deleted`)
         }
 
         // Reset team-related state
