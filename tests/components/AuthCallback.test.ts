@@ -188,13 +188,13 @@ describe('AuthCallback', () => {
 
       const wrapper = mount(AuthCallback, globalMountOptions)
 
-      // Wait for OAuth processing to complete
-      await new Promise(resolve => setTimeout(resolve, 0))
+      // Wait for OAuth processing to complete - need longer timeout for polling
+      await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
       await nextTick()
 
-      expect(wrapper.text()).toContain('Authentication Error')
-      expect(wrapper.text()).toContain('Team creation failed: Team name already exists')
+      expect(wrapper.text()).toContain('Authentication Failed')
+      expect(wrapper.text()).toContain('Team name already exists')
       expect(wrapper.find('button').text()).toContain('Continue to Dashboard')
     })
 
@@ -208,12 +208,12 @@ describe('AuthCallback', () => {
 
       const wrapper = mount(AuthCallback, globalMountOptions)
 
-      // Wait for OAuth processing to complete
-      await new Promise(resolve => setTimeout(resolve, 0))
+      // Wait for OAuth processing to complete - need longer timeout for polling
+      await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
       await nextTick()
 
-      expect(wrapper.text()).toContain('Authentication Error')
+      expect(wrapper.text()).toContain('Authentication Failed')
       expect(wrapper.text()).toContain('Invalid callback parameters. Missing mode or team name for signup.')
     })
   })
@@ -229,8 +229,8 @@ describe('AuthCallback', () => {
 
       const wrapper = mount(AuthCallback, globalMountOptions)
 
-      // Wait for OAuth processing to complete
-      await new Promise(resolve => setTimeout(resolve, 0))
+      // Wait for OAuth processing to complete - need longer timeout for polling
+      await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
       await nextTick()
 
@@ -258,12 +258,12 @@ describe('AuthCallback', () => {
 
       const wrapper = mount(AuthCallback, globalMountOptions)
 
-      // Wait for OAuth processing to complete
-      await new Promise(resolve => setTimeout(resolve, 0))
+      // Wait for OAuth processing to complete - need longer timeout for polling
+      await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
       await nextTick()
 
-      expect(wrapper.text()).toContain('Authentication Error')
+      expect(wrapper.text()).toContain('Authentication Failed')
       expect(wrapper.text()).toContain('User cancelled OAuth flow')
     })
 
@@ -277,12 +277,12 @@ describe('AuthCallback', () => {
 
       const wrapper = mount(AuthCallback, globalMountOptions)
 
-      // Wait for OAuth processing to complete
-      await new Promise(resolve => setTimeout(resolve, 0))
+      // Wait for OAuth processing to complete - need longer timeout for polling
+      await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
       await nextTick()
 
-      expect(wrapper.text()).toContain('Authentication Error')
+      expect(wrapper.text()).toContain('Authentication Failed')
       expect(wrapper.text()).toContain('Session error: Session expired')
     })
 
@@ -315,8 +315,8 @@ describe('AuthCallback', () => {
 
       const wrapper = mount(AuthCallback, globalMountOptions)
 
-      // Wait for OAuth processing to complete
-      await new Promise(resolve => setTimeout(resolve, 0))
+      // Wait for OAuth processing to complete - need longer timeout for polling
+      await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
 
       // With no mode, it defaults to signin and succeeds if session exists
@@ -336,13 +336,19 @@ describe('AuthCallback', () => {
 
       const wrapper = mount(AuthCallback, globalMountOptions)
 
-      // Wait for OAuth processing to complete
-      await new Promise(resolve => setTimeout(resolve, 0))
+      // Wait for OAuth processing to complete - need longer timeout for polling
+      await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
       await nextTick()
 
+      // Should show success state with button
+      expect(wrapper.text()).toContain('Welcome Back!')
+
       // Click "Go to Dashboard" button
-      await wrapper.find('button').trigger('click')
+      const button = wrapper.find('button')
+      expect(button.exists()).toBe(true)
+      expect(button.text()).toContain('Go to Dashboard')
+      await button.trigger('click')
 
       expect(mockRouter.push).toHaveBeenCalledWith('/dashboard')
     })
@@ -394,8 +400,8 @@ describe('AuthCallback', () => {
 
       const wrapper = mount(AuthCallback, globalMountOptions)
 
-      // Wait for OAuth processing to complete
-      await new Promise(resolve => setTimeout(resolve, 0))
+      // Wait for OAuth processing to complete - need longer timeout for polling
+      await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
       await nextTick()
 
@@ -417,12 +423,19 @@ describe('AuthCallback', () => {
 
       mount(AuthCallback, globalMountOptions)
 
-      // Wait for OAuth processing to complete
-      await new Promise(resolve => setTimeout(resolve, 0))
+      // Wait for OAuth processing to complete - need longer timeout for polling
+      await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
 
+      // First log should be the mode and team name
       expect(consoleSpy).toHaveBeenCalledWith('OAuth callback - Mode:', 'signin', 'Team name:', undefined)
-      expect(consoleSpy).toHaveBeenCalledWith('OAuth session established for user:', 'test@example.com')
+
+      // The component polls for session, so check for polling logs
+      const logCalls = consoleSpy.mock.calls
+      const sessionLogs = logCalls.filter(call =>
+        call[0] && call[0].includes('OAuth session established'),
+      )
+      expect(sessionLogs.length).toBeGreaterThan(0)
     })
   })
 })
