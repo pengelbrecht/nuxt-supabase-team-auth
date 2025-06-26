@@ -462,6 +462,150 @@ supabase functions deploy invite-member
 
 **⚠️ Important:** Both database migrations AND Edge Functions must be deployed for the module to work correctly. Missing Edge Functions will result in 404 errors when using team management features.
 
+## CLI Commands
+
+The module includes a `team-auth` CLI to simplify database setup and development tasks. The CLI is automatically available after installing the module.
+
+### Installation & Setup Commands
+
+#### `team-auth init`
+
+Initialize the module in your Supabase project by copying migrations and Edge Functions:
+
+```bash
+# Initialize in a new Supabase project
+team-auth init
+
+# Force overwrite existing files
+team-auth init --force
+```
+
+**What it does:**
+- Copies all required database migrations to `supabase/migrations/`
+- Copies all Edge Functions to `supabase/functions/`
+- Detects conflicting tables and warns before proceeding
+- Sets up version tracking for future updates
+- Adds npm script shortcuts to your `package.json`
+
+**Prerequisites:**
+- Must be run from a Supabase project directory (with `supabase/config.toml`)
+- Run `supabase init` first if starting fresh
+
+#### `team-auth migrate`
+
+Apply new migrations when updating the module:
+
+```bash
+# Check and apply new migrations
+team-auth migrate
+
+# Preview what would be applied without making changes
+team-auth migrate --dry-run
+```
+
+**What it does:**
+- Compares your current module version with installed version
+- Copies only new migration files and Edge Functions
+- Updates version tracking to prevent duplicate applications
+- Automatically applies migrations to local database if Supabase is running
+
+### Development & Debugging Commands
+
+#### `team-auth cleanup`
+
+Clean up test data and manage teams during development:
+
+```bash
+# Reset entire database (like supabase db reset)
+team-auth cleanup --all
+
+# Clean only test users (emails ending with @example.com)
+team-auth cleanup --test-data
+
+# Delete a specific team by ID
+team-auth cleanup --team 12345678-1234-1234-1234-123456789abc
+```
+
+**Safety features:**
+- Confirmation prompts for destructive operations
+- UUID validation for team IDs
+- Uses specialized Edge Functions to bypass RLS constraints
+
+#### `team-auth db`
+
+Inspect your database and Supabase services:
+
+```bash
+# Show Supabase services status
+team-auth db --status
+
+# List all teams in the database
+team-auth db --teams
+
+# List all users (limited to 50 for performance)
+team-auth db --users
+```
+
+### Usage Examples
+
+**Setting up a new project:**
+```bash
+# 1. Create Supabase project
+supabase init
+
+# 2. Initialize team-auth
+team-auth init
+
+# 3. Start local development
+supabase start
+
+# 4. Verify setup
+team-auth db --status
+```
+
+**Updating to a new module version:**
+```bash
+# 1. Update the npm package
+pnpm update nuxt-supabase-team-auth
+
+# 2. Apply new migrations
+team-auth migrate
+
+# 3. Deploy to production when ready
+supabase db push
+supabase functions deploy
+```
+
+**Development workflow:**
+```bash
+# Clean test data between tests
+team-auth cleanup --test-data
+
+# Check what's in the database
+team-auth db --teams
+team-auth db --users
+
+# Delete problematic test team
+team-auth cleanup --team <team-id>
+```
+
+### Integration with package.json
+
+After running `team-auth init`, a convenience script is added to your `package.json`:
+
+```json
+{
+  "scripts": {
+    "team-auth:migrate": "team-auth migrate"
+  }
+}
+```
+
+This allows team members to easily apply migrations:
+```bash
+pnpm run team-auth:migrate
+```
+
 ## Team Management Examples
 
 ### Basic Team Operations
