@@ -40,13 +40,34 @@
       </UButton>
     </UDropdownMenu>
 
-    <!-- Settings Modal -->
-    <SettingsModal
-      v-model="showSettingsModal"
-      :tab="settingsTab"
-      @saved="handleSettingsSaved"
-      @error="handleSettingsError"
-    />
+    <!-- Profile Settings Dialog -->
+    <FormDialog
+      v-model="showProfileDialog"
+      title="Edit Profile"
+      subtitle="Manage your personal profile information and account settings"
+      :has-changes="profileHasChanges"
+      :loading="profileLoading"
+      save-text="Save Changes"
+      @save="handleProfileSave"
+      @close="handleProfileClose"
+      @cancel="handleProfileCancel"
+    >
+      <UserProfileForm
+        ref="profileFormRef"
+        :is-modal="true"
+        @saved="handleProfileSaved"
+        @error="handleSettingsError"
+      />
+    </FormDialog>
+
+    <!-- Impersonation Dialog -->
+    <DialogBox
+      v-model="showImpersonationDialog"
+      title="Start Impersonation"
+      subtitle="Select a user to impersonate for support and debugging purposes"
+    >
+      <SuperAdminImpersonationContent />
+    </DialogBox>
 
     <!-- Company Settings Dialog -->
     <CompanySettingsDialog
@@ -67,9 +88,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
-import SettingsModal from './SettingsModal.vue'
 import CompanySettingsDialog from './CompanySettingsDialog.vue'
 import TeamMembersDialog from './TeamMembersDialog.vue'
+import UserProfileForm from './UserProfileForm.vue'
+import SuperAdminImpersonationContent from './SuperAdminImpersonationContent.vue'
 
 // Props
 interface Props {
@@ -98,10 +120,12 @@ const {
 } = useTeamAuth()
 
 // Modal state
-const showSettingsModal = ref(false)
-const settingsTab = ref<'profile' | 'impersonation'>('profile')
+const showProfileDialog = ref(false)
+const showImpersonationDialog = ref(false)
 const showCompanySettingsDialog = ref(false)
 const showTeamMembersDialog = ref(false)
+const profileFormRef = ref<InstanceType<typeof UserProfileForm> | null>(null)
+const profileLoading = ref(false)
 
 // Computed properties - ensure consistent SSR/client rendering
 const avatarFallback = computed(() => {
@@ -124,10 +148,13 @@ const isSuperAdmin = computed(() => {
   return currentRole.value === 'super_admin'
 })
 
+const profileHasChanges = computed(() => {
+  return profileFormRef.value?.hasChanges || false
+})
+
 // Modal handlers
 const openProfileSettings = () => {
-  settingsTab.value = 'profile'
-  showSettingsModal.value = true
+  showProfileDialog.value = true
 }
 
 const openCompanySettings = () => {
@@ -139,12 +166,38 @@ const openTeamMembers = () => {
 }
 
 const openImpersonationSettings = () => {
-  settingsTab.value = 'impersonation'
-  showSettingsModal.value = true
+  showImpersonationDialog.value = true
 }
 
-const handleSettingsSaved = (_data: any) => {
+const handleProfileSave = async () => {
+  if (!profileFormRef.value) return
+
+  try {
+    profileLoading.value = true
+    await profileFormRef.value.handleSubmit()
+  }
+  catch (error: any) {
+    console.error('Profile save failed:', error)
+  }
+  finally {
+    profileLoading.value = false
+  }
+}
+
+const handleProfileClose = () => {
+  // Form will handle resetting if needed
+}
+
+const handleProfileCancel = () => {
+  // Reset form to original values and close
+  if (profileFormRef.value) {
+    // Form will handle resetting itself
+  }
+}
+
+const handleProfileSaved = (_data: any) => {
   // Profile updates automatically via reactive state in composable
+  showProfileDialog.value = false
 }
 
 const handleCompanySettingsSaved = (_data: any) => {
@@ -264,7 +317,7 @@ const dropdownItems = computed(() => {
 // Watch for successful impersonation to close modal
 watch(justStartedImpersonation, (newValue, _oldValue) => {
   if (newValue) {
-    showSettingsModal.value = false
+    showImpersonationDialog.value = false
     clearSuccessFlag()
   }
 })

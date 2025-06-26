@@ -213,7 +213,10 @@
       />
     </UFormField>
 
-    <UFormField label="Role">
+    <UFormField
+      label="Role"
+      class="mb-4"
+    >
       <USelect
         v-model="inviteRole"
         :items="getInviteRoleOptions"
@@ -224,8 +227,8 @@
   </ActionDialog>
 
   <!-- Confirmation Modal for Member Deletion -->
-  <ConfirmationModal
-    v-model:open="showConfirmModal"
+  <ConfirmDialog
+    v-model="showConfirmModal"
     title="Remove Team Member"
     :message="`Are you sure you want to remove ${memberToDelete?.profile?.full_name || memberToDelete?.profile?.email || 'this member'} from the team? This action cannot be undone.`"
     cancel-text="Cancel"
@@ -250,7 +253,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import type { Profile } from '../types'
-import ConfirmationModal from './ConfirmationModal.vue'
+import ConfirmDialog from './ConfirmDialog.vue'
 import EditUserModal from './EditUserModal.vue'
 import RoleBadge from './RoleBadge.vue'
 

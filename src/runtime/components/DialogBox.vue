@@ -17,32 +17,19 @@
           >
             {{ subtitle }}
           </p>
+          <!-- Fixed height unsaved changes indicator -->
+          <div class="h-5 mt-1 flex items-center">
+            <span
+              v-if="hasChanges && showChangeIndicator"
+              class="text-sm text-amber-600 dark:text-amber-400 font-medium"
+            >
+              You have unsaved changes
+            </span>
+          </div>
         </div>
         <div class="flex items-center gap-3 ml-4">
-          <!-- Status indicators -->
-          <span
-            v-if="hasChanges && showChangeIndicator"
-            class="text-sm text-amber-600 dark:text-amber-400 font-medium"
-          >
-            You have unsaved changes
-          </span>
-
-          <!-- Custom actions slot -->
-          <slot name="actions">
-            <!-- Default save button for forms -->
-            <UButton
-              v-if="showSaveButton"
-              color="primary"
-              variant="solid"
-              size="md"
-              :loading="loading"
-              :disabled="loading || (requireChanges && !hasChanges)"
-              class="min-w-[120px]"
-              @click="$emit('save')"
-            >
-              {{ saveText }}
-            </UButton>
-          </slot>
+          <!-- Custom actions slot (for non-form dialogs) -->
+          <slot name="actions" />
 
           <!-- Close button -->
           <UButton
@@ -60,6 +47,29 @@
     <template #body>
       <div :class="bodyClass">
         <slot />
+      </div>
+
+      <!-- Bottom action buttons for forms -->
+      <div
+        v-if="showSaveButton"
+        class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700"
+      >
+        <UButton
+          variant="ghost"
+          :disabled="loading"
+          @click="handleCancel"
+        >
+          {{ cancelText }}
+        </UButton>
+        <UButton
+          color="primary"
+          :disabled="loading || (requireChanges && !hasChanges)"
+          :loading="loading"
+          class="min-w-[120px]"
+          @click="$emit('save')"
+        >
+          {{ saveText }}
+        </UButton>
       </div>
     </template>
   </UModal>
@@ -84,6 +94,8 @@ interface Props {
   showSaveButton?: boolean
   /** Text for save button */
   saveText?: string
+  /** Text for cancel button */
+  cancelText?: string
   /** Show change indicator */
   showChangeIndicator?: boolean
   /** Require changes before enabling save */
@@ -101,6 +113,7 @@ const props = withDefaults(defineProps<Props>(), {
   hasChanges: false,
   showSaveButton: false,
   saveText: 'Save Changes',
+  cancelText: 'Cancel',
   showChangeIndicator: true,
   requireChanges: true,
   preventClose: false,
@@ -113,6 +126,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   'save': []
   'close': []
+  'cancel': []
 }>()
 
 // Computed
@@ -125,6 +139,13 @@ const isOpen = computed({
 const handleClose = () => {
   if (!props.loading && !props.preventClose) {
     emit('close')
+    isOpen.value = false
+  }
+}
+
+const handleCancel = () => {
+  if (!props.loading) {
+    emit('cancel')
     isOpen.value = false
   }
 }

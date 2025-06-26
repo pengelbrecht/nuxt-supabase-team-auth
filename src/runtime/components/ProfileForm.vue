@@ -175,4 +175,10 @@ const getSubmitButtonText = () => {
   if (isProfileSaved.value) return 'Saved!'
   return 'Save Profile'
 }
+
+// Expose methods and properties for parent components
+defineExpose({
+  handleSubmit,
+  hasChanges,
+})
 </script>

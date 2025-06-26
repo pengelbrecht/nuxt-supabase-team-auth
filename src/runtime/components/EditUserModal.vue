@@ -5,6 +5,7 @@
     :subtitle="isLoading ? 'Loading user information...' : undefined"
     :has-changes="hasChanges"
     :loading="isSaving"
+    save-text="Save Changes"
     @save="handleSave"
     @close="handleClose"
   >
@@ -76,7 +77,8 @@ const displayName = computed(() => {
 })
 
 const hasChanges = computed(() => {
-  return formRef.value?.hasChanges || false
+  if (!formRef.value) return false
+  return formRef.value.hasChanges
 })
 
 // Load user profile data for display name

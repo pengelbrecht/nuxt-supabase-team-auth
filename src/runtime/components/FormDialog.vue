@@ -14,6 +14,7 @@
     :ui="ui"
     @save="handleSave"
     @close="handleClose"
+    @cancel="handleCancel"
   >
     <template
       v-if="$slots.actions"
@@ -71,6 +72,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   'save': []
   'close': []
+  'cancel': []
 }>()
 
 // Computed
@@ -90,5 +92,9 @@ const handleSave = () => {
 
 const handleClose = () => {
   emit('close')
+}
+
+const handleCancel = () => {
+  emit('cancel')
 }
 </script>

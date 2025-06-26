@@ -1631,7 +1631,7 @@
             "id": 1,
             "title": "Create Auth Confirmation Page with Token Handling",
             "description": "Implement the `/auth/confirm` page that handles email confirmation links for both invitation confirmations and password reset flows.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "Create `/src/runtime/pages/auth/confirm.vue` page that parses URL parameters to determine token type (invite_confirmation vs password_reset). Use Supabase's `auth.exchangeCodeForSession()` to handle confirmation tokens. Route users to appropriate next steps based on confirmation type - password setup for invitations, password reset form for forgot password flow. Include proper error handling for invalid/expired tokens.",
             "testStrategy": "Test with valid invitation tokens, password reset tokens, expired tokens, and invalid tokens. Verify routing works correctly for different token types."
@@ -1640,7 +1640,7 @@
             "id": 2,
             "title": "Build Password Setup Form for Invited Users",
             "description": "Create a PasswordSetupForm component specifically for users who have been invited to teams and need to set their initial password.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1
             ],
@@ -1651,7 +1651,7 @@
             "id": 3,
             "title": "Add Social OAuth Integration to Password Setup",
             "description": "Extend the password setup flow to allow invited users to link their Google account instead of setting a password.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               2
             ],
@@ -1662,7 +1662,7 @@
             "id": 4,
             "title": "Implement Forgot Password Flow",
             "description": "Add complete forgot password functionality including form, email sending, and password reset confirmation.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1
             ],
@@ -1673,7 +1673,7 @@
             "id": 5,
             "title": "Configure Email Templates and Error Handling",
             "description": "Ensure proper email template configuration and implement comprehensive error handling and UX improvements across all flows.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               2,
               3,
@@ -1687,7 +1687,7 @@
             "title": "Document Google OAuth manual linking for invited users",
             "description": "Update README with documentation for the manual identity linking feature that allows invited users to link Google OAuth to their existing email-based account",
             "details": "After confirming the invitation flow with Google OAuth manual linking works properly, update the project README to document:\n\n1. **Feature Description**: How invited users can choose between password setup or Google OAuth linking\n2. **Supabase Configuration**: Requirement to enable manual linking in Supabase Auth settings (Beta feature)\n3. **Technical Implementation**: Brief explanation of using linkIdentity() vs signInWithOAuth()\n4. **User Flow**: Step-by-step process from invitation email to team membership\n5. **Security Benefits**: How this prevents duplicate accounts and maintains invitation context\n6. **Prerequisites**: Manual linking must be enabled in Supabase dashboard\n\nInclude code examples and configuration screenshots if helpful for module consumers.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 45
           },
@@ -1699,13 +1699,22 @@
             "status": "pending",
             "dependencies": [],
             "parentTaskId": 45
+          },
+          {
+            "id": 8,
+            "title": "Test Complete Password Recovery and Invitation Flows",
+            "description": "Comprehensive testing of all password recovery and invitation acceptance flows to ensure they work correctly in practice, not just in theory.",
+            "details": "Test all password recovery and invitation flows end-to-end:\n\n1. **Forgot Password Flow Testing**:\n   - Test forgot password form submission from sign-in page\n   - Verify email delivery with correct reset link\n   - Test password reset confirmation page (/auth/confirm)\n   - Verify new password setting works and allows sign-in\n   - Test expired/invalid reset tokens\n\n2. **Invitation Password Setup Testing**:\n   - Send team invitation and verify email delivery\n   - Test invitation acceptance with password setup\n   - Verify team membership is activated after password creation\n   - Test password strength validation and requirements\n   - Test user can sign in with new password after setup\n\n3. **OAuth Invitation Linking Testing**:\n   - Test invitation acceptance with Google OAuth linking\n   - Verify profile data merging from Google account\n   - Confirm team membership creation via OAuth path\n   - Test avatar display updates immediately after linking\n\n4. **Edge Cases and Error Handling**:\n   - Test expired invitation tokens\n   - Test invalid confirmation codes\n   - Test self-invitation error handling (subtask 45.7)\n   - Test network failures and retry scenarios\n   - Verify proper error messages are displayed\n\n5. **Integration Testing**:\n   - Test complete invitation workflow: send → email → accept → team access\n   - Verify password recovery works for both regular and OAuth users\n   - Test that security requirements are properly enforced\n   - Confirm no bypass paths exist for credential setup\n\nThis testing is critical since password recovery is a security-sensitive feature that must work correctly in production.\"",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 45
           }
         ]
       }
     ],
     "metadata": {
       "created": "2025-06-18T17:53:26.166Z",
-      "updated": "2025-06-25T15:01:01.214Z",
+      "updated": "2025-06-26T15:24:56.110Z",
       "description": "Tasks for master context"
     }
   }
