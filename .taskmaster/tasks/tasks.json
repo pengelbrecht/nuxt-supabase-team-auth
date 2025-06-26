@@ -1421,7 +1421,7 @@
               1
             ],
             "details": "Configure semantic versioning using conventional commits; set up scripts for version bumping (patch/minor/major); create git tag creation workflow; ensure version in package.json syncs with git tags; add pre-release and beta versioning support.",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": "Test version bump scripts locally and verify git tags are created correctly with proper semver format"
           },
           {
@@ -1432,7 +1432,7 @@
               2
             ],
             "details": "Create .github/workflows/release.yml that triggers on version tags (v*); include steps for: dependency installation, module building, testing, changelog generation from conventional commits, GitHub release creation with built assets, and optional NPM publishing.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test workflow with a pre-release tag to ensure all steps execute correctly without publishing"
           },
           {
@@ -1443,7 +1443,7 @@
               3
             ],
             "details": "Set up conventional-changelog or similar tool for automatic changelog generation; create GitHub release templates in .github/release-template.md; configure categorized changelog sections (Features, Bug Fixes, Breaking Changes); ensure commit message conventions are documented.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": "Generate test changelog from existing commits to verify formatting and categorization"
           },
           {
@@ -1714,7 +1714,7 @@
     ],
     "metadata": {
       "created": "2025-06-18T17:53:26.166Z",
-      "updated": "2025-06-26T21:09:29.203Z",
+      "updated": "2025-06-26T21:15:57.224Z",
       "description": "Tasks for master context"
     }
   }

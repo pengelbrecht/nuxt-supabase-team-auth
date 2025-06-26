@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/pengelbrecht/nuxt-supabase-team-auth#readme
+    about: Check the documentation for usage examples and guides
+  - name: 💬 Discussions
+    url: https://github.com/pengelbrecht/nuxt-supabase-team-auth/discussions
+    about: Ask questions and get help from the community
+  - name: 🔒 Security Vulnerability
+    url: https://github.com/pengelbrecht/nuxt-supabase-team-auth/security/advisories/new
+    about: Report a security vulnerability privately
