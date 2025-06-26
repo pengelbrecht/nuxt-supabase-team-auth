@@ -1397,7 +1397,7 @@
         "description": "Establish comprehensive GitHub-based distribution pipeline with versioned releases, package publishing configuration, and automated workflows to enable public consumption of the Nuxt module.",
         "details": "Configure complete distribution pipeline for the Nuxt module:\n\n1. **GitHub Release Configuration**:\n   - Set up semantic versioning with git tags\n   - Configure GitHub releases with proper changelog generation\n   - Add release notes templates and asset packaging\n\n2. **Package.json Distribution Setup**:\n   - Configure 'files' array to include only necessary distribution files\n   - Set up proper 'main', 'module', and 'types' entry points\n   - Add 'publishConfig' for GitHub Packages or npm registry\n   - Configure 'repository', 'bugs', and 'homepage' fields\n\n3. **GitHub Actions Workflow**:\n   - Create release workflow triggered by version tags\n   - Add automated testing before release\n   - Configure changelog generation from conventional commits\n   - Set up asset building and packaging\n\n4. **Test Project Migration**:\n   - Update ./test-projects/ to install from GitHub releases instead of local file references\n   - Modify package.json dependencies to use GitHub repository URLs with version tags\n   - Add validation scripts to ensure remote installation works correctly\n\n5. **Distribution Validation**:\n   - Create end-to-end test for complete installation flow\n   - Test module loading, component registration, and runtime functionality\n   - Validate TypeScript definitions are properly exported\n   - Ensure all runtime dependencies are correctly specified",
         "testStrategy": "1. Test semantic versioning workflow by creating test tags and verifying GitHub releases are generated correctly. 2. Validate package.json configuration by running 'npm pack' and inspecting the generated tarball contents. 3. Test GitHub Actions workflow in a separate branch to ensure release automation works without affecting main branch. 4. Update test project to install from a test GitHub release and verify all module functionality works identically to local development. 5. Run full test suite against the distributed version to ensure no functionality is lost in packaging. 6. Test installation in a fresh Nuxt project to validate the complete user experience. 7. Verify TypeScript definitions are properly exported by testing import statements and type checking in the test project.",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [
           1,
           5
@@ -1410,7 +1410,7 @@
             "description": "Set up package.json with proper fields for GitHub releases and NPM publishing, including entry points, file inclusions, and repository metadata.",
             "dependencies": [],
             "details": "Update package.json to include: 'files' array specifying src/runtime, dist, and package.json; set 'main' to './dist/module.mjs', 'types' to './dist/types.d.ts'; add 'repository', 'bugs', 'homepage' fields pointing to GitHub; configure 'publishConfig' for registry settings; ensure 'keywords' and 'description' are publication-ready.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Validate package.json structure with npm pack --dry-run to see what files would be included"
           },
           {
@@ -1421,7 +1421,7 @@
               1
             ],
             "details": "Configure semantic versioning using conventional commits; set up scripts for version bumping (patch/minor/major); create git tag creation workflow; ensure version in package.json syncs with git tags; add pre-release and beta versioning support.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": "Test version bump scripts locally and verify git tags are created correctly with proper semver format"
           },
           {
@@ -1714,7 +1714,7 @@
     ],
     "metadata": {
       "created": "2025-06-18T17:53:26.166Z",
-      "updated": "2025-06-26T20:50:09.315Z",
+      "updated": "2025-06-26T21:09:29.203Z",
       "description": "Tasks for master context"
     }
   }

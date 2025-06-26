@@ -1,0 +1,48 @@
+{
+  "types": {
+    "feat": {
+      "title": "🚀 Enhancements",
+      "semver": "minor"
+    },
+    "fix": {
+      "title": "🩹 Fixes",
+      "semver": "patch"
+    },
+    "docs": {
+      "title": "📖 Documentation",
+      "semver": "patch"
+    },
+    "style": {
+      "title": "💅 Refactors",
+      "semver": "patch"
+    },
+    "refactor": {
+      "title": "💅 Refactors",
+      "semver": "patch"
+    },
+    "perf": {
+      "title": "🔥 Performance",
+      "semver": "patch"
+    },
+    "test": {
+      "title": "✅ Tests",
+      "semver": "patch"
+    },
+    "build": {
+      "title": "📦 Build",
+      "semver": "patch"
+    },
+    "ci": {
+      "title": "🤖 CI",
+      "semver": "patch"
+    },
+    "chore": {
+      "title": "🏡 Chore",
+      "semver": "patch"
+    }
+  },
+  "github": {
+    "repo": "pengelbrecht/nuxt-supabase-team-auth"
+  },
+  "output": "CHANGELOG.md"
+}

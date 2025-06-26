@@ -50,11 +50,14 @@
     "cleanup:all": "pnpm db:reset",
     "prepack": "nuxt-module-build build",
     "prepare": "nuxt-module-build build --stub",
-    "version:patch": "npm version patch && git push --follow-tags",
-    "version:minor": "npm version minor && git push --follow-tags",
-    "version:major": "npm version major && git push --follow-tags",
+    "version:patch": "pnpm run validate:package && npm version patch && git push --follow-tags",
+    "version:minor": "pnpm run validate:package && npm version minor && git push --follow-tags",
+    "version:major": "pnpm run validate:package && npm version major && git push --follow-tags",
     "pack:dry": "npm pack --dry-run",
-    "validate:package": "pnpm run pack:dry && pnpm run build"
+    "validate:package": "pnpm run pack:dry && pnpm run build",
+    "changelog": "changelogen --no-commit --no-tag",
+    "changelog:release": "changelogen --release",
+    "version:info": "node scripts/version-info.js"
   },
   "dependencies": {
     "@nuxt/kit": "^3.13.0",
