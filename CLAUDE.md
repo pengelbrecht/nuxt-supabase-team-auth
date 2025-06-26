@@ -72,6 +72,40 @@ public.team_members (
 )
 ```
 
+## CLI Commands and Database Management
+
+### Available CLI Commands
+The module includes a `team-auth` CLI for common development tasks:
+
+```bash
+# Initialize team-auth in new Supabase project
+team-auth init [--force]
+
+# Apply new migrations (after module updates)
+team-auth migrate [--dry-run] 
+
+# Database cleanup for development
+team-auth cleanup --all          # Reset entire database
+team-auth cleanup --test-data    # Clean test users only  
+team-auth cleanup --team <id>    # Delete specific team
+
+# Database inspection
+team-auth db --status    # Show Supabase status
+team-auth db --teams     # List all teams
+team-auth db --users     # List all users
+```
+
+### Development Database Management
+- **Use CLI cleanup commands** instead of manual SQL for consistency
+- **team-auth cleanup --test-data** safely removes users with @example.com emails
+- **team-auth cleanup --team <uuid>** uses Edge Function to bypass RLS constraints
+- **Always backup before cleanup --all** as it runs `supabase db reset`
+
+### Migration Workflow
+1. **team-auth init** copies migrations/functions and sets up version tracking
+2. **team-auth migrate** applies only new migrations from module updates
+3. Version tracking prevents duplicate applications via `.team-auth-version.json`
+
 ## Don't Re-implement
 -  JWT claims parsing (we don't use custom claims)
 -  Profiles table structure 
