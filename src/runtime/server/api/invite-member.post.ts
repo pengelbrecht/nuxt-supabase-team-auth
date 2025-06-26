@@ -45,9 +45,24 @@ export default defineEventHandler(async (event) => {
       data: error.data,
       message: error.message,
     })
+
+    // Extract the error message from the edge function response
+    let errorMessage = 'Failed to invite member'
+
+    if (error.data?.error) {
+      // Edge function returns {error: "message"}
+      errorMessage = error.data.error
+    }
+    else if (error.data?.message) {
+      errorMessage = error.data.message
+    }
+    else if (error.message) {
+      errorMessage = error.message
+    }
+
     throw createError({
       statusCode: error.status || error.statusCode || 500,
-      statusMessage: error.message || 'Failed to invite member',
+      statusMessage: errorMessage,
     })
   }
 })

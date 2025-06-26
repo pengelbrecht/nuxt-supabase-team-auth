@@ -136,7 +136,8 @@ serve(async (req) => {
       }
 
       // Check if user has unconfirmed invitation (email_confirmed_at is null)
-      if (!existingUser.user.email_confirmed_at) {
+      // Fixed: existingUser is the user object directly, not wrapped in .user
+      if (!existingUser.email_confirmed_at) {
         return new Response(
           JSON.stringify({ error: 'User already has a pending invitation' }),
           {
@@ -145,9 +146,72 @@ serve(async (req) => {
           },
         )
       }
+
+      // User exists and is confirmed - check if they're on ANY team
+      const { data: existingTeamMembership } = await supabaseAdmin
+        .from('team_members')
+        .select('team_id')
+        .eq('user_id', existingUser.id)
+        .single()
+
+      if (existingTeamMembership) {
+        return new Response(
+          JSON.stringify({ error: 'This user is already a member of another team' }),
+          {
+            status: 409,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        )
+      }
+
+      // User exists but has no team membership - this shouldn't normally happen
+      // but if it does, we can add them to this team
+      console.log(`Adding existing user ${email} with no team membership to team ${finalTeamId}`)
+
+      const { error: memberError } = await supabaseAdmin
+        .from('team_members')
+        .insert({
+          team_id: finalTeamId,
+          user_id: existingUser.id,
+          role: inviteRole,
+        })
+
+      if (memberError) {
+        return new Response(
+          JSON.stringify({
+            error: 'Failed to add user to team',
+            details: memberError.message,
+          }),
+          {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        )
+      }
+
+      // Get team info for response
+      const { data: team } = await supabaseAdmin
+        .from('teams')
+        .select('name')
+        .eq('id', finalTeamId)
+        .single()
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'User added to team successfully',
+          team: {
+            id: finalTeamId,
+            name: team?.name,
+          },
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
     }
 
-    // Get team info for the invite metadata
+    // Get team info for the invite metadata (for NEW users only)
     const { data: team, error: teamError } = await supabaseAdmin
       .from('teams')
       .select('name')
@@ -164,7 +228,7 @@ serve(async (req) => {
       )
     }
 
-    // Send invite using Supabase's built-in system
+    // Send invite using Supabase's built-in system for NEW users
     const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:3000'
     const redirectUrl = `${siteUrl}/accept-invite?team_id=${finalTeamId}`
 

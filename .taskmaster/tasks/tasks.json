@@ -1695,8 +1695,8 @@
             "id": 7,
             "title": "Fix self-invitation error handling",
             "description": "Improve error handling when users try to invite themselves to their own team. Currently returns 500 error with no UI feedback.",
-            "details": "- Add validation to prevent self-invitations\n- Return proper error message instead of 500\n- Display user-friendly error in UI\n- Consider adding client-side validation as well",
-            "status": "pending",
+            "details": "- Add validation to prevent self-invitations\n- Return proper error message instead of 500\n- Display user-friendly error in UI\n- Consider adding client-side validation as well\n<info added on 2025-06-26T20:55:49.334Z>\nFixed error handling chain to properly display specific error messages from edge function. Updated server API route to extract error messages from {error: \"message\"} format responses and updated useTeamAuth composable to handle multiple error response formats (statusMessage, data.message, data.error). Users now see specific errors like \"User is already a member of this team\" instead of generic \"Failed to send invitation\" messages. Self-invitation validation was already implemented in edge function - the issue was error message propagation through the handling chain.\n</info added on 2025-06-26T20:55:49.334Z>",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 45
           },
@@ -1705,7 +1705,7 @@
             "title": "Test Complete Password Recovery and Invitation Flows",
             "description": "Comprehensive testing of all password recovery and invitation acceptance flows to ensure they work correctly in practice, not just in theory.",
             "details": "Test all password recovery and invitation flows end-to-end:\n\n1. **Forgot Password Flow Testing**:\n   - Test forgot password form submission from sign-in page\n   - Verify email delivery with correct reset link\n   - Test password reset confirmation page (/auth/confirm)\n   - Verify new password setting works and allows sign-in\n   - Test expired/invalid reset tokens\n\n2. **Invitation Password Setup Testing**:\n   - Send team invitation and verify email delivery\n   - Test invitation acceptance with password setup\n   - Verify team membership is activated after password creation\n   - Test password strength validation and requirements\n   - Test user can sign in with new password after setup\n\n3. **OAuth Invitation Linking Testing**:\n   - Test invitation acceptance with Google OAuth linking\n   - Verify profile data merging from Google account\n   - Confirm team membership creation via OAuth path\n   - Test avatar display updates immediately after linking\n\n4. **Edge Cases and Error Handling**:\n   - Test expired invitation tokens\n   - Test invalid confirmation codes\n   - Test self-invitation error handling (subtask 45.7)\n   - Test network failures and retry scenarios\n   - Verify proper error messages are displayed\n\n5. **Integration Testing**:\n   - Test complete invitation workflow: send → email → accept → team access\n   - Verify password recovery works for both regular and OAuth users\n   - Test that security requirements are properly enforced\n   - Confirm no bypass paths exist for credential setup\n\nThis testing is critical since password recovery is a security-sensitive feature that must work correctly in production.\"",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 45
           }
@@ -1714,7 +1714,7 @@
     ],
     "metadata": {
       "created": "2025-06-18T17:53:26.166Z",
-      "updated": "2025-06-26T15:24:56.110Z",
+      "updated": "2025-06-26T20:50:09.315Z",
       "description": "Tasks for master context"
     }
   }

@@ -523,6 +523,34 @@ const handleInviteMember = async () => {
   try {
     isInviteLoading.value = true
 
+    // Client-side validation: check if user is already a member of this team
+    const existingMember = teamMembers.value.find(
+      member => member.profile?.email?.toLowerCase() === inviteEmail.value.toLowerCase(),
+    )
+
+    if (existingMember) {
+      toast.add({
+        title: 'User Already a Member',
+        description: `${inviteEmail.value} is already a member of this team.`,
+        color: 'red',
+      })
+      return
+    }
+
+    // Client-side validation: check if user has a pending invitation
+    const existingInvite = pendingInvitations.value.find(
+      invite => invite.email?.toLowerCase() === inviteEmail.value.toLowerCase(),
+    )
+
+    if (existingInvite) {
+      toast.add({
+        title: 'Invitation Already Sent',
+        description: `${inviteEmail.value} already has a pending invitation.`,
+        color: 'red',
+      })
+      return
+    }
+
     await inviteMember(inviteEmail.value, inviteRole.value)
 
     toast.add({

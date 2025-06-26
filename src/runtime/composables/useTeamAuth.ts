@@ -645,8 +645,22 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       }
       catch (error: any) {
         console.error('Invite member failed:', error)
-        // Make sure we have a proper error message
-        const errorMessage = error?.data?.message || error?.message || 'Failed to send invitation'
+        // Extract error message from various possible sources
+        let errorMessage = 'Failed to send invitation'
+
+        if (error?.data?.message) {
+          errorMessage = error.data.message
+        }
+        else if (error?.statusMessage) {
+          errorMessage = error.statusMessage
+        }
+        else if (error?.message) {
+          errorMessage = error.message
+        }
+        else if (error?.data?.error) {
+          errorMessage = error.data.error
+        }
+
         throw new Error(errorMessage)
       }
       finally {
