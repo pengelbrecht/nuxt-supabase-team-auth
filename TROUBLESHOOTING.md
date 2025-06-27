@@ -63,15 +63,37 @@ export default defineNuxtConfig({
 })
 ```
 
+### Component Import Issues
+
+If components like `SignedIn`, `SignedOut`, or `UserButton` are not being recognized:
+
+1. Ensure `@nuxt/ui` is installed and added to your modules:
+   ```typescript
+   export default defineNuxtConfig({
+     modules: ['@nuxt/ui', 'nuxt-supabase-team-auth']
+   })
+   ```
+
+2. Components are auto-imported, no manual imports needed
+
+3. **If components still aren't recognized after v0.2.0:**
+   - Clear the `.nuxt` directory: `rm -rf .nuxt`
+   - Restart your dev server
+   - Check `.nuxt/types/components.d.ts` to verify components are registered
+
+4. **For v0.2.1+**, components are globally registered with transpilation enabled for better compatibility
+
 ### Available Components
 All components are auto-imported when the module is installed:
 
+- `SignedIn` / `SignedOut` - Conditional rendering based on auth state
 - `UserButton` - User avatar with dropdown menu
 - `AuthSignIn` - Sign-in form
 - `AuthSignUpWithTeam` - Sign-up with team creation
 - `TeamForm` - Team management form  
 - `TeamMembersDialog` - Team member management
 - `ProfileForm` - User profile editing
+- `ImpersonationBanner` - Shows when impersonating users
 - And many more...
 
 ### Configuration Example

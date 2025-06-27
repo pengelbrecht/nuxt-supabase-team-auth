@@ -168,11 +168,19 @@ export default defineNuxtModule<ModuleOptions>({
       },
     ])
 
-    // Add components directory
+    // Add components directory with transpilation
     addComponentsDir({
       path: resolver.resolve('./runtime/components'),
       prefix: '',
+      transpile: true, // Enable transpilation for module components
+      pathPrefix: false, // Don't use path-based prefixes
+      global: true, // Register components globally
     })
+    
+    // Also add to transpile array to ensure proper compilation
+    nuxt.options.build = nuxt.options.build || {}
+    nuxt.options.build.transpile = nuxt.options.build.transpile || []
+    nuxt.options.build.transpile.push(resolver.resolve('./runtime'))
 
     // Add middleware directory
     nuxt.hook('app:resolve', (app) => {
