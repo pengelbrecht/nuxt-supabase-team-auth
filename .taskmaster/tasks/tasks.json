@@ -997,7 +997,7 @@
             "id": 1,
             "title": "Create CLI Tool for Project Initialization and Migrations",
             "description": "Build the team-auth CLI tool for init and migrate commands with automatic Supabase integration",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               2,
               3
@@ -1156,7 +1156,7 @@
             "id": 14,
             "title": "Write Tests for CLI Tool and Module Integration",
             "description": "Create tests for the CLI tool commands (init, migrate), module installation process, and integration with consuming Nuxt applications. Test schema migration workflows, Edge Function deployment, and module configuration in various project setups.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               7,
               28
@@ -1168,7 +1168,7 @@
             "id": 15,
             "title": "Complete Nuxt Module Packaging and Distribution Setup",
             "description": "Finalize the setup for distributing the project as a Nuxt module, including server API route handling, Supabase integration, and TypeScript exports.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1,
               3,
@@ -1397,7 +1397,7 @@
         "description": "Establish comprehensive GitHub-based distribution pipeline with versioned releases, package publishing configuration, and automated workflows to enable public consumption of the Nuxt module.",
         "details": "Configure complete distribution pipeline for the Nuxt module:\n\n1. **GitHub Release Configuration**:\n   - Set up semantic versioning with git tags\n   - Configure GitHub releases with proper changelog generation\n   - Add release notes templates and asset packaging\n\n2. **Package.json Distribution Setup**:\n   - Configure 'files' array to include only necessary distribution files\n   - Set up proper 'main', 'module', and 'types' entry points\n   - Add 'publishConfig' for GitHub Packages or npm registry\n   - Configure 'repository', 'bugs', and 'homepage' fields\n\n3. **GitHub Actions Workflow**:\n   - Create release workflow triggered by version tags\n   - Add automated testing before release\n   - Configure changelog generation from conventional commits\n   - Set up asset building and packaging\n\n4. **Test Project Migration**:\n   - Update ./test-projects/ to install from GitHub releases instead of local file references\n   - Modify package.json dependencies to use GitHub repository URLs with version tags\n   - Add validation scripts to ensure remote installation works correctly\n\n5. **Distribution Validation**:\n   - Create end-to-end test for complete installation flow\n   - Test module loading, component registration, and runtime functionality\n   - Validate TypeScript definitions are properly exported\n   - Ensure all runtime dependencies are correctly specified",
         "testStrategy": "1. Test semantic versioning workflow by creating test tags and verifying GitHub releases are generated correctly. 2. Validate package.json configuration by running 'npm pack' and inspecting the generated tarball contents. 3. Test GitHub Actions workflow in a separate branch to ensure release automation works without affecting main branch. 4. Update test project to install from a test GitHub release and verify all module functionality works identically to local development. 5. Run full test suite against the distributed version to ensure no functionality is lost in packaging. 6. Test installation in a fresh Nuxt project to validate the complete user experience. 7. Verify TypeScript definitions are properly exported by testing import statements and type checking in the test project.",
-        "status": "in-progress",
+        "status": "done",
         "dependencies": [
           1,
           5
@@ -1455,7 +1455,7 @@
               3
             ],
             "details": "Update ./test-projects/*/package.json to reference GitHub repository with version tags (e.g., 'github:user/repo#v1.0.0'); create validation scripts to test installation, module loading, and runtime functionality; add CI step to test against latest release.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Create test script that installs from GitHub release, runs build, and validates all module features work correctly"
           },
           {
@@ -1467,7 +1467,7 @@
               5
             ],
             "details": "Create validation script that: creates a test release, installs module in fresh project, tests component loading and TypeScript definitions, validates runtime functionality, and verifies dependency resolution; add GitHub Actions job to run validation on each release.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run complete validation pipeline with a test release to ensure all distribution aspects work correctly from end to end"
           }
         ]
@@ -1478,7 +1478,7 @@
         "description": "Finish implementing the CLI tool for the nuxt-supabase-team-auth module, including missing commands, testing, and proper package distribution integration.",
         "details": "Complete the CLI tool implementation for the nuxt-supabase-team-auth module:\n\n1. **Review Current CLI Implementation**:\n   - Audit existing CLI code in the codebase to identify incomplete functionality\n   - Document current command structure and identify missing commands\n   - Review CLI entry point configuration and module integration\n\n2. **Implement Missing CLI Commands**:\n   - Implement `init` command to scaffold team auth configuration in target projects\n   - Create database migration commands for setting up required tables and RLS policies\n   - Add `configure` command for setting up Supabase integration and environment variables\n   - Implement validation commands to check project setup and configuration\n\n3. **CLI Command Functionality**:\n   - `team-auth init`: Create necessary config files, add required dependencies\n   - `team-auth migrate`: Run database migrations for profiles, teams, team_members tables\n   - `team-auth configure`: Interactive setup for Supabase URL, anon key, service role\n   - `team-auth validate`: Check configuration completeness and database connectivity\n\n4. **Package Distribution Integration**:\n   - Ensure CLI binary is properly configured in package.json 'bin' field\n   - Set up proper CLI entry point with shebang and executable permissions\n   - Configure build process to include CLI in distribution bundle\n   - Test CLI installation and execution from npm/pnpm install\n\n5. **Documentation and Help System**:\n   - Implement comprehensive help text for each command\n   - Create usage examples and troubleshooting guides\n   - Add command-line argument validation and error messaging\n   - Document CLI integration in module README",
         "testStrategy": "1. **CLI Command Testing**:\n   - Test each CLI command in isolation with various argument combinations\n   - Create test projects and verify `init` command creates correct file structure\n   - Test database migration commands against clean Supabase instances\n   - Verify configuration commands properly handle environment variables\n\n2. **Package Distribution Testing**:\n   - Test CLI installation via `npm pack` and local installation\n   - Verify CLI binary is executable and accessible from PATH\n   - Test CLI functionality after module installation in test projects\n   - Validate help text and error messaging for all commands\n\n3. **Integration Testing**:\n   - Test complete workflow: init -> configure -> migrate -> validate\n   - Verify CLI-generated projects work with the module correctly\n   - Test CLI behavior with existing projects and configuration conflicts\n   - Validate CLI works across different Node.js versions and operating systems\n\n4. **Error Handling Testing**:\n   - Test CLI behavior with invalid Supabase credentials\n   - Verify graceful handling of network errors during migration\n   - Test CLI response to missing dependencies or configuration files",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           1,
           42
@@ -1491,7 +1491,7 @@
             "description": "Review the current CLI codebase to understand what functionality exists and what needs to be implemented or completed.",
             "dependencies": [],
             "details": "Examine src/cli directory structure, analyze existing command definitions, check package.json bin configuration, identify incomplete or missing commands (likely init, migrate, configure, validate), and document the current CLI entry point and module integration patterns.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Manual testing of existing CLI commands and verification of package.json bin field configuration"
           },
           {
@@ -1502,7 +1502,7 @@
               1
             ],
             "details": "Implement 'team-auth init' command to scaffold config files and add dependencies to target projects. Create 'team-auth configure' command for interactive Supabase setup (URL, anon key, service role). Use inquirer or similar for interactive prompts. Handle file creation, environment variable setup, and dependency management.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test commands in fresh Nuxt projects, verify config file creation, validate environment variable setup"
           },
           {
@@ -1513,7 +1513,7 @@
               2
             ],
             "details": "Implement 'team-auth migrate' command to run database migrations for profiles, teams, and team_members tables with RLS policies. Create 'team-auth validate' command to check configuration completeness, database connectivity, and proper setup. Include error handling and informative feedback for setup issues.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test migration commands against local Supabase instances, verify table creation and RLS policies, test validation against various project states"
           },
           {
@@ -1524,7 +1524,7 @@
               3
             ],
             "details": "Configure package.json 'bin' field for CLI binary, set up proper CLI entry point with shebang and executable permissions, ensure build process includes CLI in distribution bundle, test CLI installation via npm/pnpm install, and verify global CLI access after module installation.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test CLI installation from published package, verify global command availability, test in different environments (local install vs global install)"
           },
           {
@@ -1535,7 +1535,7 @@
               4
             ],
             "details": "Implement help text for each command with usage examples, add command-line argument validation with clear error messages, create troubleshooting guides for common issues, document CLI integration in module README with setup workflows, and add version and help flags for the main CLI entry point.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test help text display, validate error message clarity, verify documentation accuracy against actual CLI behavior"
           }
         ]
@@ -1544,7 +1544,7 @@
         "id": 44,
         "title": "Complete and Test Social Authentication (Google OAuth) Integration",
         "description": "Complete the Google OAuth authentication implementation by creating the missing callback handler and ensuring proper integration with the team system and user profile management.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           1,
           3,
@@ -1561,7 +1561,7 @@
             "id": 1,
             "title": "Create Auth Callback Page Handler",
             "description": "Implement the missing `/auth/callback` page to handle Google OAuth returns for both signin and signup flows.",
-            "status": "in-progress",
+            "status": "done",
             "dependencies": [],
             "details": "Create `/auth/callback` page in the module that handles OAuth returns from Google. Parse URL parameters to determine flow type (signin vs signup with team_name). Implement Supabase session exchange to complete authentication. Handle routing logic to direct users to appropriate destinations (dashboard for signin, team setup completion for signup). Ensure proper error handling for OAuth failures and cancellations.",
             "testStrategy": "Test callback page with both signin and signup URL patterns. Verify session exchange works and users are properly authenticated. Test error scenarios and proper error handling."
@@ -1570,7 +1570,7 @@
             "id": 2,
             "title": "Complete Google Signup with Team Creation Flow",
             "description": "Implement team creation logic in the callback handler for Google OAuth signup flows.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1
             ],
@@ -1581,7 +1581,7 @@
             "id": 3,
             "title": "Verify and Test Google Login Flow",
             "description": "Ensure existing Google users can authenticate properly through the callback handler.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1
             ],
@@ -1592,7 +1592,7 @@
             "id": 4,
             "title": "Validate Profile Integration and Avatar Handling",
             "description": "Ensure Google profile data and avatars are properly integrated with the profile system.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               2
             ],
@@ -1603,7 +1603,7 @@
             "id": 5,
             "title": "End-to-End Testing and Documentation",
             "description": "Conduct comprehensive testing of the complete Google OAuth integration and document the implementation.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               2,
               3,
@@ -1618,7 +1618,7 @@
         "id": 45,
         "title": "Complete Invitation Flow with Password Setting and Forgot Password Functionality",
         "description": "Address the critical security gap in the invitation system where invited users can access teams without ever setting up proper authentication credentials. Currently, users invited via email can access the system without passwords or proper account setup, creating a significant security vulnerability. This task implements the complete invitation flow with mandatory password setting and forgot password functionality using Supabase's built-in authentication mechanisms.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           8,
           44
@@ -1710,11 +1710,98 @@
             "parentTaskId": 45
           }
         ]
+      },
+      {
+        "id": 46,
+        "title": "Implement Configurable Social Authentication Providers",
+        "description": "Add configurable social authentication provider support to the nuxt-supabase-team-auth module, allowing consuming apps to enable/disable providers (Google, GitHub) through module configuration with graceful UI degradation.",
+        "status": "done",
+        "dependencies": [
+          4,
+          5
+        ],
+        "priority": "medium",
+        "details": "Create module configuration system in module.ts for social providers with teamAuth.socialProviders.google.enabled and teamAuth.socialProviders.github.enabled options. Update existing components (AuthSignIn.vue, AuthSignUpWithTeam.vue, PasswordSetupForm.vue) to read from module configuration instead of hardcoded props - these components already have conditional rendering with showSocialLogin, googleAuth, githubAuth props. Implement graceful UI degradation by hiding social sections entirely when no providers are enabled, adjusting form layouts and spacing. Create extensible TypeScript configuration interface for future providers (Apple, Microsoft, etc.) in runtime/types. Add composable or utility to provide module configuration to components. Ensure backward compatibility with default behavior: Google enabled, GitHub disabled to match current installations.",
+        "testStrategy": "Unit tests for module configuration parsing and provider validation. Component tests for AuthSignIn, AuthSignUpWithTeam, and PasswordSetupForm with different provider configurations (all enabled, partial, none disabled). Integration tests verifying components read module config correctly. Visual regression tests for UI layouts with different provider combinations. E2E tests for complete authentication flows with various provider configurations. Test backward compatibility with existing nuxt.config.ts files. Verify TypeScript type checking for new configuration options.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create module configuration structure for social providers",
+            "description": "Add teamAuth.socialProviders configuration to module.ts with TypeScript types",
+            "status": "done",
+            "dependencies": [],
+            "details": "Define configuration schema in module.ts with socialProviders.google.enabled and socialProviders.github.enabled options. Create TypeScript interface for provider configuration with extensible structure for future providers. Set defaults: Google enabled, GitHub disabled for backward compatibility.",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Create TypeScript types for provider configuration",
+            "description": "Define interfaces in runtime/types for social provider configuration",
+            "status": "done",
+            "dependencies": [],
+            "details": "Create SocialProviderConfig interface with enabled boolean and future extensibility. Define ModuleOptions interface extension for socialProviders configuration. Export types for use in components and composables.",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Create composable for accessing module configuration",
+            "description": "Add composable to provide module configuration to components",
+            "status": "done",
+            "dependencies": [],
+            "details": "Create useModuleConfig or similar composable that components can use to access socialProviders configuration. Ensure reactive access to configuration values. Handle default values when configuration is not provided.",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Update AuthSignIn.vue component",
+            "description": "Connect existing conditional rendering props to module configuration",
+            "status": "done",
+            "dependencies": [],
+            "details": "Replace hardcoded showSocialLogin, googleAuth, githubAuth props with values from module configuration using the composable. Maintain existing conditional rendering logic. Test that social buttons appear/disappear based on configuration.",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Update AuthSignUpWithTeam.vue component",
+            "description": "Connect existing conditional rendering props to module configuration",
+            "status": "done",
+            "dependencies": [],
+            "details": "Replace hardcoded showSocialLogin, googleAuth, githubAuth props with values from module configuration using the composable. Maintain existing conditional rendering logic. Test that social buttons appear/disappear based on configuration.",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Update PasswordSetupForm.vue component",
+            "description": "Connect existing showSocialLogin prop to module configuration",
+            "status": "done",
+            "dependencies": [],
+            "details": "Replace hardcoded showSocialLogin prop with value from module configuration using the composable. Maintain existing conditional rendering for Google account linking. Test that social linking section appears/disappears based on configuration.",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Implement graceful UI degradation",
+            "description": "Hide social sections entirely when no providers are enabled",
+            "status": "done",
+            "dependencies": [],
+            "details": "Update all three components to hide social authentication sections completely when no providers are enabled. Adjust form layouts and spacing to prevent awkward gaps. Add appropriate messaging or styling when social auth is disabled.",
+            "testStrategy": ""
+          },
+          {
+            "id": 8,
+            "title": "Test backward compatibility",
+            "description": "Verify existing installations continue to work with default behavior",
+            "status": "done",
+            "dependencies": [],
+            "details": "Test that projects without socialProviders configuration continue to work with Google enabled and GitHub disabled. Verify no breaking changes to existing nuxt.config.ts files. Test TypeScript compilation with and without explicit configuration.",
+            "testStrategy": ""
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-06-18T17:53:26.166Z",
-      "updated": "2025-06-26T21:17:50.642Z",
+      "updated": "2025-06-27T11:41:13.595Z",
       "description": "Tasks for master context"
     }
   }

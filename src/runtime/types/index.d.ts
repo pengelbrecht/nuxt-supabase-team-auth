@@ -90,6 +90,28 @@ export interface TeamAuthMethods {
 
 export type TeamAuth = TeamAuthState & TeamAuthMethods
 
+// UserButton Custom Menu Item Types
+export interface CustomMenuItem {
+  /** Display text for the menu item */
+  label: string
+  /** Icon name (e.g., 'i-lucide-settings') */
+  icon?: string
+  /** Internal route to navigate to */
+  to?: string
+  /** External URL to navigate to */
+  href?: string
+  /** Link target (e.g., '_blank') */
+  target?: string
+  /** Custom click handler (overrides navigation) */
+  onSelect?: (event: Event) => void
+  /** Disable the menu item */
+  disabled?: boolean
+  /** Required role to show this item */
+  requiredRole?: 'member' | 'admin' | 'owner' | 'super_admin'
+  /** Add a separator after this item */
+  addSeparator?: boolean
+}
+
 // Module Configuration Types
 export interface TeamAuthModuleConfig {
   supabaseUrl?: string

@@ -352,10 +352,10 @@
   <!-- Confirmation Modal for Member Deletion -->
   <ConfirmDialog
     v-model="showConfirmModal"
-    title="Remove Team Member"
-    :message="`Are you sure you want to remove ${memberToDelete?.profile?.full_name || memberToDelete?.profile?.email || 'this member'} from the team? This action cannot be undone.`"
+    title="Delete Team Member"
+    :message="`Are you sure you want to delete ${memberToDelete?.profile?.full_name || memberToDelete?.profile?.email || 'this member'}? This will permanently delete their account and all associated data. This action cannot be undone.`"
     cancel-text="Cancel"
-    confirm-text="Remove Member"
+    confirm-text="Delete Member"
     confirm-color="red"
     :loading="isDeletingMember"
     @confirm="confirmDeleteMember"
@@ -646,14 +646,14 @@ const getMemberActions = (member: any) => {
 
   // Edit member action
   actions.push({
-    label: 'Edit User',
+    label: 'Edit Member',
     icon: 'i-lucide-edit',
     onSelect: () => handleEditMember(member),
   })
 
   // Delete user action (always show, but disable for current user)
   actions.push({
-    label: 'Delete User',
+    label: 'Delete Member',
     icon: 'i-lucide-trash-2',
     disabled: isCurrentUser || !canDelete,
     onSelect: () => handleRemoveMember(member),
@@ -839,7 +839,7 @@ const handleUserSaved = (_profile: any) => {
   const memberName = member?.profile?.full_name || member?.profile?.email || 'User'
 
   toast.add({
-    title: 'User Updated',
+    title: 'Member Updated',
     description: `${memberName}'s profile has been updated successfully.`,
     color: 'green',
   })

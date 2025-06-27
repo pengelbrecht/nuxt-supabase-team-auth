@@ -12,13 +12,13 @@
       <div class="space-y-8">
         <!-- Search Input -->
         <UFormField
-          label="Search Users"
+          label="Search Team Members"
           name="search"
           class="flex items-center justify-between mb-4 gap-2"
         >
           <UInput
             v-model="searchQuery"
-            placeholder="Search by name, email, or user ID..."
+            placeholder="Search by name, email, or member ID..."
             icon="i-lucide-search"
             size="md"
             :loading="isSearching"

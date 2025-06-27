@@ -148,7 +148,7 @@ const handleSignedUp = () => {
 |-----------|-------------|-----------|---------|
 | `<AuthSignIn />` | Email/password sign-in form | `title`, `subtitle`, `showSocialLogin` | User authentication |
 | `<AuthSignUpWithTeam />` | Sign-up form with team creation | `title`, `subtitle`, `showSocialLogin` | New user onboarding |
-| `<UserButton />` | User avatar with dropdown menu | `size`, `showName` | User menu and settings |
+| `<UserButton />` | User avatar with dropdown menu | `size`, `showName`, `customItems`, `customItemsPosition` | User menu and settings |
 
 ### Conditional Rendering Components  
 
@@ -201,6 +201,13 @@ const handleSignedUp = () => {
   <UserButton :show-name="true" size="md" />
 </SignedIn>
 
+<!-- UserButton with custom menu items -->
+<UserButton 
+  :show-name="true"
+  :custom-items="customMenuItems"
+  custom-items-position="before-signout"
+/>
+
 <!-- Team management -->
 <TeamMembersDialog v-model="showTeamDialog" />
 
@@ -220,6 +227,68 @@ const handleSignedUp = () => {
   <!-- Form content -->
 </FormDialog>
 ```
+
+#### UserButton Custom Menu Items
+
+The `UserButton` component supports custom menu items that integrate seamlessly with the built-in user menu:
+
+```typescript
+// Define your custom menu items
+import type { CustomMenuItem } from 'nuxt-supabase-team-auth'
+
+const customMenuItems: CustomMenuItem[] = [
+  {
+    label: 'Billing & Plans',
+    icon: 'i-lucide-credit-card',
+    to: '/billing',
+    requiredRole: 'admin' // Only show for admins and owners
+  },
+  {
+    label: 'Help & Support',
+    icon: 'i-lucide-help-circle',
+    href: 'https://docs.example.com',
+    target: '_blank'
+  },
+  {
+    label: 'Send Feedback',
+    icon: 'i-lucide-message-circle',
+    onSelect: () => openFeedbackModal(),
+    addSeparator: true // Add separator after this item
+  }
+]
+```
+
+```vue
+<template>
+  <UserButton 
+    :custom-items="customMenuItems"
+    custom-items-position="before-signout"
+    :show-name="true"
+  />
+</template>
+```
+
+**CustomMenuItem Properties:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `label` | `string` | Display text for the menu item |
+| `icon` | `string` | Icon name (e.g., `'i-lucide-settings'`) |
+| `to` | `string` | Internal route to navigate to |
+| `href` | `string` | External URL to navigate to |
+| `target` | `string` | Link target (e.g., `'_blank'`) |
+| `onSelect` | `function` | Custom click handler (overrides navigation) |
+| `disabled` | `boolean` | Disable the menu item |
+| `requiredRole` | `string` | Required role: `'member'`, `'admin'`, `'owner'`, `'super_admin'` |
+| `addSeparator` | `boolean` | Add a separator line after this item |
+
+**Positioning Options:**
+
+- `after-user-info` - After user name/email header
+- `after-main-actions` - After Settings/Company/Team items  
+- `before-signout` - Before sign out section *(default)*
+
+Custom items are automatically filtered based on user roles and integrate seamlessly with the existing menu structure.
 
 ## Composables API
 
