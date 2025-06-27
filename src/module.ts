@@ -79,12 +79,31 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.options.vite = nuxt.options.vite || {}
     nuxt.options.vite.optimizeDeps = nuxt.options.vite.optimizeDeps || {}
     nuxt.options.vite.optimizeDeps.exclude = nuxt.options.vite.optimizeDeps.exclude || []
+    nuxt.options.vite.ssr = nuxt.options.vite.ssr || {}
+    nuxt.options.vite.ssr.noExternal = nuxt.options.vite.ssr.noExternal || []
     
     // Exclude problematic Supabase packages from Vite optimization
     const supabaseExcludes = ['@supabase/postgrest-js', '@supabase/storage-js', '@supabase/realtime-js']
     supabaseExcludes.forEach(pkg => {
       if (!nuxt.options.vite.optimizeDeps.exclude.includes(pkg)) {
         nuxt.options.vite.optimizeDeps.exclude.push(pkg)
+      }
+    })
+    
+    // Add Supabase packages and this module to SSR noExternal to fix ESM/CJS conflicts
+    const noExternalPackages = ['nuxt-supabase-team-auth', '@supabase/supabase-js', ...supabaseExcludes]
+    noExternalPackages.forEach(pkg => {
+      if (!nuxt.options.vite.ssr.noExternal.includes(pkg)) {
+        nuxt.options.vite.ssr.noExternal.push(pkg)
+      }
+    })
+    
+    // Also add to build.transpile as additional safeguard for ESM/CJS issues
+    nuxt.options.build = nuxt.options.build || {}
+    nuxt.options.build.transpile = nuxt.options.build.transpile || []
+    noExternalPackages.forEach(pkg => {
+      if (!nuxt.options.build.transpile.includes(pkg)) {
+        nuxt.options.build.transpile.push(pkg)
       }
     })
 
@@ -177,10 +196,11 @@ export default defineNuxtModule<ModuleOptions>({
       global: true, // Register components globally
     })
     
-    // Also add to transpile array to ensure proper compilation
-    nuxt.options.build = nuxt.options.build || {}
-    nuxt.options.build.transpile = nuxt.options.build.transpile || []
-    nuxt.options.build.transpile.push(resolver.resolve('./runtime'))
+    // Also add to transpile array to ensure proper compilation including Supabase packages
+    // (Note: Supabase packages were added earlier in the module setup)
+    if (!nuxt.options.build.transpile.includes(resolver.resolve('./runtime'))) {
+      nuxt.options.build.transpile.push(resolver.resolve('./runtime'))
+    }
 
     // Add middleware directory
     nuxt.hook('app:resolve', (app) => {

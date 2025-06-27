@@ -32,14 +32,22 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key  # For server operations
 ```
 
 ### ESM/CJS Module Conflicts with postgrest-js
-**Fixed in v0.1.8** - The module now automatically excludes problematic Supabase packages from Vite optimization.
+**Fixed in v0.2.2** - The module now automatically handles all ESM/CJS conflicts with comprehensive Vite configuration.
 
-If you're still seeing import errors, you can manually add to your `nuxt.config.ts`:
+The module automatically configures:
+- `vite.optimizeDeps.exclude` for problematic Supabase packages
+- `vite.ssr.noExternal` for proper SSR bundling
+- `build.transpile` for additional compatibility
+
+If you're still seeing import errors with v0.2.2+, please report it as a bug. For older versions, you can manually add to your `nuxt.config.ts`:
 ```ts
 export default defineNuxtConfig({
   vite: {
     optimizeDeps: {
       exclude: ['@supabase/postgrest-js', '@supabase/storage-js', '@supabase/realtime-js']
+    },
+    ssr: {
+      noExternal: ['nuxt-supabase-team-auth', '@supabase/supabase-js', '@supabase/postgrest-js']
     }
   }
 })
