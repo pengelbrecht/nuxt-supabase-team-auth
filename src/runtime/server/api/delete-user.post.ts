@@ -1,3 +1,4 @@
+import { defineEventHandler, readBody, createError } from 'h3'
 import { createServiceRoleClient, getCurrentUser } from '../utils/supabase'
 
 interface DeleteUserRequest {

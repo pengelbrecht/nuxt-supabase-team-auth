@@ -1,3 +1,6 @@
+import { defineEventHandler, readBody, getHeader, createError, useRuntimeConfig } from 'h3'
+import { $fetch } from 'ofetch'
+
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const authHeader = getHeader(event, 'authorization')
