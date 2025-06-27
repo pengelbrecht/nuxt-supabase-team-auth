@@ -5,7 +5,7 @@ export default defineConfig({
   github: {
     repo: 'pengelbrecht/nuxt-supabase-team-auth',
   },
-  
+
   // Release types and their emoji/titles
   types: {
     feat: { title: '🚀 Features', semver: 'minor' },
@@ -21,28 +21,28 @@ export default defineConfig({
     style: { title: '🎨 Styles' },
     ci: { title: '🤖 CI' },
   },
-  
+
   // Commit message patterns to include/exclude
   excludeAuthors: [
     'dependabot[bot]',
     'renovate[bot]',
     'github-actions[bot]',
   ],
-  
+
   // Output configuration
   output: {
     file: 'CHANGELOG.md',
   },
-  
+
   // Include breaking changes section
   includeBreaking: true,
-  
+
   // Include authors in changelog
   includeAuthors: true,
-  
+
   // Group commits by type
   group: true,
-  
+
   // Use conventional commits
   conventional: {
     // Custom scopes that should be highlighted
