@@ -32,22 +32,25 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key  # For server operations
 ```
 
 ### ESM/CJS Module Conflicts with postgrest-js
-**Fixed in v0.2.2** - The module now automatically handles all ESM/CJS conflicts with comprehensive Vite configuration.
+**Fixed in v0.2.3** - The module now forces all Supabase packages to be external to prevent Vite from bundling them.
 
 The module automatically configures:
-- `vite.optimizeDeps.exclude` for problematic Supabase packages
-- `vite.ssr.noExternal` for proper SSR bundling
-- `build.transpile` for additional compatibility
+- `vite.optimizeDeps.exclude` for all Supabase packages
+- `vite.ssr.external` to force Supabase packages to be handled by Node.js
+- Only transpiles the module itself, not Supabase dependencies
 
-If you're still seeing import errors with v0.2.2+, please report it as a bug. For older versions, you can manually add to your `nuxt.config.ts`:
+This approach prevents the "does not provide an export named 'default'" error by letting Node.js handle Supabase package imports directly.
+
+If you're still seeing import errors with v0.2.3+, please report it as a bug with your package.json dependencies. For older versions, you can manually add to your `nuxt.config.ts`:
 ```ts
 export default defineNuxtConfig({
   vite: {
     optimizeDeps: {
-      exclude: ['@supabase/postgrest-js', '@supabase/storage-js', '@supabase/realtime-js']
+      exclude: ['@supabase/supabase-js', '@supabase/postgrest-js', '@supabase/storage-js', '@supabase/realtime-js']
     },
     ssr: {
-      noExternal: ['nuxt-supabase-team-auth', '@supabase/supabase-js', '@supabase/postgrest-js']
+      external: ['@supabase/supabase-js', '@supabase/postgrest-js', '@supabase/storage-js', '@supabase/realtime-js'],
+      noExternal: ['nuxt-supabase-team-auth']
     }
   }
 })

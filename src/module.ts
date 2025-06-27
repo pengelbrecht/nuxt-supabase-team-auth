@@ -75,30 +75,53 @@ export default defineNuxtModule<ModuleOptions>({
       console.warn(`[nuxt-supabase-team-auth] Warning: @nuxt/ui not found in modules. Please add '@nuxt/ui' to your modules array in nuxt.config.ts for components to work properly.`)
     }
 
-    // Fix ESM/CJS module conflicts for Supabase dependencies
+    // Fix ESM/CJS module conflicts for Supabase dependencies - aggressive approach
     nuxt.options.vite = nuxt.options.vite || {}
     nuxt.options.vite.optimizeDeps = nuxt.options.vite.optimizeDeps || {}
     nuxt.options.vite.optimizeDeps.exclude = nuxt.options.vite.optimizeDeps.exclude || []
     nuxt.options.vite.ssr = nuxt.options.vite.ssr || {}
     nuxt.options.vite.ssr.noExternal = nuxt.options.vite.ssr.noExternal || []
+    nuxt.options.vite.resolve = nuxt.options.vite.resolve || {}
+    nuxt.options.vite.resolve.alias = nuxt.options.vite.resolve.alias || {}
     
-    // Exclude problematic Supabase packages from Vite optimization
+    // Problematic Supabase packages that have ESM/CJS conflicts
     const supabaseExcludes = ['@supabase/postgrest-js', '@supabase/storage-js', '@supabase/realtime-js']
-    supabaseExcludes.forEach(pkg => {
+    
+    // Comprehensive approach: prevent Vite from touching Supabase packages entirely
+    // This forces them to be resolved by Node.js module resolution instead
+    
+    // Exclude ALL Supabase packages from optimization to prevent CJS bundling
+    const allSupabasePackages = ['@supabase/supabase-js', '@supabase/postgrest-js', '@supabase/storage-js', '@supabase/realtime-js', '@supabase/gotrue-js', '@supabase/functions-js']
+    allSupabasePackages.forEach(pkg => {
       if (!nuxt.options.vite.optimizeDeps.exclude.includes(pkg)) {
         nuxt.options.vite.optimizeDeps.exclude.push(pkg)
       }
     })
     
-    // Add Supabase packages and this module to SSR noExternal to fix ESM/CJS conflicts
-    const noExternalPackages = ['nuxt-supabase-team-auth', '@supabase/supabase-js', ...supabaseExcludes]
+    // Force them to be external in SSR - this means Node.js will handle the imports
+    nuxt.options.vite.ssr.external = nuxt.options.vite.ssr.external || []
+    allSupabasePackages.forEach(pkg => {
+      if (!nuxt.options.vite.ssr.external.includes(pkg)) {
+        nuxt.options.vite.ssr.external.push(pkg)
+      }
+    })
+    
+    // Only add our module to noExternal (not the Supabase packages)
+    const noExternalPackages = ['nuxt-supabase-team-auth']
     noExternalPackages.forEach(pkg => {
       if (!nuxt.options.vite.ssr.noExternal.includes(pkg)) {
         nuxt.options.vite.ssr.noExternal.push(pkg)
       }
     })
     
-    // Also add to build.transpile as additional safeguard for ESM/CJS issues
+    // Debug logging for development
+    if (nuxt.options.dev) {
+      console.log('[nuxt-supabase-team-auth] Forcing Supabase packages to be external:', allSupabasePackages)
+      console.log('[nuxt-supabase-team-auth] Vite optimizeDeps.exclude:', nuxt.options.vite.optimizeDeps.exclude.filter(p => p.includes('supabase')))
+      console.log('[nuxt-supabase-team-auth] Vite ssr.external:', nuxt.options.vite.ssr.external)
+    }
+    
+    // Only transpile our module, not Supabase packages (they should be external)
     nuxt.options.build = nuxt.options.build || {}
     nuxt.options.build.transpile = nuxt.options.build.transpile || []
     noExternalPackages.forEach(pkg => {
@@ -106,6 +129,11 @@ export default defineNuxtModule<ModuleOptions>({
         nuxt.options.build.transpile.push(pkg)
       }
     })
+    
+    // Force ESM module resolution for Node.js
+    nuxt.options.nitro = nuxt.options.nitro || {}
+    nuxt.options.nitro.experimental = nuxt.options.nitro.experimental || {}
+    nuxt.options.nitro.experimental.wasm = false // Disable WASM to avoid module issues
 
     // Merge options with runtime config
     // Debug mode hierarchy: explicit option > env var > nuxt dev mode
