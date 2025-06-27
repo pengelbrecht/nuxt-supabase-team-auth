@@ -538,20 +538,20 @@ supabase functions deploy invite-member
 
 ## CLI Commands
 
-The module includes a `team-auth` CLI to simplify database setup and development tasks. The CLI is automatically available after installing the module.
+The module includes a CLI to simplify database setup and development tasks. The CLI is automatically available after installing the module via `npx nuxt-supabase-team-auth`.
 
 ### Installation & Setup Commands
 
-#### `team-auth init`
+#### `npx nuxt-supabase-team-auth init`
 
 Initialize the module in your Supabase project by copying migrations and Edge Functions:
 
 ```bash
 # Initialize in a new Supabase project
-team-auth init
+npx nuxt-supabase-team-auth init
 
 # Force overwrite existing files
-team-auth init --force
+npx nuxt-supabase-team-auth init --force
 ```
 
 **What it does:**
@@ -565,16 +565,16 @@ team-auth init --force
 - Must be run from a Supabase project directory (with `supabase/config.toml`)
 - Run `supabase init` first if starting fresh
 
-#### `team-auth migrate`
+#### `npx nuxt-supabase-team-auth migrate`
 
 Apply new migrations when updating the module:
 
 ```bash
 # Check and apply new migrations
-team-auth migrate
+npx nuxt-supabase-team-auth migrate
 
 # Preview what would be applied without making changes
-team-auth migrate --dry-run
+npx nuxt-supabase-team-auth migrate --dry-run
 ```
 
 **What it does:**
@@ -585,19 +585,19 @@ team-auth migrate --dry-run
 
 ### Development & Debugging Commands
 
-#### `team-auth cleanup`
+#### `npx nuxt-supabase-team-auth cleanup`
 
 Clean up test data and manage teams during development:
 
 ```bash
 # Reset entire database (like supabase db reset)
-team-auth cleanup --all
+npx nuxt-supabase-team-auth cleanup --all
 
 # Clean only test users (emails ending with @example.com)
-team-auth cleanup --test-data
+npx nuxt-supabase-team-auth cleanup --test-data
 
 # Delete a specific team by ID
-team-auth cleanup --team 12345678-1234-1234-1234-123456789abc
+npx nuxt-supabase-team-auth cleanup --team 12345678-1234-1234-1234-123456789abc
 ```
 
 **Safety features:**
@@ -605,19 +605,19 @@ team-auth cleanup --team 12345678-1234-1234-1234-123456789abc
 - UUID validation for team IDs
 - Uses specialized Edge Functions to bypass RLS constraints
 
-#### `team-auth db`
+#### `npx nuxt-supabase-team-auth db`
 
 Inspect your database and Supabase services:
 
 ```bash
 # Show Supabase services status
-team-auth db --status
+npx nuxt-supabase-team-auth db --status
 
 # List all teams in the database
-team-auth db --teams
+npx nuxt-supabase-team-auth db --teams
 
 # List all users (limited to 50 for performance)
-team-auth db --users
+npx nuxt-supabase-team-auth db --users
 ```
 
 ### Usage Examples
@@ -628,13 +628,13 @@ team-auth db --users
 supabase init
 
 # 2. Initialize team-auth
-team-auth init
+npx nuxt-supabase-team-auth init
 
 # 3. Start local development
 supabase start
 
 # 4. Verify setup
-team-auth db --status
+npx nuxt-supabase-team-auth db --status
 ```
 
 **Updating to a new module version:**
@@ -643,7 +643,7 @@ team-auth db --status
 pnpm update nuxt-supabase-team-auth
 
 # 2. Apply new migrations
-team-auth migrate
+npx nuxt-supabase-team-auth migrate
 
 # 3. Deploy to production when ready
 supabase db push
@@ -653,24 +653,24 @@ supabase functions deploy
 **Development workflow:**
 ```bash
 # Clean test data between tests
-team-auth cleanup --test-data
+npx nuxt-supabase-team-auth cleanup --test-data
 
 # Check what's in the database
-team-auth db --teams
-team-auth db --users
+npx nuxt-supabase-team-auth db --teams
+npx nuxt-supabase-team-auth db --users
 
 # Delete problematic test team
-team-auth cleanup --team <team-id>
+npx nuxt-supabase-team-auth cleanup --team <team-id>
 ```
 
 ### Integration with package.json
 
-After running `team-auth init`, a convenience script is added to your `package.json`:
+After running `npx nuxt-supabase-team-auth init`, a convenience script is added to your `package.json`:
 
 ```json
 {
   "scripts": {
-    "team-auth:migrate": "team-auth migrate"
+    "team-auth:migrate": "npx nuxt-supabase-team-auth migrate"
   }
 }
 ```

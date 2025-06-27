@@ -18,7 +18,8 @@
   "files": [
     "dist",
     "src/runtime",
-    "supabase"
+    "supabase",
+    "README.md"
   ],
   "scripts": {
     "build": "nuxt-module-build build",

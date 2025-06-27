@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, copyFileSync } from 'node:fs'
-import { join, dirname } from 'node:path'
+import { join, dirname, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execSync } from 'node:child_process'
 import { program } from 'commander'
@@ -14,6 +14,33 @@ interface MigrationTracker {
   version: string
   appliedMigrations: string[]
   lastUpdated: string
+}
+
+// Helper to find Supabase directory (walks up directory tree like Supabase CLI)
+function findSupabaseDir(): string | null {
+  const startDir = process.cwd()
+  let currentDir = startDir
+  const rootDir = '/'
+  
+  while (currentDir !== rootDir) {
+    const supabaseConfigPath = join(currentDir, 'supabase', 'config.toml')
+    if (existsSync(supabaseConfigPath)) {
+      // Calculate relative path from working directory to supabase dir
+      const supabaseDir = join(currentDir, 'supabase')
+      const relativePath = relative(startDir, supabaseDir)
+      return relativePath || 'supabase'
+    }
+    
+    // Move up one directory
+    const parentDir = dirname(currentDir)
+    if (parentDir === currentDir) {
+      // Reached root without finding supabase directory
+      break
+    }
+    currentDir = parentDir
+  }
+  
+  return null
 }
 
 // Helper to get the module root directory
@@ -131,9 +158,15 @@ program
       console.log('🚀 Initializing team-auth module...')
 
       // Check if we're in a Supabase project
-      if (!existsSync('supabase/config.toml')) {
+      const supabaseDir = findSupabaseDir()
+      if (!supabaseDir) {
         console.error('❌ No Supabase project found. Run `supabase init` first.')
+        console.error('   Searched up directory tree from current working directory')
         process.exit(1)
+      }
+      
+      if (supabaseDir !== 'supabase') {
+        console.log(`📁 Found Supabase project at: ${supabaseDir}`)
       }
 
       // Check if Supabase is running for conflict detection
@@ -181,7 +214,7 @@ program
 
       // Copy migration files
       const migrationsSource = join(moduleRoot, 'supabase', 'migrations')
-      const migrationsTarget = join('supabase', 'migrations')
+      const migrationsTarget = join(supabaseDir, 'migrations')
 
       if (existsSync(migrationsSource)) {
         const copiedMigrations = copyDirectoryRecursive(migrationsSource, migrationsTarget, options.force)
@@ -193,7 +226,7 @@ program
 
       // Copy edge function files
       const functionsSource = join(moduleRoot, 'supabase', 'functions')
-      const functionsTarget = join('supabase', 'functions')
+      const functionsTarget = join(supabaseDir, 'functions')
 
       if (existsSync(functionsSource)) {
         const functionDirs = readdirSync(functionsSource, { withFileTypes: true })
@@ -286,15 +319,17 @@ program
       console.log('🔄 Checking for team-auth migrations...')
 
       // Check if we're in a Supabase project
-      if (!existsSync('supabase/config.toml')) {
+      const supabaseDir = findSupabaseDir()
+      if (!supabaseDir) {
         console.error('❌ No Supabase project found. Run `supabase init` first.')
+        console.error('   Searched up directory tree from current working directory')
         process.exit(1)
       }
 
       // Load current migration tracker
       const currentTracker = loadMigrationTracker()
       if (!currentTracker) {
-        console.error('❌ No migration tracker found. Run `team-auth init` first.')
+        console.error('❌ No migration tracker found. Run `npx nuxt-supabase-team-auth init` first.')
         process.exit(1)
       }
 
@@ -344,7 +379,7 @@ program
       }
 
       // Copy new migration files
-      const migrationsTarget = join('supabase', 'migrations')
+      const migrationsTarget = join(supabaseDir, 'migrations')
 
       for (const migration of newMigrations) {
         const sourcePath = join(migrationsSource, migration)
@@ -417,8 +452,10 @@ program
   .action(async (options) => {
     try {
       // Check if we're in a Supabase project
-      if (!existsSync('supabase/config.toml')) {
+      const supabaseDir = findSupabaseDir()
+      if (!supabaseDir) {
         console.error('❌ No Supabase project found. Must be run from Supabase project root.')
+        console.error('   Searched up directory tree from current working directory')
         process.exit(1)
       }
 
@@ -503,8 +540,10 @@ program
   .action(async (options) => {
     try {
       // Check if we're in a Supabase project
-      if (!existsSync('supabase/config.toml')) {
+      const supabaseDir = findSupabaseDir()
+      if (!supabaseDir) {
         console.error('❌ No Supabase project found. Must be run from Supabase project root.')
+        console.error('   Searched up directory tree from current working directory')
         process.exit(1)
       }
 
@@ -551,5 +590,33 @@ async function confirmAction(message: string): Promise<boolean> {
     })
   })
 }
+
+// Add docs command
+program
+  .command('docs')
+  .description('Open documentation (README)')
+  .action(() => {
+    const moduleRoot = getModuleRoot()
+    const readmePath = join(moduleRoot, 'README.md')
+    
+    if (existsSync(readmePath)) {
+      console.log('📖 Opening documentation...')
+      console.log(`📍 README location: ${readmePath}`)
+      try {
+        // Try to open with system default
+        execSync(`open "${readmePath}"`, { stdio: 'ignore' })
+      } catch {
+        try {
+          // Fallback for Linux
+          execSync(`xdg-open "${readmePath}"`, { stdio: 'ignore' })
+        } catch {
+          console.log('💡 View the README at the path above, or visit:')
+          console.log('   https://github.com/pengelbrecht/nuxt-supabase-team-auth')
+        }
+      }
+    } else {
+      console.log('📖 Documentation: https://github.com/pengelbrecht/nuxt-supabase-team-auth')
+    }
+  })
 
 program.parse()
