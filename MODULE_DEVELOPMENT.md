@@ -334,6 +334,52 @@ pnpm run changelog
 pnpm run changelog:release
 ```
 
+### Manual Release Process
+When GitHub Actions are failing (e.g., lockfile issues), use manual release:
+
+1. **Pre-Release Validation**:
+   ```bash
+   # Run quality checks
+   pnpm run lint
+   pnpm run test:types
+   pnpm run build
+   
+   # Validate package
+   pnpm run validate:package
+   ```
+
+2. **Commit All Changes**:
+   ```bash
+   git add -A
+   git commit -m "fix: describe changes
+   
+   🤖 Generated with [Claude Code](https://claude.ai/code)
+   
+   Co-Authored-By: Claude <noreply@anthropic.com>"
+   ```
+
+3. **Version Bump and Publish**:
+   ```bash
+   # Bump version (creates git tag)
+   npm version patch  # or minor/major
+   
+   # Publish to npm
+   npm publish
+   
+   # Push changes and tags
+   git push --follow-tags
+   ```
+
+4. **Create GitHub Release**:
+   ```bash
+   # Create release with notes
+   gh release create v0.1.x --title "Release v0.1.x" --notes "Release notes here" --latest
+   ```
+
+**Note**: Manual releases bypass the automated changelog generation and some quality gates. Ensure all checks pass manually and write detailed release notes.
+
+**Future Work**: Fix GitHub Actions automated release pipeline (currently failing on lockfile configuration mismatch).
+
 ## Troubleshooting
 
 ### Common Development Issues
