@@ -5,6 +5,11 @@
 [![License][license-src]][license-href]
 [![Nuxt][nuxt-src]][nuxt-href]
 
+> **📚 Documentation Notice**  
+> This README is for **developers using this module in their applications**. If you're looking to contribute to the module itself, please see:
+> - [MODULE_DEVELOPMENT.md](./MODULE_DEVELOPMENT.md) - Guide for module contributors
+> - [CONTRIBUTING.md](./docs/CONTRIBUTING.md) - Contribution guidelines and commit conventions
+
 Drop-in Nuxt 3 module for team-based authentication with Supabase.
 
 - ✨ **Team-based authentication** - Built-in support for multi-user teams
