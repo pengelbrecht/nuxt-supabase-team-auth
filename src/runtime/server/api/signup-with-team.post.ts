@@ -1,4 +1,4 @@
-import { defineEventHandler, readBody, getHeader, createError, useRuntimeConfig } from 'h3'
+import { defineEventHandler, readBody, getHeader, createError } from 'h3'
 import { $fetch } from 'ofetch'
 
 export default defineEventHandler(async (event) => {

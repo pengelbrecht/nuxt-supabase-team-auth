@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { useRuntimeConfig, getHeader, createError } from 'h3'
+import { getHeader, createError } from 'h3'
 import type { H3Event } from 'h3'
 
 export function createServiceRoleClient() {
