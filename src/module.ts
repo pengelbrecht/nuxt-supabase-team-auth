@@ -62,8 +62,31 @@ export default defineNuxtModule<ModuleOptions>({
   async setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
 
-    // Note: Consumer must add '@nuxt/ui' to their modules array
-    // Auto-installation doesn't properly initialize context providers
+    // Validate Nuxt UI dependency
+    const hasNuxtUI = nuxt.options.modules?.some(module => 
+      typeof module === 'string' 
+        ? module === '@nuxt/ui'
+        : Array.isArray(module) 
+          ? module[0] === '@nuxt/ui'
+          : false
+    )
+    
+    if (!hasNuxtUI && nuxt.options.dev) {
+      console.warn(`[nuxt-supabase-team-auth] Warning: @nuxt/ui not found in modules. Please add '@nuxt/ui' to your modules array in nuxt.config.ts for components to work properly.`)
+    }
+
+    // Fix ESM/CJS module conflicts for Supabase dependencies
+    nuxt.options.vite = nuxt.options.vite || {}
+    nuxt.options.vite.optimizeDeps = nuxt.options.vite.optimizeDeps || {}
+    nuxt.options.vite.optimizeDeps.exclude = nuxt.options.vite.optimizeDeps.exclude || []
+    
+    // Exclude problematic Supabase packages from Vite optimization
+    const supabaseExcludes = ['@supabase/postgrest-js', '@supabase/storage-js', '@supabase/realtime-js']
+    supabaseExcludes.forEach(pkg => {
+      if (!nuxt.options.vite.optimizeDeps.exclude.includes(pkg)) {
+        nuxt.options.vite.optimizeDeps.exclude.push(pkg)
+      }
+    })
 
     // Merge options with runtime config
     // Debug mode hierarchy: explicit option > env var > nuxt dev mode
@@ -73,16 +96,35 @@ export default defineNuxtModule<ModuleOptions>({
         ? true
         : nuxt.options.dev
 
-    // Set up runtime config for both client and server
+    // Set up runtime config for both client and server  
+    // Auto-detect service role key from common environment variable names
+    const serviceKey = process.env.SUPABASE_SERVICE_KEY 
+      || process.env.SUPABASE_SERVICE_ROLE_KEY 
+      || process.env.SUPABASE_ANON_KEY // Fallback for development
+    
     nuxt.options.runtimeConfig = defu(nuxt.options.runtimeConfig, {
-      supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY,
+      supabaseServiceKey: serviceKey,
     })
+
+    const supabaseUrl = options.supabaseUrl || process.env.SUPABASE_URL
+    const supabaseKey = options.supabaseKey || process.env.SUPABASE_ANON_KEY
+
+    // Validate required configuration
+    if (!supabaseUrl) {
+      throw new Error(`[nuxt-supabase-team-auth] Missing Supabase URL. Please set SUPABASE_URL environment variable or configure supabaseUrl in module options.`)
+    }
+    if (!supabaseKey) {
+      throw new Error(`[nuxt-supabase-team-auth] Missing Supabase anon key. Please set SUPABASE_ANON_KEY environment variable or configure supabaseKey in module options.`)
+    }
+    if (!serviceKey && nuxt.options.dev) {
+      console.warn(`[nuxt-supabase-team-auth] Warning: No service role key found. Server-side operations may not work. Please set SUPABASE_SERVICE_ROLE_KEY environment variable.`)
+    }
 
     nuxt.options.runtimeConfig.public.teamAuth = defu(
       nuxt.options.runtimeConfig.public.teamAuth || {},
       {
-        supabaseUrl: options.supabaseUrl || process.env.SUPABASE_URL,
-        supabaseKey: options.supabaseKey || process.env.SUPABASE_ANON_KEY,
+        supabaseUrl,
+        supabaseKey,
         debug: debugMode,
         redirectTo: options.redirectTo,
         socialProviders: options.socialProviders,

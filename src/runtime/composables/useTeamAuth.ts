@@ -1,4 +1,5 @@
 import { ref, computed, triggerRef } from 'vue'
+import { useState } from '#app'
 import type { SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js'
 import type { User, Profile, Team, TeamMember, TeamAuth } from '../types'
 import { useSessionSync } from './useSessionSync'
