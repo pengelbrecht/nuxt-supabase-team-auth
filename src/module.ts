@@ -25,6 +25,19 @@ export interface ModuleOptions {
     invite?: string
     welcome?: string
   }
+  /**
+   * Social authentication providers configuration
+   */
+  socialProviders?: {
+    /**
+     * Google OAuth provider configuration
+     */
+    google?: {
+      enabled?: boolean
+      // Future: clientId, redirectUrl, scopes, etc.
+    }
+    // Future providers can be added here when implemented: github, apple, microsoft, facebook, etc.
+  }
 }
 
 export default defineNuxtModule<ModuleOptions>({
@@ -39,6 +52,12 @@ export default defineNuxtModule<ModuleOptions>({
     debug: undefined, // Will be auto-detected based on Nuxt dev mode
     redirectTo: '/dashboard',
     emailTemplates: {},
+    socialProviders: {
+      google: {
+        enabled: true, // Default enabled for backward compatibility
+      },
+      // Future providers will be added here when implemented
+    },
   },
   async setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
@@ -66,6 +85,7 @@ export default defineNuxtModule<ModuleOptions>({
         supabaseKey: options.supabaseKey || process.env.SUPABASE_ANON_KEY,
         debug: debugMode,
         redirectTo: options.redirectTo,
+        socialProviders: options.socialProviders,
       },
     )
 

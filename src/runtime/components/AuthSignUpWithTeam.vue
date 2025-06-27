@@ -1,9 +1,15 @@
 <template>
   <UCard :class="cardClass">
-    <template #header>
+    <template
+      v-if="title || subtitle"
+      #header
+    >
       <slot name="header">
         <div class="text-center">
-          <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+          <h2
+            v-if="title"
+            class="text-2xl font-semibold text-gray-900 dark:text-gray-100"
+          >
             {{ title }}
           </h2>
           <p
@@ -19,232 +25,233 @@
     <UForm
       :schema="signUpSchema"
       :state="form"
-      class="space-y-4"
+      class="space-y-6"
       @submit="handleSignUp"
     >
-      <!-- Team Name Field -->
-      <UFormField
-        label="Team name"
-        name="teamName"
-        required
-        :help="teamNameHelp"
-      >
-        <UInput
-          v-model="form.teamName"
-          type="text"
-          placeholder="Enter your team name"
-          :disabled="isLoading"
-          icon="i-heroicons-user-group"
-          size="lg"
-        />
-      </UFormField>
-
-      <!-- Social Login Buttons -->
-      <div
-        v-if="showSocialLogin"
-        class="space-y-3"
-      >
-        <div class="text-center">
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-            Choose how you'd like to create your team
-          </p>
-        </div>
-
-        <slot name="social-buttons">
-          <UButton
-            v-if="googleAuth"
-            type="button"
-            variant="outline"
-            size="lg"
-            block
-            :disabled="isLoading || !form.teamName.trim() || isGoogleLoading"
-            :loading="isGoogleLoading"
-            class="justify-center"
-            @click="handleGoogleSignUp"
-          >
-            <template #leading>
-              <Icon
-                name="logos:google-icon"
-                class="w-5 h-5"
-              />
-            </template>
-            Create "{{ form.teamName || 'team' }}" with Google
-          </UButton>
-
-          <UButton
-            v-if="githubAuth"
-            type="button"
-            variant="outline"
-            size="lg"
-            block
-            :disabled="isLoading || !form.teamName.trim() || isGithubLoading"
-            :loading="isGithubLoading"
-            class="justify-center"
-            @click="handleGithubSignUp"
-          >
-            <template #leading>
-              <Icon
-                name="logos:github-icon"
-                class="w-5 h-5"
-              />
-            </template>
-            Create "{{ form.teamName || 'team' }}" with GitHub
-          </UButton>
-        </slot>
-      </div>
-
-      <!-- Divider -->
-      <div
-        v-if="showSocialLogin"
-        class="flex items-center my-6"
-      >
-        <div class="flex-1 border-t border-gray-300 dark:border-gray-600" />
-        <div class="font-medium text-gray-500 dark:text-gray-400 flex mx-3 whitespace-nowrap">
-          <span class="text-sm">Or create with email</span>
-        </div>
-        <div class="flex-1 border-t border-gray-300 dark:border-gray-600" />
-      </div>
-
-      <!-- Email Field -->
-      <UFormField
-        label="Email address"
-        name="email"
-        required
-      >
-        <UInput
-          v-model="form.email"
-          type="email"
-          placeholder="Enter your email"
-          autocomplete="email"
-          :disabled="isLoading"
-          icon="i-heroicons-envelope"
-          size="lg"
-        />
-      </UFormField>
-
-      <!-- Password Field -->
-      <UFormField
-        label="Password"
-        name="password"
-        required
-        :help="passwordHelp"
-      >
-        <UInput
-          v-model="form.password"
-          :type="showPassword ? 'text' : 'password'"
-          placeholder="Create a password"
-          autocomplete="new-password"
-          :disabled="isLoading"
-          icon="i-heroicons-lock-closed"
-          size="lg"
-          :ui="{ trailing: { padding: { sm: 'pe-2' } } }"
-        >
-          <template #trailing>
-            <UButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              color="gray"
-              :icon="showPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
-              :aria-label="showPassword ? 'Hide password' : 'Show password'"
-              @click="showPassword = !showPassword"
-            />
-          </template>
-        </UInput>
-      </UFormField>
-
-      <!-- Password Confirmation Field -->
-      <UFormField
-        label="Confirm password"
-        name="confirmPassword"
-        required
-      >
-        <UInput
-          v-model="form.confirmPassword"
-          :type="showConfirmPassword ? 'text' : 'password'"
-          placeholder="Confirm your password"
-          autocomplete="new-password"
-          :disabled="isLoading"
-          icon="i-heroicons-lock-closed"
-          size="lg"
-          :ui="{ trailing: { padding: { sm: 'pe-2' } } }"
-        >
-          <template #trailing>
-            <UButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              color="gray"
-              :icon="showConfirmPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
-              :aria-label="showConfirmPassword ? 'Hide password' : 'Show password'"
-              @click="showConfirmPassword = !showConfirmPassword"
-            />
-          </template>
-        </UInput>
-      </UFormField>
-
-      <!-- Terms and Privacy -->
-      <div
-        v-if="requireTermsAcceptance"
-        class="space-y-3"
-      >
-        <UCheckbox
-          v-model="form.acceptTerms"
+      <div class="space-y-4">
+        <!-- Team Name Field -->
+        <UFormField
+          label="Team name"
+          name="teamName"
           required
-          :disabled="isLoading"
+          :help="teamNameHelp"
         >
-          <template #label>
-            <span class="text-sm text-gray-600 dark:text-gray-400">
-              I agree to the
-              <slot name="terms-link">
-                <UButton
-                  variant="ghost"
-                  size="sm"
-                  class="p-0 h-auto text-primary-600 hover:text-primary-500"
-                  @click="$emit('view-terms')"
-                >
-                  Terms of Service
-                </UButton>
-              </slot>
-              and
-              <slot name="privacy-link">
-                <UButton
-                  variant="ghost"
-                  size="sm"
-                  class="p-0 h-auto text-primary-600 hover:text-primary-500"
-                  @click="$emit('view-privacy')"
-                >
-                  Privacy Policy
-                </UButton>
-              </slot>
-            </span>
-          </template>
-        </UCheckbox>
+          <UInput
+            v-model="form.teamName"
+            type="text"
+            placeholder="Enter your team name"
+            :disabled="isLoading"
+            icon="i-heroicons-user-group"
+            size="lg"
+          />
+        </UFormField>
 
-        <UCheckbox
-          v-if="showMarketingConsent"
-          v-model="form.marketingConsent"
-          :disabled="isLoading"
+        <!-- Social Login Buttons -->
+        <div
+          v-if="showSocialSection"
+          class="space-y-3"
         >
-          <template #label>
-            <span class="text-sm text-gray-600 dark:text-gray-400">
-              I'd like to receive product updates and marketing emails
-            </span>
-          </template>
-        </UCheckbox>
+          <div class="text-center">
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              Choose how you'd like to create your team
+            </p>
+          </div>
+
+          <slot name="social-buttons">
+            <UButton
+              v-if="showGoogleAuth"
+              type="button"
+              variant="outline"
+              size="lg"
+              block
+              :disabled="isLoading || !form.teamName.trim() || isGoogleLoading"
+              :loading="isGoogleLoading"
+              class="justify-center"
+              @click="handleGoogleSignUp"
+            >
+              <template #leading>
+                <Icon
+                  name="logos:google-icon"
+                  class="w-5 h-5"
+                />
+              </template>
+              Create "{{ form.teamName || 'team' }}" with Google
+            </UButton>
+
+            <UButton
+              v-if="showGithubAuth"
+              type="button"
+              variant="outline"
+              size="lg"
+              block
+              :disabled="isLoading || !form.teamName.trim() || isGithubLoading"
+              :loading="isGithubLoading"
+              class="justify-center"
+              @click="handleGithubSignUp"
+            >
+              <template #leading>
+                <Icon
+                  name="logos:github-icon"
+                  class="w-5 h-5"
+                />
+              </template>
+              Create "{{ form.teamName || 'team' }}" with GitHub
+            </UButton>
+          </slot>
+        </div>
+
+        <!-- Divider -->
+        <div
+          v-if="showSocialSection"
+          class="flex items-center my-6"
+        >
+          <div class="flex-1 border-t border-gray-300 dark:border-gray-600" />
+          <div class="font-medium text-gray-500 dark:text-gray-400 flex mx-3 whitespace-nowrap">
+            <span class="text-sm">Or create with email</span>
+          </div>
+          <div class="flex-1 border-t border-gray-300 dark:border-gray-600" />
+        </div>
+
+        <!-- Email Field -->
+        <UFormField
+          label="Email address"
+          name="email"
+          required
+        >
+          <UInput
+            v-model="form.email"
+            type="email"
+            placeholder="Enter your email"
+            autocomplete="email"
+            :disabled="isLoading"
+            icon="i-heroicons-envelope"
+            size="lg"
+          />
+        </UFormField>
+
+        <!-- Password Field -->
+        <UFormField
+          label="Password"
+          name="password"
+          required
+          :help="passwordHelp"
+        >
+          <UInput
+            v-model="form.password"
+            :type="showPassword ? 'text' : 'password'"
+            placeholder="Create a password"
+            autocomplete="new-password"
+            :disabled="isLoading"
+            icon="i-heroicons-lock-closed"
+            size="lg"
+            :ui="{ trailing: { padding: { sm: 'pe-2' } } }"
+          >
+            <template #trailing>
+              <UButton
+                type="button"
+                variant="ghost"
+                size="sm"
+                color="gray"
+                :icon="showPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+                :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                @click="showPassword = !showPassword"
+              />
+            </template>
+          </UInput>
+        </UFormField>
+
+        <!-- Password Confirmation Field -->
+        <UFormField
+          label="Confirm password"
+          name="confirmPassword"
+          required
+        >
+          <UInput
+            v-model="form.confirmPassword"
+            :type="showConfirmPassword ? 'text' : 'password'"
+            placeholder="Confirm your password"
+            autocomplete="new-password"
+            :disabled="isLoading"
+            icon="i-heroicons-lock-closed"
+            size="lg"
+            :ui="{ trailing: { padding: { sm: 'pe-2' } } }"
+          >
+            <template #trailing>
+              <UButton
+                type="button"
+                variant="ghost"
+                size="sm"
+                color="gray"
+                :icon="showConfirmPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+                :aria-label="showConfirmPassword ? 'Hide password' : 'Show password'"
+                @click="showConfirmPassword = !showConfirmPassword"
+              />
+            </template>
+          </UInput>
+        </UFormField>
+
+        <!-- Terms and Privacy -->
+        <div
+          v-if="requireTermsAcceptance"
+          class="space-y-3"
+        >
+          <UCheckbox
+            v-model="form.acceptTerms"
+            required
+            :disabled="isLoading"
+          >
+            <template #label>
+              <span class="text-sm text-gray-600 dark:text-gray-400">
+                I agree to the
+                <slot name="terms-link">
+                  <UButton
+                    variant="ghost"
+                    size="sm"
+                    class="p-0 h-auto text-primary-600 hover:text-primary-500"
+                    @click="$emit('view-terms')"
+                  >
+                    Terms of Service
+                  </UButton>
+                </slot>
+                and
+                <slot name="privacy-link">
+                  <UButton
+                    variant="ghost"
+                    size="sm"
+                    class="p-0 h-auto text-primary-600 hover:text-primary-500"
+                    @click="$emit('view-privacy')"
+                  >
+                    Privacy Policy
+                  </UButton>
+                </slot>
+              </span>
+            </template>
+          </UCheckbox>
+
+          <UCheckbox
+            v-if="showMarketingConsent"
+            v-model="form.marketingConsent"
+            :disabled="isLoading"
+          >
+            <template #label>
+              <span class="text-sm text-gray-600 dark:text-gray-400">
+                I'd like to receive product updates and marketing emails
+              </span>
+            </template>
+          </UCheckbox>
+        </div>
+
+        <!-- Error Alert -->
+        <UAlert
+          v-if="errorMessage"
+          color="red"
+          variant="subtle"
+          :title="getErrorTitle(errorMessage)"
+          :description="getErrorDescription(errorMessage)"
+          :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'ghost' }"
+          @close="errorMessage = ''"
+        />
       </div>
-
-      <!-- Error Alert -->
-      <UAlert
-        v-if="errorMessage"
-        color="red"
-        variant="subtle"
-        :title="getErrorTitle(errorMessage)"
-        :description="getErrorDescription(errorMessage)"
-        :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'ghost' }"
-        class="mb-4"
-        @close="errorMessage = ''"
-      />
 
       <!-- Submit Button -->
       <UButton
@@ -253,7 +260,6 @@
         color="primary"
         size="lg"
         block
-        class="mt-6"
       >
         Create "{{ form.teamName || 'team' }}" with email
       </UButton>
@@ -261,7 +267,7 @@
 
     <template #footer>
       <slot name="footer">
-        <div class="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
+        <div class="text-center text-sm text-gray-600 dark:text-gray-400">
           Already have an account?
           <UButton
             type="button"
@@ -280,10 +286,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
 import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useTeamAuth } from '../composables/useTeamAuth'
+import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
+import type { User, Team } from '../types'
 
 interface AuthSignUpProps {
   /** Title displayed in the header */
@@ -384,6 +392,12 @@ const signUpSchema = v.object({
 
 // Composables - declared after form to avoid issues
 const { signUpWithTeam } = useTeamAuth()
+const { isGoogleEnabled, isGithubEnabled, hasAnySocialProvider } = useTeamAuthConfig()
+
+// Computed properties for social auth
+const showGoogleAuth = computed(() => props.googleAuth && isGoogleEnabled.value)
+const showGithubAuth = computed(() => props.githubAuth && isGithubEnabled.value)
+const showSocialSection = computed(() => props.showSocialLogin && hasAnySocialProvider.value && (showGoogleAuth.value || showGithubAuth.value))
 
 // UI state
 const isLoading = ref(false)

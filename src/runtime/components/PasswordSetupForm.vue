@@ -12,7 +12,7 @@
     <!-- User info display -->
     <div
       v-if="email"
-      class="text-center space-y-2 pb-4 border-b border-gray-200 dark:border-gray-700"
+      class="text-center space-y-2 py-6 mb-2 border-b border-gray-200 dark:border-gray-700"
     >
       <p class="text-sm text-gray-600 dark:text-gray-400">
         Setting up account for:
@@ -22,7 +22,7 @@
       </p>
       <p
         v-if="teamName"
-        class="text-sm text-gray-600 dark:text-gray-400"
+        class="text-sm text-gray-600 dark:text-gray-400 mb-4"
       >
         Joining team: <span class="font-medium">{{ teamName }}</span>
       </p>
@@ -131,7 +131,7 @@
 
     <!-- Social Login Alternative -->
     <div
-      v-if="showSocialLogin"
+      v-if="showSocialSection"
       class="space-y-4"
     >
       <!-- Divider -->
@@ -145,6 +145,7 @@
 
       <!-- Google Button -->
       <UButton
+        v-if="showGoogleAuth"
         type="button"
         variant="outline"
         size="lg"
@@ -162,14 +163,36 @@
         </template>
         Link Google Account Instead
       </UButton>
+
+      <!-- GitHub Button -->
+      <UButton
+        v-if="showGithubAuth"
+        type="button"
+        variant="outline"
+        size="lg"
+        block
+        :disabled="isLoading"
+        :loading="isGithubLoading"
+        class="justify-center"
+        @click="handleGithubLink"
+      >
+        <template #leading>
+          <Icon
+            name="logos:github-icon"
+            class="w-5 h-5"
+          />
+        </template>
+        Link GitHub Account Instead
+      </UButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
 
 interface PasswordSetupFormProps {
   /** User's email address */
@@ -178,6 +201,10 @@ interface PasswordSetupFormProps {
   teamName?: string
   /** Show social login options */
   showSocialLogin?: boolean
+  /** Enable Google authentication */
+  googleAuth?: boolean
+  /** Enable GitHub authentication */
+  githubAuth?: boolean
 }
 
 interface PasswordSetupForm {
@@ -186,10 +213,12 @@ interface PasswordSetupForm {
   fullName: string
 }
 
-const _props = withDefaults(defineProps<PasswordSetupFormProps>(), {
+const props = withDefaults(defineProps<PasswordSetupFormProps>(), {
   email: '',
   teamName: '',
   showSocialLogin: true,
+  googleAuth: true,
+  githubAuth: false,
 })
 
 const emit = defineEmits<{
@@ -224,9 +253,18 @@ const passwordSchema = v.object({
   fullName: v.optional(v.string()),
 })
 
+// Composables
+const { isGoogleEnabled, isGithubEnabled, hasAnySocialProvider } = useTeamAuthConfig()
+
+// Computed properties for social auth
+const showGoogleAuth = computed(() => props.googleAuth && isGoogleEnabled.value)
+const showGithubAuth = computed(() => props.githubAuth && isGithubEnabled.value)
+const showSocialSection = computed(() => props.showSocialLogin && hasAnySocialProvider.value && (showGoogleAuth.value || showGithubAuth.value))
+
 // UI state
 const isLoading = ref(false)
 const isGoogleLoading = ref(false)
+const isGithubLoading = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const message = ref('')
@@ -323,6 +361,45 @@ const handleGoogleLink = async () => {
   }
   finally {
     isGoogleLoading.value = false
+  }
+}
+
+// Handle GitHub account linking
+const handleGithubLink = async () => {
+  try {
+    isGithubLoading.value = true
+
+    // Get current session to preserve team metadata
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      throw new Error('No valid session found')
+    }
+
+    // For invited users, use linkIdentity instead of signInWithOAuth
+    // This links GitHub to the existing invited user account
+    const { error } = await supabase.auth.linkIdentity({
+      provider: 'github',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?mode=invite-link&team_id=${session.user.user_metadata?.team_id}`,
+      },
+    })
+
+    if (error) {
+      throw error
+    }
+
+    // If successful, the user will be redirected to GitHub OAuth
+    // After OAuth completes, they'll come back and we can proceed
+    emit('social-link', 'github')
+  }
+  catch (error: any) {
+    console.error('GitHub link error:', error)
+    message.value = error.message || 'Failed to link GitHub account'
+    messageType.value = 'error'
+  }
+  finally {
+    isGithubLoading.value = false
   }
 }
 </script>

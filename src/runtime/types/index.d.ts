@@ -1,6 +1,25 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { DbProfile, DbTeam, DbTeamMember, DbImpersonationSession } from './database.types'
 
+// Social Provider Configuration Types
+export interface SocialProviderConfig {
+  enabled: boolean
+  // Future fields for OAuth configuration
+  clientId?: string
+  redirectUrl?: string
+  scopes?: string[]
+}
+
+export interface SocialProvidersConfig {
+  google?: SocialProviderConfig
+  github?: SocialProviderConfig
+  // Future providers can be added here
+  apple?: SocialProviderConfig
+  microsoft?: SocialProviderConfig
+  facebook?: SocialProviderConfig
+  twitter?: SocialProviderConfig
+}
+
 export interface User {
   id: string
   email: string
@@ -70,6 +89,15 @@ export interface TeamAuthMethods {
 }
 
 export type TeamAuth = TeamAuthState & TeamAuthMethods
+
+// Module Configuration Types
+export interface TeamAuthModuleConfig {
+  supabaseUrl?: string
+  supabaseKey?: string
+  debug?: boolean
+  redirectTo?: string
+  socialProviders?: SocialProvidersConfig
+}
 
 declare global {
   interface Window {

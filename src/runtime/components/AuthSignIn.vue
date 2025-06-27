@@ -1,9 +1,15 @@
 <template>
   <UCard :class="cardClass">
-    <template #header>
+    <template
+      v-if="title || subtitle"
+      #header
+    >
       <slot name="header">
         <div class="text-center">
-          <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+          <h2
+            v-if="title"
+            class="text-2xl font-semibold text-gray-900 dark:text-gray-100"
+          >
             {{ title }}
           </h2>
           <p
@@ -18,12 +24,12 @@
 
     <!-- Social Login Buttons -->
     <div
-      v-if="showSocialLogin"
+      v-if="showSocialSection"
       class="space-y-3 mb-4"
     >
       <slot name="social-buttons">
         <UButton
-          v-if="googleAuth"
+          v-if="showGoogleAuth"
           type="button"
           variant="outline"
           size="lg"
@@ -43,7 +49,7 @@
         </UButton>
 
         <UButton
-          v-if="githubAuth"
+          v-if="showGithubAuth"
           type="button"
           variant="outline"
           size="lg"
@@ -66,7 +72,7 @@
 
     <!-- Divider -->
     <div
-      v-if="showSocialLogin"
+      v-if="showSocialSection"
       class="flex items-center my-8"
     >
       <div class="flex-1 border-t border-gray-300 dark:border-gray-600" />
@@ -80,77 +86,79 @@
       v-if="isFormReady"
       :schema="authSchema"
       :state="form"
-      class="space-y-4"
+      class="space-y-6"
       @submit="handleSignIn"
     >
-      <!-- Email Field -->
-      <UFormField
-        label="Email address"
-        name="email"
-        required
-      >
-        <UInput
-          v-model="form.email"
-          type="email"
-          placeholder="Enter your email"
-          autocomplete="email"
-          :disabled="isLoading"
-          icon="i-heroicons-envelope"
-          size="lg"
-        />
-      </UFormField>
-
-      <!-- Password Field -->
-      <UFormField
-        label="Password"
-        name="password"
-        required
-      >
-        <UInput
-          v-model="form.password"
-          :type="showPassword ? 'text' : 'password'"
-          placeholder="Enter your password"
-          autocomplete="current-password"
-          :disabled="isLoading"
-          icon="i-heroicons-lock-closed"
-          size="lg"
-          :ui="{ trailing: { padding: { sm: 'pe-2' } } }"
+      <div class="space-y-4">
+        <!-- Email Field -->
+        <UFormField
+          label="Email address"
+          name="email"
+          required
         >
-          <template #trailing>
+          <UInput
+            v-model="form.email"
+            type="email"
+            placeholder="Enter your email"
+            autocomplete="email"
+            :disabled="isLoading"
+            icon="i-heroicons-envelope"
+            size="lg"
+          />
+        </UFormField>
+
+        <!-- Password Field -->
+        <UFormField
+          label="Password"
+          name="password"
+          required
+        >
+          <UInput
+            v-model="form.password"
+            :type="showPassword ? 'text' : 'password'"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+            :disabled="isLoading"
+            icon="i-heroicons-lock-closed"
+            size="lg"
+            :ui="{ trailing: { padding: { sm: 'pe-2' } } }"
+          >
+            <template #trailing>
+              <UButton
+                type="button"
+                variant="ghost"
+                size="sm"
+                color="gray"
+                :icon="showPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+                :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                @click="showPassword = !showPassword"
+              />
+            </template>
+          </UInput>
+        </UFormField>
+
+        <!-- Remember Me & Forgot Password -->
+        <div class="flex items-center justify-between">
+          <UCheckbox
+            v-if="showRememberMe && isFormReady"
+            v-model="form.rememberMe"
+            label="Remember me"
+            :disabled="isLoading"
+          />
+          <div v-else />
+
+          <slot name="forgot-password">
             <UButton
               type="button"
               variant="ghost"
               size="sm"
-              color="gray"
-              :icon="showPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
-              :aria-label="showPassword ? 'Hide password' : 'Show password'"
-              @click="showPassword = !showPassword"
-            />
-          </template>
-        </UInput>
-      </UFormField>
-
-      <!-- Remember Me & Forgot Password -->
-      <div class="flex items-center justify-between">
-        <UCheckbox
-          v-if="showRememberMe && isFormReady"
-          v-model="form.rememberMe"
-          label="Remember me"
-          :disabled="isLoading"
-        />
-        <div v-else />
-
-        <slot name="forgot-password">
-          <UButton
-            type="button"
-            variant="ghost"
-            size="sm"
-            :disabled="isLoading"
-            @click="$emit('forgot-password')"
-          >
-            Forgot password?
-          </UButton>
-        </slot>
+              :disabled="isLoading"
+              @click="$emit('forgot-password')"
+            >
+              Forgot password?
+            </UButton>
+          </slot>
+        </div>
       </div>
 
       <!-- Submit Button -->
@@ -160,7 +168,6 @@
         color="primary"
         size="lg"
         block
-        class="mt-6"
       >
         {{ submitText }}
       </UButton>
@@ -168,7 +175,7 @@
 
     <template #footer>
       <slot name="footer">
-        <div class="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
+        <div class="text-center text-sm text-gray-600 dark:text-gray-400">
           Don't have an account?
           <UButton
             type="button"
@@ -191,6 +198,7 @@ import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useTeamAuth } from '../composables/useTeamAuth'
+import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
 
 interface AuthSignInProps {
   /** Title displayed in the header */
@@ -207,7 +215,7 @@ interface AuthSignInProps {
   showSocialLogin?: boolean
   /** Enable Google authentication */
   googleAuth?: boolean
-  /** Enable GitHub authentication */
+  /** Enable GitHub authentication (not yet implemented) */
   githubAuth?: boolean
   /** Show remember me checkbox */
   showRememberMe?: boolean
@@ -259,6 +267,11 @@ const authSchema = v.object({
 
 // Composables - declared after form to avoid issues
 const { signIn, isLoading } = useTeamAuth()
+const { isGoogleEnabled, hasAnySocialProvider } = useTeamAuthConfig()
+
+// Computed properties for social auth
+const showGoogleAuth = computed(() => props.googleAuth && isGoogleEnabled.value)
+const showSocialSection = computed(() => props.showSocialLogin && hasAnySocialProvider.value && showGoogleAuth.value)
 
 // UI state
 const isGoogleLoading = ref(false)
