@@ -87,18 +87,45 @@ export default defineNuxtModule<ModuleOptions>({
     // Problematic Supabase packages that have ESM/CJS conflicts
     const supabaseExcludes = ['@supabase/postgrest-js', '@supabase/storage-js', '@supabase/realtime-js']
     
-    // Comprehensive approach: prevent Vite from touching Supabase packages entirely
-    // This forces them to be resolved by Node.js module resolution instead
+    // Comprehensive fix for both client-side and server-side ESM/CJS conflicts
     
-    // Exclude ALL Supabase packages from optimization to prevent CJS bundling
+    // Define all Supabase packages with their correct ESM paths
     const allSupabasePackages = ['@supabase/supabase-js', '@supabase/postgrest-js', '@supabase/storage-js', '@supabase/realtime-js', '@supabase/gotrue-js', '@supabase/functions-js']
+    
+    // Force ESM resolution for client-side using aliases - this is the critical fix
+    const supabaseAliases = {
+      '@supabase/postgrest-js': '@supabase/postgrest-js/dist/esm/wrapper.mjs',
+      '@supabase/storage-js': '@supabase/storage-js/dist/esm/wrapper.mjs',
+      '@supabase/realtime-js': '@supabase/realtime-js/dist/esm/wrapper.mjs',
+      '@supabase/gotrue-js': '@supabase/gotrue-js/dist/esm/wrapper.mjs',
+      '@supabase/functions-js': '@supabase/functions-js/dist/esm/wrapper.mjs'
+    }
+    
+    // Apply aliases to force ESM resolution on client-side
+    Object.entries(supabaseAliases).forEach(([pkg, esmPath]) => {
+      nuxt.options.vite.resolve.alias[pkg] = esmPath
+    })
+    
+    // Still exclude from optimization to prevent bundling issues
     allSupabasePackages.forEach(pkg => {
       if (!nuxt.options.vite.optimizeDeps.exclude.includes(pkg)) {
         nuxt.options.vite.optimizeDeps.exclude.push(pkg)
       }
     })
     
-    // Force them to be external in SSR - this means Node.js will handle the imports
+    // Handle client-side external packages using rollup options
+    nuxt.options.vite.build = nuxt.options.vite.build || {}
+    nuxt.options.vite.build.rollupOptions = nuxt.options.vite.build.rollupOptions || {}
+    nuxt.options.vite.build.rollupOptions.external = nuxt.options.vite.build.rollupOptions.external || []
+    
+    // Make Supabase packages external for production builds too
+    allSupabasePackages.forEach(pkg => {
+      if (!nuxt.options.vite.build.rollupOptions.external.includes(pkg)) {
+        nuxt.options.vite.build.rollupOptions.external.push(pkg)
+      }
+    })
+    
+    // Force them to be external in SSR for server-side
     nuxt.options.vite.ssr.external = nuxt.options.vite.ssr.external || []
     allSupabasePackages.forEach(pkg => {
       if (!nuxt.options.vite.ssr.external.includes(pkg)) {
@@ -116,9 +143,9 @@ export default defineNuxtModule<ModuleOptions>({
     
     // Debug logging for development
     if (nuxt.options.dev) {
-      console.log('[nuxt-supabase-team-auth] Forcing Supabase packages to be external:', allSupabasePackages)
-      console.log('[nuxt-supabase-team-auth] Vite optimizeDeps.exclude:', nuxt.options.vite.optimizeDeps.exclude.filter(p => p.includes('supabase')))
-      console.log('[nuxt-supabase-team-auth] Vite ssr.external:', nuxt.options.vite.ssr.external)
+      console.log('[nuxt-supabase-team-auth] Applied ESM aliases for client-side:', Object.keys(supabaseAliases))
+      console.log('[nuxt-supabase-team-auth] Made external for SSR:', allSupabasePackages)
+      console.log('[nuxt-supabase-team-auth] Made external for build:', nuxt.options.vite.build.rollupOptions.external.filter(p => typeof p === 'string' && p.includes('supabase')))
     }
     
     // Only transpile our module, not Supabase packages (they should be external)

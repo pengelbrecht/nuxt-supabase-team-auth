@@ -32,25 +32,35 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key  # For server operations
 ```
 
 ### ESM/CJS Module Conflicts with postgrest-js
-**Fixed in v0.2.3** - The module now forces all Supabase packages to be external to prevent Vite from bundling them.
+**Fixed in v0.2.4** - The module now handles both client-side and server-side ESM/CJS resolution properly.
 
 The module automatically configures:
-- `vite.optimizeDeps.exclude` for all Supabase packages
-- `vite.ssr.external` to force Supabase packages to be handled by Node.js
-- Only transpiles the module itself, not Supabase dependencies
+- `vite.resolve.alias` to force ESM resolution on client-side (uses `/dist/esm/wrapper.mjs`)
+- `vite.ssr.external` for server-side packages to be handled by Node.js  
+- `vite.build.rollupOptions.external` for production build external handling
+- `vite.optimizeDeps.exclude` to prevent pre-bundling conflicts
 
-This approach prevents the "does not provide an export named 'default'" error by letting Node.js handle Supabase package imports directly.
+This comprehensive approach fixes the "does not provide an export named 'default'" error by:
+1. **Client-side**: Forces Vite to use ESM versions (`wrapper.mjs`) instead of CJS (`cjs/index.js`)
+2. **Server-side**: Lets Node.js handle imports directly with proper ESM support
+3. **Production**: Keeps packages external in production builds
 
-If you're still seeing import errors with v0.2.3+, please report it as a bug with your package.json dependencies. For older versions, you can manually add to your `nuxt.config.ts`:
+If you're still seeing import errors with v0.2.4+, please report it as a bug. For older versions, manually add to your `nuxt.config.ts`:
 ```ts
 export default defineNuxtConfig({
   vite: {
+    resolve: {
+      alias: {
+        '@supabase/postgrest-js': '@supabase/postgrest-js/dist/esm/wrapper.mjs',
+        '@supabase/storage-js': '@supabase/storage-js/dist/esm/wrapper.mjs',
+        '@supabase/realtime-js': '@supabase/realtime-js/dist/esm/wrapper.mjs'
+      }
+    },
     optimizeDeps: {
       exclude: ['@supabase/supabase-js', '@supabase/postgrest-js', '@supabase/storage-js', '@supabase/realtime-js']
     },
     ssr: {
-      external: ['@supabase/supabase-js', '@supabase/postgrest-js', '@supabase/storage-js', '@supabase/realtime-js'],
-      noExternal: ['nuxt-supabase-team-auth']
+      external: ['@supabase/supabase-js', '@supabase/postgrest-js', '@supabase/storage-js', '@supabase/realtime-js']
     }
   }
 })
