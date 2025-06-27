@@ -1,6 +1,6 @@
 {
   "name": "nuxt-supabase-team-auth",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Drop-in Nuxt 3 module for team-based authentication with Supabase",
   "type": "module",
   "exports": {
