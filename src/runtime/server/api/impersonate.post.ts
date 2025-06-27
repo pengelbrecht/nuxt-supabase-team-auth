@@ -1,4 +1,4 @@
-import { createError } from 'h3'
+import { defineEventHandler, readBody, setCookie, createError } from 'h3'
 import jwt from 'jsonwebtoken'
 import { createServiceRoleClient, getCurrentUser } from '../utils/supabase'
 
