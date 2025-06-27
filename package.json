@@ -50,7 +50,7 @@
     "cleanup": "pnpm db:clean",
     "cleanup:all": "pnpm db:reset",
     "prepack": "nuxt-module-build build",
-    "prepare": "nuxt-module-build build --stub",
+    "prepare": "nuxt-module-build build",
     "version:patch": "pnpm run validate:package && npm version patch && git push --follow-tags",
     "version:minor": "pnpm run validate:package && npm version minor && git push --follow-tags",
     "version:major": "pnpm run validate:package && npm version major && git push --follow-tags",

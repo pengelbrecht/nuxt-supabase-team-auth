@@ -538,7 +538,30 @@ supabase functions deploy invite-member
 
 ## CLI Commands
 
-The module includes a CLI to simplify database setup and development tasks. The CLI is automatically available after installing the module via `npx nuxt-supabase-team-auth`.
+The module includes a CLI to simplify database setup and development tasks. After installing the module, the CLI is available in multiple ways:
+
+**For projects with the module installed:**
+```bash
+# Via node_modules (direct)
+./node_modules/.bin/team-auth init
+
+# Via package manager exec
+pnpm exec team-auth init
+npm exec team-auth init
+
+# Via package.json scripts (recommended)
+{
+  "scripts": {
+    "setup": "team-auth init"
+  }
+}
+```
+
+**For one-time usage or without local install:**
+```bash
+# Via npx (downloads and runs)
+npx nuxt-supabase-team-auth init
+```
 
 ### Installation & Setup Commands
 
@@ -665,19 +688,23 @@ npx nuxt-supabase-team-auth cleanup --team <team-id>
 
 ### Integration with package.json
 
-After running `npx nuxt-supabase-team-auth init`, a convenience script is added to your `package.json`:
+After running the init command, you can add convenience scripts to your `package.json`:
 
 ```json
 {
   "scripts": {
-    "team-auth:migrate": "npx nuxt-supabase-team-auth migrate"
+    "setup": "team-auth init",
+    "migrate": "team-auth migrate",
+    "db:clean": "team-auth cleanup --test-data"
   }
 }
 ```
 
-This allows team members to easily apply migrations:
+This allows team members to easily run commands:
 ```bash
-pnpm run team-auth:migrate
+pnpm run setup     # Initialize team-auth
+pnpm run migrate   # Apply new migrations  
+pnpm run db:clean  # Clean test data
 ```
 
 ## Team Management Examples
