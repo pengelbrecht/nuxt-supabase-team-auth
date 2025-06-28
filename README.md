@@ -27,9 +27,10 @@ Drop-in Nuxt 3 module for team-based authentication with Supabase.
 This module requires the following peer dependencies:
 
 - **Nuxt 3** (`^3.0.0`)
-- **@nuxtjs/supabase** (`^1.5.0`) - Official Nuxt Supabase module
 - **@nuxt/ui** (`^3.1.0`) - UI component framework
 - **@nuxt/icon** (`^1.0.0`) - Icon framework (required by Nuxt UI)
+
+The module automatically installs and configures **@nuxtjs/supabase** (`^1.5.0`) if not already present.
 
 ## Quick Setup
 
@@ -112,10 +113,10 @@ export default defineNuxtConfig({
 | `debug` | `boolean` | Auto-detected | Enable debug logging |
 
 **Important Notes:**
-- The module automatically registers `@nuxtjs/supabase` if not present
+- The module automatically registers and configures `@nuxtjs/supabase` if not already present
 - Configure your login routes in `supabase.redirectOptions` to match your app structure  
-- The `build.transpile: ['cookie']` fix and cookie@0.7.2 override are **required** to prevent ESM/CJS import errors from `@supabase/ssr`
-- Cookie versions < 0.7.0 have security vulnerabilities and should be avoided
+- The `build.transpile: ['cookie']` fix is **required** to prevent ESM/CJS import errors
+- Cookie version 0.7.2 is automatically enforced to fix security vulnerabilities
 
 ### 3. Add Required App Structure
 

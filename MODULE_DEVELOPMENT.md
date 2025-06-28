@@ -113,10 +113,11 @@ Components are organized by functionality:
 - **Utility Components**: `RoleBadge.vue`, `ImpersonationBanner.vue`
 
 ### Composables
-- **`useTeamAuth`**: Core authentication logic (100% test coverage)
-- **`useSession`**: Session state management 
+- **`useTeamAuth`**: Core authentication logic (100% test coverage, uses @nuxtjs/supabase)
+- **`useSession`**: Session state management wrapper
 - **`useSessionSync`**: Cross-tab session synchronization
 - **`useTeamAuthConfig`**: Module configuration access
+- **External**: `useSupabaseClient()`, `useSupabaseSession()` from @nuxtjs/supabase
 
 ### Middleware System
 - **`auth.global.ts`**: Global authentication middleware
@@ -136,10 +137,19 @@ Components are organized by functionality:
 - **`public.impersonation_sessions`**: Super admin impersonation tracking
 
 ### Core Principles
+- **@nuxtjs/supabase integration** - Uses official Nuxt Supabase module for better ESM/CJS compatibility
 - **No JWT claims** - Always fetch team data from database via team_members join
 - **User profile data** stored in `public.profiles.id` which equals `auth.uid()`
 - **RLS policies** secure all data access
 - **Edge Functions** handle complex operations (invitations, team creation, etc.)
+
+### Module Architecture Changes (v0.2.0+)
+After v0.2.0, the module was refactored to use `@nuxtjs/supabase`:
+
+- **Before**: Direct `@supabase/supabase-js` imports with custom client management
+- **After**: `@nuxtjs/supabase` composables (`useSupabaseClient()`, `useSupabaseSession()`, etc.)
+- **Benefits**: Better ESM/CJS compatibility, industry standard patterns, smaller bundle size
+- **Testing**: Integration tests use `@supabase/supabase-js` as dev dependency only
 
 ### Migration Management
 ```bash
