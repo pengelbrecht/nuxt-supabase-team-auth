@@ -221,9 +221,14 @@ export default defineNuxtModule<ModuleOptions>({
     })
 
     // Add our runtime to transpile for proper compilation
-    if (!nuxt.options.build.transpile.includes(resolver.resolve('./runtime'))) {
-      nuxt.options.build.transpile.push(resolver.resolve('./runtime'))
+    const runtimeDir = resolver.resolve('./runtime')
+    if (!nuxt.options.build.transpile.includes(runtimeDir)) {
+      nuxt.options.build.transpile.push(runtimeDir)
     }
+
+    // Create virtual alias for runtime directory (Nuxt-approved pattern)
+    nuxt.options.alias = nuxt.options.alias || {}
+    nuxt.options.alias['#nuxt-supabase-team-auth'] = runtimeDir
 
     // Add middleware directory
     nuxt.hook('app:resolve', (app) => {

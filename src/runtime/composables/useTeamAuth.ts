@@ -2,14 +2,23 @@ import { ref, computed, triggerRef } from 'vue'
 import type { User, Profile, Team, TeamMember, TeamAuth } from '../types'
 import { useSessionSync } from './useSessionSync'
 import { useSession } from './useSession'
-import { useState } from '#app'
+import { useState, useNuxtApp } from '#app'
 
 // Helper to get toast function if available (optional dependency)
 const getToast = async () => {
   try {
-    // Try to import useToast if available (e.g., from @nuxt/ui)
-    const { useToast } = await import('@nuxt/ui')
-    return useToast()
+    // Try to get useToast from global imports if available
+    const nuxtApp = useNuxtApp()
+    if (nuxtApp?.$toast || (globalThis as any)?.useToast) {
+      return nuxtApp.$toast || (globalThis as any).useToast()
+    }
+
+    // Fallback - try to access it from window (client-side)
+    if (import.meta.client && (window as any)?.useToast) {
+      return (window as any).useToast()
+    }
+
+    throw new Error('No toast available')
   }
   catch {
     // Fallback to console logging if no toast library available
