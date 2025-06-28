@@ -230,7 +230,8 @@ serve(async (req) => {
 
     // Send invite using Supabase's built-in system for NEW users
     const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:3000'
-    const redirectUrl = `${siteUrl}/accept-invite?team_id=${finalTeamId}`
+    // Use the confirm page where @nuxtjs/supabase automatically processes tokens
+    const redirectUrl = `${siteUrl}/auth/confirm?type=invite&team_id=${finalTeamId}`
 
     console.log('SITE_URL env var:', Deno.env.get('SITE_URL'))
     console.log('Computed site URL:', siteUrl)

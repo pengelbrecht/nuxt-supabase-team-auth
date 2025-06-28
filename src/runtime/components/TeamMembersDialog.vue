@@ -723,9 +723,32 @@ const handleRevokeInvitation = async (invitation: any) => {
   }
   catch (error: any) {
     console.error('Revoke invitation error:', error)
+
+    // Extract a clean error message
+    let errorMessage = 'Failed to revoke invitation. Please try again.'
+
+    // Handle FetchError specifically
+    if (error.data && typeof error.data === 'string') {
+      // Extract message from FetchError format
+      errorMessage = error.data
+    }
+    else if (error.statusMessage) {
+      errorMessage = error.statusMessage
+    }
+    else if (error.message) {
+      // Clean up technical error messages
+      const match = error.message.match(/: (\d{3}) (.+)$/)
+      if (match) {
+        errorMessage = match[2] // Extract just the message part after status code
+      }
+      else {
+        errorMessage = error.message
+      }
+    }
+
     toast.add({
       title: 'Revoke Failed',
-      description: error.message || 'Failed to revoke invitation. Please try again.',
+      description: errorMessage,
       color: 'red',
     })
   }

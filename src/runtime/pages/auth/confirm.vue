@@ -116,6 +116,7 @@ import ResetPasswordForm from '../../components/ResetPasswordForm.vue'
 const route = useRoute()
 const router = useRouter()
 const supabase = useSupabaseClient()
+const session = useSupabaseSession()
 
 // State management
 const status = ref<'processing' | 'password-setup' | 'success' | 'error'>('processing')
@@ -170,6 +171,33 @@ onMounted(async () => {
       }
     }
 
+    // Handle PKCE code confirmations (modern format)
+    const { code } = route.query
+    if (code) {
+      console.log('PKCE code confirmation - waiting for @nuxtjs/supabase to process:', { code })
+
+      // Wait for @nuxtjs/supabase to automatically process the PKCE code
+      let attempts = 0
+      const maxAttempts = 20
+      const delayMs = 250
+
+      while (!session.value && attempts < maxAttempts) {
+        console.log(`Waiting for PKCE session... (attempt ${attempts + 1}/${maxAttempts})`)
+        await new Promise(resolve => setTimeout(resolve, delayMs))
+        attempts++
+      }
+
+      if (!session.value) {
+        throw new Error('Failed to establish session from password reset code')
+      }
+
+      console.log('Session established from PKCE code:', session.value.user?.email)
+
+      // This is a password reset confirmation
+      await handlePasswordReset()
+      return
+    }
+
     // Handle token_hash confirmations (legacy format)
     if (token_hash) {
       console.log('Token hash confirmation:', { type })
@@ -203,74 +231,61 @@ const handleInviteConfirmation = async () => {
 
     console.log('Starting invitation confirmation...')
 
-    // First, try to exchange the code for a session if we have URL fragments
-    if (window.location.hash) {
-      console.log('Found hash fragment, attempting session exchange...')
+    // @nuxtjs/supabase's useSupabaseSession() is just reactive state - it doesn't establish sessions
+    // We need to manually process the hash tokens and set the session
+    console.log('Processing hash tokens manually...')
 
-      // Try exchangeCodeForSession first
-      const hashParams = new URLSearchParams(window.location.hash.substring(1))
-      const code = hashParams.get('code')
+    // Extract tokens from hash
+    const hashParams = new URLSearchParams(window.location.hash.substring(1))
+    const accessToken = hashParams.get('access_token')
+    const refreshToken = hashParams.get('refresh_token')
 
-      if (code) {
-        console.log('Found auth code, exchanging for session...')
-        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+    console.log('Hash tokens:', {
+      hasAccessToken: !!accessToken,
+      hasRefreshToken: !!refreshToken,
+    })
 
-        if (error) {
-          console.log('Code exchange error:', error)
-        }
-        else {
-          console.log('Successfully exchanged code for session:', data.user?.email)
-        }
+    let currentSession = null
+
+    if (accessToken && refreshToken) {
+      console.log('Setting session with hash tokens...')
+
+      // Use setSession to establish the session with the tokens from the hash
+      const { data, error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      })
+
+      if (error) {
+        console.error('setSession error:', error)
+        throw new Error(`Failed to establish session: ${error.message}`)
       }
+
+      currentSession = data.session
+      console.log('Session established via setSession:', currentSession?.user?.email)
     }
-
-    // Wait for the session to be established after email confirmation
-    let session = null
-    let attempts = 0
-    const maxAttempts = 20 // Increased attempts
-    const delayMs = 250 // Shorter delay
-
-    console.log('Polling for session...')
-    while (!session && attempts < maxAttempts) {
-      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession()
+    else {
+      // Fallback: check if session already exists
+      const { data: { session: existingSession }, error: sessionError } = await supabase.auth.getSession()
 
       if (sessionError) {
-        console.error('Session error on attempt', attempts + 1, ':', sessionError)
-        // Don't throw immediately, keep trying
-      }
-      else {
-        session = currentSession
+        console.error('getSession error:', sessionError)
+        throw new Error(`Session error: ${sessionError.message}`)
       }
 
-      if (!session) {
-        console.log(`Waiting for invitation session... (attempt ${attempts + 1}/${maxAttempts})`)
-        await new Promise(resolve => setTimeout(resolve, delayMs))
-        attempts++
-      }
-      else {
-        console.log('Session found!', session.user?.email)
-      }
+      currentSession = existingSession
+      console.log('Using existing session:', currentSession?.user?.email)
     }
 
-    if (!session) {
-      // Last attempt: try getting user directly
-      const { data: userData, error: userError } = await supabase.auth.getUser()
-      if (userData.user && !userError) {
-        console.log('Session polling failed but user exists, proceeding...')
-        // Create a fake session structure for compatibility
-        session = {
-          user: userData.user,
-          access_token: 'direct-user-access',
-        }
-      }
-      else {
-        throw new Error('Unable to establish session. The invitation link may have expired or already been used.')
-      }
+    if (!currentSession) {
+      throw new Error('Unable to establish session. The invitation link may have expired or already been used.')
     }
+
+    console.log('Session established for user:', currentSession.user?.email)
 
     // Extract user metadata and query params for team info
-    const metadata = session.user.user_metadata
-    userEmail.value = session.user.email || ''
+    const metadata = currentSession.user.user_metadata
+    userEmail.value = currentSession.user.email || ''
     teamId.value = route.query.team_id as string || metadata?.team_id || ''
     teamName.value = metadata?.team_name || ''
     inviteRole.value = metadata?.role || 'member'
@@ -296,7 +311,7 @@ const handleInviteConfirmation = async () => {
     const { data: membership } = await supabase
       .from('team_members')
       .select('id')
-      .eq('user_id', session.user.id)
+      .eq('user_id', currentSession.user.id)
       .eq('team_id', teamId.value)
       .single()
 
@@ -309,8 +324,8 @@ const handleInviteConfirmation = async () => {
 
     // Check if user has a strong password set (not auto-generated)
     // We'll require password setup for security
-    const userCreatedAt = new Date(session.user.created_at)
-    const userConfirmedAt = new Date(session.user.email_confirmed_at || session.user.created_at)
+    const userCreatedAt = new Date(currentSession.user.created_at)
+    const userConfirmedAt = new Date(currentSession.user.email_confirmed_at || currentSession.user.created_at)
     const timeDifference = Math.abs(userConfirmedAt.getTime() - userCreatedAt.getTime())
 
     // If user was just created via invitation (less than 5 minutes between creation and confirmation)
@@ -336,10 +351,18 @@ const handlePasswordReset = async () => {
   try {
     confirmationType.value = 'recovery'
 
-    // Verify the session exists
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    // Wait for session to be established by @nuxtjs/supabase
+    let attempts = 0
+    const maxAttempts = 10
+    const delayMs = 250
 
-    if (sessionError || !session) {
+    while (!session.value && attempts < maxAttempts) {
+      console.log(`Waiting for recovery session... (attempt ${attempts + 1}/${maxAttempts})`)
+      await new Promise(resolve => setTimeout(resolve, delayMs))
+      attempts++
+    }
+
+    if (!session.value) {
       throw new Error('Invalid or expired password reset link')
     }
 
@@ -357,9 +380,7 @@ const handlePasswordReset = async () => {
 const handlePasswordSetupSuccess = async () => {
   try {
     // Add user to the team
-    const { data: { session } } = await supabase.auth.getSession()
-
-    if (!session) {
+    if (!session.value) {
       throw new Error('No valid session found')
     }
 
@@ -367,7 +388,7 @@ const handlePasswordSetupSuccess = async () => {
     const response = await $fetch('/api/accept-invite', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${session.value.access_token}`,
       },
       body: {
         team_id: teamId.value,

@@ -133,33 +133,19 @@ serve(async (req) => {
     console.log('targetUser structure:', JSON.stringify(targetUser, null, 2))
     console.log('targetUser.user:', JSON.stringify(targetUser.user, null, 2))
 
-    // Check confirmation fields - user is confirmed only if either field exists and has a date value
-    const emailConfirmedAt = targetUser.user.email_confirmed_at
-    const confirmedAt = targetUser.user.confirmed_at
+    // Check if user is actually a member of the team
+    const { data: targetMembership, error: _targetMembershipError } = await supabaseAdmin
+      .from('team_members')
+      .select('id')
+      .eq('team_id', teamId)
+      .eq('user_id', userId)
+      .single()
 
-    // User is confirmed only if the fields exist and are not null/undefined
-    const isConfirmed = (emailConfirmedAt != null && emailConfirmedAt !== '')
-      || (confirmedAt != null && confirmedAt !== '')
-
-    console.log('Confirmation check:', {
-      emailConfirmedAt,
-      confirmedAt,
-      isConfirmed,
-      hasEmailConfirmedField: 'email_confirmed_at' in targetUser.user,
-      hasConfirmedAtField: 'confirmed_at' in targetUser.user,
-    })
-
-    if (isConfirmed) {
-      console.log('User has already confirmed their account')
+    if (targetMembership) {
+      console.log('User is already a team member')
       return new Response(
         JSON.stringify({
-          error: 'User has already confirmed their account',
-          debug: {
-            email_confirmed_at: emailConfirmedAt,
-            confirmed_at: confirmedAt,
-            emailConfirmedAtType: typeof emailConfirmedAt,
-            confirmedAtType: typeof confirmedAt,
-          },
+          error: 'User is already a team member. Remove them from the team instead.',
         }),
         {
           status: 400,

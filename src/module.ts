@@ -19,6 +19,10 @@ export interface ModuleOptions {
    */
   redirectTo?: string
   /**
+   * Login page path (where unauthenticated users are redirected)
+   */
+  loginPage?: string
+  /**
    * Custom email templates
    */
   emailTemplates?: {
@@ -51,6 +55,7 @@ export default defineNuxtModule<ModuleOptions>({
   defaults: {
     debug: undefined, // Will be auto-detected based on Nuxt dev mode
     redirectTo: '/dashboard',
+    loginPage: '/signin',
     emailTemplates: {},
     socialProviders: {
       google: {
@@ -131,6 +136,48 @@ export default defineNuxtModule<ModuleOptions>({
       supabaseKey,
     })
 
+    // Configure @nuxtjs/supabase redirect options to include our auth routes
+    // Use defu to merge with any existing configuration
+    const redirectOptions = {
+      login: options.loginPage || '/signin',
+      callback: '/auth/callback', // Use default callback for OAuth
+      exclude: [
+        '/',
+        '/signup',
+        '/signin',
+        '/login',
+        '/accept-invite',
+        '/auth/confirm', // Allow email confirmations
+        '/auth/forgot-password',
+        '/auth/callback', // Allow OAuth callbacks
+        '/auth/reset-password',
+      ],
+    }
+
+    nuxt.options.supabase = defu(nuxt.options.supabase || {}, {
+      url: supabaseUrl,
+      key: supabaseKey,
+      redirectOptions,
+    })
+
+    if (nuxt.options.dev) {
+      console.log('[team-auth] Supabase redirectOptions configured:', redirectOptions)
+      console.log('[team-auth] Final supabase config:', nuxt.options.supabase)
+    }
+
+    // Also ensure the configuration is applied before @nuxtjs/supabase initializes
+    nuxt.hook('modules:before', () => {
+      nuxt.options.supabase = defu(nuxt.options.supabase || {}, {
+        url: supabaseUrl,
+        key: supabaseKey,
+        redirectOptions,
+      })
+
+      if (nuxt.options.dev) {
+        console.log('[team-auth] modules:before - Final supabase config:', nuxt.options.supabase)
+      }
+    })
+
     // Keep our custom teamAuth config for backward compatibility
     nuxt.options.runtimeConfig.public.teamAuth = defu(
       nuxt.options.runtimeConfig.public.teamAuth || {},
@@ -139,19 +186,16 @@ export default defineNuxtModule<ModuleOptions>({
         supabaseKey,
         debug: debugMode,
         redirectTo: options.redirectTo,
+        loginPage: options.loginPage,
         socialProviders: options.socialProviders,
       },
     )
 
-    // Add composables (useSupabaseClient is now a re-export from @nuxtjs/supabase)
+    // Add composables (useSupabaseClient is provided by @nuxtjs/supabase)
     addImports([
       {
         name: 'useTeamAuth',
         from: resolver.resolve('./runtime/composables/useTeamAuth'),
-      },
-      {
-        name: 'useSupabaseClient',
-        from: resolver.resolve('./runtime/composables/useSupabaseClient'),
       },
       {
         name: 'useImpersonation',

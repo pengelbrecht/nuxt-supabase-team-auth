@@ -47,26 +47,6 @@
           </template>
           Continue with Google
         </UButton>
-
-        <UButton
-          v-if="showGithubAuth"
-          type="button"
-          variant="outline"
-          size="lg"
-          block
-          :disabled="isLoading"
-          :loading="isGithubLoading"
-          class="justify-center"
-          @click="handleGithubSignIn"
-        >
-          <template #leading>
-            <Icon
-              name="logos:github-icon"
-              class="w-5 h-5"
-            />
-          </template>
-          Continue with GitHub
-        </UButton>
       </slot>
     </div>
 
@@ -215,8 +195,6 @@ interface AuthSignInProps {
   showSocialLogin?: boolean
   /** Enable Google authentication */
   googleAuth?: boolean
-  /** Enable GitHub authentication (not yet implemented) */
-  githubAuth?: boolean
   /** Show remember me checkbox */
   showRememberMe?: boolean
 }
@@ -235,7 +213,6 @@ const props = withDefaults(defineProps<AuthSignInProps>(), {
   autoFocus: true,
   showSocialLogin: true,
   googleAuth: true,
-  githubAuth: false,
   showRememberMe: true,
 })
 
@@ -268,6 +245,7 @@ const authSchema = v.object({
 // Composables - declared after form to avoid issues
 const { signIn, isLoading } = useTeamAuth()
 const { isGoogleEnabled, hasAnySocialProvider } = useTeamAuthConfig()
+const supabase = useSupabaseClient()
 
 // Computed properties for social auth
 const showGoogleAuth = computed(() => props.googleAuth && isGoogleEnabled.value)
@@ -275,7 +253,6 @@ const showSocialSection = computed(() => props.showSocialLogin && hasAnySocialPr
 
 // UI state
 const isGoogleLoading = ref(false)
-const isGithubLoading = ref(false)
 const showPassword = ref(false)
 
 // Form validation
@@ -315,14 +292,7 @@ const handleGoogleSignIn = async () => {
   try {
     isGoogleLoading.value = true
 
-    // Get Supabase client
-    const nuxtApp = useNuxtApp()
-
-    if (!nuxtApp?.$teamAuthClient?.auth?.signInWithOAuth) {
-      throw new Error('Supabase client not available for OAuth')
-    }
-
-    const { data, error } = await nuxtApp.$teamAuthClient.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
@@ -341,39 +311,6 @@ const handleGoogleSignIn = async () => {
   }
   finally {
     isGoogleLoading.value = false
-  }
-}
-
-const handleGithubSignIn = async () => {
-  try {
-    isGithubLoading.value = true
-
-    // Get Supabase client
-    const nuxtApp = useNuxtApp()
-
-    if (!nuxtApp?.$teamAuthClient?.auth?.signInWithOAuth) {
-      throw new Error('Supabase client not available for OAuth')
-    }
-
-    const { data, error } = await nuxtApp.$teamAuthClient.auth.signInWithOAuth({
-      provider: 'github',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-
-    if (error) {
-      throw error
-    }
-
-    emit('social-success', 'github', data)
-  }
-  catch (error: any) {
-    const errorMessage = error.message || 'Failed to sign in with GitHub'
-    emit('social-error', 'github', errorMessage)
-  }
-  finally {
-    isGithubLoading.value = false
   }
 }
 

@@ -47,10 +47,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const publicRoutes = [
     '/',
     '/login',
+    '/signin',
     '/signup',
     '/auth',
     '/confirm',
     '/reset-password',
+    '/forgot-password',
+    '/accept-invite',
     '/about',
     '/contact',
     '/privacy',
@@ -59,13 +62,27 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const currentPath = to.path
 
+  // Debug logging for auth middleware
+  if (currentPath.includes('/auth/')) {
+    console.log('[Auth Middleware] Path:', currentPath)
+    console.log('[Auth Middleware] Checking public routes:', publicRoutes)
+  }
+
   // Check if current route is public
   const isPublicRoute = publicRoutes.some(route =>
     currentPath === route || currentPath.startsWith(route + '/'),
   )
 
+  // Debug logging for auth middleware
+  if (currentPath.includes('/auth/')) {
+    console.log('[Auth Middleware] isPublicRoute:', isPublicRoute)
+  }
+
   // Allow access to public routes
   if (isPublicRoute) {
+    if (currentPath.includes('/auth/')) {
+      console.log('[Auth Middleware] Allowing public route:', currentPath)
+    }
     return
   }
 

@@ -184,13 +184,7 @@ const isLoadingUsers = ref(false)
 const impersonatingUserId = ref<string | null>(null)
 
 // Get Supabase client
-const getSupabaseClient = () => {
-  const nuxtApp = useNuxtApp()
-  if (!nuxtApp?.$teamAuthClient) {
-    throw new Error('Supabase client not available')
-  }
-  return nuxtApp.$teamAuthClient as any
-}
+const supabase = useSupabaseClient()
 
 // Computed property for displayed users with instant client-side filtering
 const displayedUsers = computed(() => {
@@ -216,7 +210,6 @@ const displayedUsers = computed(() => {
 const loadAllUsers = async () => {
   try {
     isLoadingUsers.value = true
-    const supabase = getSupabaseClient()
 
     // Check if user is super admin
     if (currentRole.value !== 'super_admin') {
@@ -291,7 +284,6 @@ const performSearch = async () => {
 
   try {
     isSearching.value = true
-    const supabase = getSupabaseClient()
 
     // Check if user is super admin
     if (currentRole.value !== 'super_admin') {

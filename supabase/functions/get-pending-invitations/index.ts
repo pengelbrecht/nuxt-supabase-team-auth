@@ -153,14 +153,13 @@ serve(async (req) => {
         const hasTeamMetadata = user.user_metadata?.team_id === teamId
         const notInTeam = !teamMemberIds.has(user.id)
 
-        // Must be unconfirmed (pending invitation)
-        const isUnconfirmed = user.email_confirmed_at === null
-
         // Check if invitation is still valid (not expired)
         const inviteDate = user.invited_at ? new Date(user.invited_at) : null
         const notExpired = inviteDate && inviteDate > twentyFourHoursAgo
 
-        return hasTeamMetadata && notInTeam && isUnconfirmed && notExpired
+        // Include users who have team metadata but haven't joined the team yet
+        // This covers both unconfirmed users and those who clicked the link but didn't complete setup
+        return hasTeamMetadata && notInTeam && notExpired
       })
       .map(user => ({
         id: user.id,

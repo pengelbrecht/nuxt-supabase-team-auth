@@ -3,6 +3,23 @@ import type { User, Profile, Team, TeamMember, TeamAuth } from '../types'
 import { useSessionSync } from './useSessionSync'
 import { useSession } from './useSession'
 import { useState } from '#app'
+
+// Helper to get toast function if available (optional dependency)
+const getToast = async () => {
+  try {
+    // Try to import useToast if available (e.g., from @nuxt/ui)
+    const { useToast } = await import('@nuxt/ui')
+    return useToast()
+  }
+  catch {
+    // Fallback to console logging if no toast library available
+    return {
+      add: (notification: any) => {
+        console.log('Toast notification:', notification)
+      },
+    }
+  }
+}
 // Types - we'll get the actual client and user from @nuxtjs/supabase composables
 type SupabaseClient = any
 type SupabaseUser = any
@@ -1269,7 +1286,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         })
 
         // Show success toast
-        const toast = useToast()
+        const toast = await getToast()
         toast.add({
           title: 'Impersonation Started',
           description: `Now impersonating ${response.impersonation.target_user.full_name || response.impersonation.target_user.email}`,
@@ -1291,7 +1308,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         updateAuthState({ loading: false })
 
         // Show error toast
-        const toast = useToast()
+        const toast = await getToast()
         toast.add({
           title: 'Impersonation Failed',
           description: error.data?.message || error.message || 'Failed to start impersonation',
@@ -1324,7 +1341,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
             loading: false,
           })
 
-          const toast = useToast()
+          const toast = await getToast()
           toast.add({
             title: 'Impersonation Cleared',
             description: 'Stale impersonation state has been cleared',
@@ -1391,7 +1408,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         }
 
         // Show success toast
-        const toast = useToast()
+        const toast = await getToast()
         toast.add({
           title: 'Impersonation Ended',
           description: 'Returned to your original session',
@@ -1404,7 +1421,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         updateAuthState({ loading: false })
 
         // Show error toast
-        const toast = useToast()
+        const toast = await getToast()
         toast.add({
           title: 'Error Stopping Impersonation',
           description: 'Session has been cleared. Please sign in again.',

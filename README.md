@@ -27,6 +27,7 @@ Drop-in Nuxt 3 module for team-based authentication with Supabase.
 This module requires the following peer dependencies:
 
 - **Nuxt 3** (`^3.0.0`)
+- **@nuxtjs/supabase** (`^1.5.0`) - Official Nuxt Supabase module
 - **@nuxt/ui** (`^3.1.0`) - UI component framework
 - **@nuxt/icon** (`^1.0.0`) - Icon framework (required by Nuxt UI)
 
@@ -54,36 +55,67 @@ pnpm add nuxt-supabase-team-auth
 
 ### 2. Configure Nuxt
 
-Add our module to your `nuxt.config.ts`:
+Add our module to your `nuxt.config.ts`. The module automatically registers `@nuxtjs/supabase` if not already present:
 
 ```typescript
 // nuxt.config.ts
 export default defineNuxtConfig({
   modules: [
     '@nuxt/ui',                    // Should already be here
-    'nuxt-supabase-team-auth'      // Add our module
+    'nuxt-supabase-team-auth'      // Add our module (auto-registers @nuxtjs/supabase)
   ],
 
-  // Configure our module
+  // Configure @nuxtjs/supabase (required)
+  supabase: {
+    url: process.env.SUPABASE_URL,
+    key: process.env.SUPABASE_ANON_KEY,
+    redirectOptions: {
+      login: '/signin',            // Your login page route
+      callback: '/auth/callback',  // OAuth callback (provided by module)
+      exclude: ['/', '/signup']    // Public routes that don't require auth
+    }
+  },
+
+  // Configure our team-auth module
   teamAuth: {
-    supabaseUrl: process.env.SUPABASE_URL,
-    supabaseKey: process.env.SUPABASE_ANON_KEY,
     redirectTo: '/dashboard',      // Where to go after login
-    loginPage: '/',                // Where to redirect when auth required
-    debug: true                    // Enable debug mode in development
+    socialProviders: {
+      google: { enabled: true }    // Configure social providers
+    }
+  },
+
+  // Fix ESM/CJS compatibility (required)
+  build: {
+    transpile: ['cookie']
   }
 })
 ```
 
 #### Configuration Options
 
+**@nuxtjs/supabase Configuration (`supabase` key):**
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `supabaseUrl` | `string` | - | Your Supabase project URL |
-| `supabaseKey` | `string` | - | Your Supabase anon key |
-| `redirectTo` | `string` | `'/dashboard'` | Where to redirect after auth |
-| `loginPage` | `string` | `'/signin'` | Where to redirect when auth required |
+| `url` | `string` | - | Your Supabase project URL |
+| `key` | `string` | - | Your Supabase anon key |
+| `redirectOptions.login` | `string` | `'/signin'` | Your login page route |
+| `redirectOptions.callback` | `string` | `'/auth/callback'` | OAuth callback route |
+| `redirectOptions.exclude` | `string[]` | `[]` | Public routes (no auth redirect) |
+
+**Team Auth Module Configuration (`teamAuth` key):**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `redirectTo` | `string` | `'/dashboard'` | Where to redirect after successful auth |
+| `socialProviders.google.enabled` | `boolean` | `true` | Enable Google OAuth |
 | `debug` | `boolean` | Auto-detected | Enable debug logging |
+
+**Important Notes:**
+- The module automatically registers `@nuxtjs/supabase` if not present
+- Configure your login routes in `supabase.redirectOptions` to match your app structure  
+- The `build.transpile: ['cookie']` fix and cookie@0.7.2 override are **required** to prevent ESM/CJS import errors from `@supabase/ssr`
+- Cookie versions < 0.7.0 have security vulnerabilities and should be avoided
 
 ### 3. Add Required App Structure
 
@@ -842,7 +874,7 @@ cd my-team-app
 # Add our module
 pnpm add nuxt-supabase-team-auth
 
-# Configure in nuxt.config.ts
+# Configure in nuxt.config.ts (see configuration section above)
 # Add environment variables
 # Start building!
 ```
@@ -853,6 +885,71 @@ Use our minimal test app as reference:
 
 - `test-projects/minimal-nuxt-ui-app/` - Working integration example
 - Shows proper component usage and middleware setup
+
+### Migration from Previous Versions
+
+If you're updating from a previous version of this module (< v0.2.0), you need to update your configuration:
+
+#### Required Changes
+
+1. **Add @nuxtjs/supabase configuration block:**
+```typescript
+// NEW: Required @nuxtjs/supabase configuration
+supabase: {
+  url: process.env.SUPABASE_URL,
+  key: process.env.SUPABASE_ANON_KEY,
+  redirectOptions: {
+    login: '/signin',
+    callback: '/auth/callback',
+    exclude: ['/', '/signup']
+  }
+},
+```
+
+2. **Update teamAuth configuration:**
+```typescript
+// BEFORE: Direct Supabase credentials
+teamAuth: {
+  supabaseUrl: process.env.SUPABASE_URL,    // Remove
+  supabaseKey: process.env.SUPABASE_ANON_KEY, // Remove
+  redirectTo: '/dashboard',
+  loginPage: '/',  // Remove - use supabase.redirectOptions.login
+}
+
+// AFTER: Simplified configuration
+teamAuth: {
+  redirectTo: '/dashboard',
+  socialProviders: {
+    google: { enabled: true }
+  }
+}
+```
+
+3. **Add ESM/CJS compatibility fix:**
+```typescript
+build: {
+  transpile: ['cookie']
+}
+```
+
+4. **Add cookie version override to package.json:**
+```json
+{
+  "pnpm": {
+    "overrides": {
+      "cookie": "0.7.2"
+    }
+  }
+}
+```
+*Use `"overrides"` for npm or `"resolutions"` for Yarn*
+
+#### Benefits of New Architecture
+
+- **Better ESM/CJS compatibility** - No more module import errors
+- **Industry standard patterns** - Built on @nuxtjs/supabase
+- **Flexible routing** - Configure auth routes to match your app
+- **Improved performance** - Better tree-shaking and bundling
 
 ## Development
 

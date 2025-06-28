@@ -155,3 +155,46 @@ defineExpose({
   close: handleClose,
 })
 </script>
+
+<style>
+/* Force modal width with high specificity - targeting the actual DialogContent */
+[data-state="open"][role="dialog"] {
+  width: 95vw !important;
+  max-width: 95vw !important;
+}
+
+@media (min-width: 640px) {
+  [data-state="open"][role="dialog"] {
+    width: 85vw !important;
+    max-width: 85vw !important;
+  }
+}
+
+@media (min-width: 768px) {
+  [data-state="open"][role="dialog"] {
+    width: 75vw !important;
+    max-width: 75vw !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  [data-state="open"][role="dialog"] {
+    width: 65vw !important;
+    max-width: 65vw !important;
+  }
+}
+
+@media (min-width: 1280px) {
+  [data-state="open"][role="dialog"] {
+    width: 55vw !important;
+    max-width: 55vw !important;
+  }
+}
+
+@media (min-width: 1536px) {
+  [data-state="open"][role="dialog"] {
+    width: 50vw !important;
+    max-width: 1152px !important;
+  }
+}
+</style>

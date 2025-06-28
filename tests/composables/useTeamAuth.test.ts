@@ -1,26 +1,80 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { nextTick, ref } from 'vue'
+
+// Import after mocking
 import { useTeamAuth, resetTeamAuthState } from '../../src/runtime/composables/useTeamAuth'
 import { resetSessionState } from '../../src/runtime/composables/useSession'
 
-// Mock Nuxt composables
+// Mock $fetch globally
+global.$fetch = vi.fn()
+
+// Mock #app module
+vi.mock('#app', () => ({
+  useState: vi.fn(),
+  useNuxtApp: vi.fn(),
+  useRuntimeConfig: vi.fn(),
+  $fetch: global.$fetch,
+  defineNuxtRouteMiddleware: vi.fn(fn => fn),
+  navigateTo: vi.fn(),
+}))
+
+// Mock @nuxt/ui module for toast
+vi.mock('@nuxt/ui', () => ({
+  useToast: vi.fn(() => ({
+    add: vi.fn(),
+  })),
+}))
+
+// Mock @nuxtjs/supabase composables
+vi.mock('#supabase/composables', () => ({
+  useSupabaseClient: vi.fn(),
+}))
+
+// Mock other composables
+vi.mock('../../src/runtime/composables/useSessionSync', () => {
+  const mockSessionSyncReturn = {
+    tabId: 'test-tab-id',
+    isActiveTab: { value: true },
+    isPrimaryTab: true,
+    lastSyncTime: { value: new Date() },
+    conflictResolution: { value: 'primary' },
+    initializeSessionSync: vi.fn(),
+    broadcastSessionState: vi.fn(),
+    triggerSessionRecovery: vi.fn(),
+    performSessionHealthCheck: vi.fn().mockReturnValue({ isHealthy: true, issues: [] }),
+    getActiveTabs: vi.fn().mockReturnValue([]),
+    SESSION_SYNC_EVENTS: {
+      TEAM_CHANGED: 'team_changed',
+      ROLE_CHANGED: 'role_changed',
+      IMPERSONATION_STARTED: 'impersonation_started',
+      IMPERSONATION_STOPPED: 'impersonation_stopped',
+      SESSION_CONFLICT: 'session_conflict',
+      SESSION_RECOVERY: 'session_recovery',
+    },
+  }
+
+  return {
+    useSessionSync: vi.fn(() => mockSessionSyncReturn),
+  }
+})
+
+// Mock useToast
+vi.mock('../../src/runtime/composables/useToast', () => ({
+  useToast: vi.fn(),
+}))
+
+// Get a handle to the mocked functions
 const mockUseState = vi.fn()
 const mockUseNuxtApp = vi.fn()
 const mockUseRuntimeConfig = vi.fn()
 const mockUseSessionSync = vi.fn()
 const mockUseToast = vi.fn()
 const mockUseSupabaseClient = vi.fn()
-const mockFetch = vi.fn()
 
-Object.assign(global, {
-  useState: mockUseState,
-  useNuxtApp: mockUseNuxtApp,
-  useRuntimeConfig: mockUseRuntimeConfig,
-  useSessionSync: mockUseSessionSync,
-  useToast: mockUseToast,
-  useSupabaseClient: mockUseSupabaseClient,
-  $fetch: mockFetch,
-})
+// Helper to get the mocked $fetch function
+const getMockFetch = () => {
+  return global.$fetch
+}
 
 // Mock import.meta.client for browser-only code
 Object.defineProperty(import.meta, 'client', {
@@ -106,12 +160,21 @@ describe('useTeamAuth', () => {
   let mockSupabaseClient: any
   let mockAuthState: any
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
 
     // Reset all global state BEFORE creating new mocks
     resetSessionState()
     resetTeamAuthState()
+
+    // Set up fresh mocks for each test
+    mockUseState.mockClear()
+    mockUseNuxtApp.mockClear()
+    mockUseSupabaseClient.mockClear()
+    mockUseRuntimeConfig.mockClear()
+    mockUseSessionSync.mockClear()
+    mockUseToast.mockClear()
+    // mockFetch will be accessed via getMockFetch() in each test
 
     // Create completely fresh mock for each test to prevent interference
     mockSupabaseClient = createMockSupabaseClient()
@@ -139,21 +202,17 @@ describe('useTeamAuth', () => {
       initialized: false,
     })
 
-    // Mock Nuxt composables
-    mockUseState.mockReturnValue(mockAuthState)
-    mockUseNuxtApp.mockReturnValue({
-      $teamAuthClient: mockSupabaseClient,
-    })
-    // Always return the fresh mockSupabaseClient instance
-    mockUseSupabaseClient.mockReturnValue(mockSupabaseClient)
-    mockUseRuntimeConfig.mockReturnValue({
-      public: {
-        teamAuth: {
-          loginPage: '/signin',
-        },
-      },
-    })
-    mockUseSessionSync.mockReturnValue({
+    // Mock Nuxt composables - useState should return the ref directly
+    // We need to mock the actual function calls in the vi.mock() definitions
+    const { useState } = await vi.importMock('#app')
+    const { useSupabaseClient } = await vi.importMock('#supabase/composables')
+    const { useSessionSync } = await vi.importMock('../../src/runtime/composables/useSessionSync')
+    const { useToast } = await vi.importMock('@nuxt/ui')
+
+    // Set up the mocks
+    useState.mockReturnValue(mockAuthState)
+    useSupabaseClient.mockReturnValue(mockSupabaseClient)
+    useSessionSync.mockReturnValue({
       tabId: 'test-tab-id',
       isActiveTab: ref(true),
       isPrimaryTab: true,
@@ -173,14 +232,66 @@ describe('useTeamAuth', () => {
         SESSION_RECOVERY: 'session_recovery',
       },
     })
-    mockUseToast.mockReturnValue({
+    useToast.mockReturnValue({
       add: vi.fn(),
     })
-    mockFetch.mockResolvedValue({
-      success: true,
-      message: 'Success',
-      session: mockSession,
-      team: mockTeam,
+    const { useNuxtApp, useRuntimeConfig } = await vi.importMock('#app')
+
+    useNuxtApp.mockReturnValue({
+      $teamAuthClient: mockSupabaseClient,
+    })
+
+    useRuntimeConfig.mockReturnValue({
+      public: {
+        teamAuth: {
+          loginPage: '/signin',
+        },
+      },
+    })
+
+    // Set up $fetch mock with default success responses
+    global.$fetch.mockImplementation(async (url: string, _options: any) => {
+      // Default success responses for all API endpoints
+      const responses: Record<string, any> = {
+        '/api/signup-with-team': {
+          success: true,
+          team: mockTeam,
+          user: mockUser,
+        },
+        '/api/invite-member': {
+          success: true,
+          message: 'Invitation sent successfully',
+        },
+        '/api/get-pending-invitations': {
+          success: true,
+          invitations: [],
+        },
+        '/api/revoke-invitation': {
+          success: true,
+          message: 'Invitation revoked successfully',
+        },
+        '/api/transfer-ownership': {
+          success: true,
+          message: 'Ownership transferred successfully',
+        },
+        '/api/delete-user': {
+          success: true,
+          message: 'User deleted successfully',
+        },
+        '/api/impersonate': {
+          success: true,
+          impersonation: {
+            target_user: { full_name: 'Target User', email: 'target@example.com' },
+          },
+        },
+        '/api/stop-impersonation': {
+          success: true,
+          message: 'Impersonation stopped successfully',
+        },
+      }
+
+      const response = responses[url] || { success: true }
+      return Promise.resolve(response)
     })
 
     // Mock storage functions (browser APIs we can't test directly)
@@ -261,6 +372,8 @@ describe('useTeamAuth', () => {
 
   describe('Authentication Methods', () => {
     it('should sign up with team creation', async () => {
+      const mockFetch = getMockFetch()
+
       // Mock $fetch for signup API call
       mockFetch.mockResolvedValue({
         success: true,
@@ -295,6 +408,7 @@ describe('useTeamAuth', () => {
 
     it('should handle sign up errors', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const mockFetch = getMockFetch()
 
       // Mock $fetch to return error response
       mockFetch.mockResolvedValue({
@@ -382,6 +496,7 @@ describe('useTeamAuth', () => {
     it('should invite member with proper permissions', async () => {
       // Setup authenticated state as owner
       setupAuthenticatedState({ role: 'owner' })
+      const mockFetch = getMockFetch()
 
       mockFetch.mockResolvedValue({
         success: true,
@@ -454,6 +569,7 @@ describe('useTeamAuth', () => {
     it('should transfer ownership', async () => {
       // Setup authenticated state as owner
       setupAuthenticatedState({ role: 'owner' })
+      const mockFetch = getMockFetch()
 
       mockFetch.mockResolvedValue({
         success: true,
@@ -495,6 +611,7 @@ describe('useTeamAuth', () => {
         error: null,
       })
 
+      const mockFetch = getMockFetch()
       mockFetch.mockResolvedValue({
         success: true,
         session: {
@@ -556,6 +673,7 @@ describe('useTeamAuth', () => {
         error: null,
       })
 
+      const mockFetch = getMockFetch()
       mockFetch.mockResolvedValue({
         success: true,
         message: 'Impersonation stopped',
@@ -617,6 +735,7 @@ describe('useTeamAuth', () => {
         },
       }
 
+      const mockFetch = getMockFetch()
       mockFetch.mockResolvedValue(impersonationResponse)
 
       // Mock useToast
@@ -656,6 +775,7 @@ describe('useTeamAuth', () => {
       })
 
       // Mock API error response
+      const mockFetch = getMockFetch()
       mockFetch.mockResolvedValue({
         success: false,
         message: 'Only super admins can start impersonation',
@@ -689,6 +809,7 @@ describe('useTeamAuth', () => {
         error: null,
       })
 
+      const mockFetch = getMockFetch()
       mockFetch.mockResolvedValue({
         success: true,
         message: 'Impersonation stopped successfully',

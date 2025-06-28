@@ -12,6 +12,7 @@ export function useTeamAuthConfig() {
 
   const debug = computed(() => config.value.debug || false)
   const redirectTo = computed(() => config.value.redirectTo || '/dashboard')
+  const loginPage = computed(() => config.value.loginPage || '/signin')
   const supabaseUrl = computed(() => config.value.supabaseUrl)
   const supabaseKey = computed(() => config.value.supabaseKey)
 
@@ -29,6 +30,7 @@ export function useTeamAuthConfig() {
 
   // Convenience getters for individual providers
   const isGoogleEnabled = computed(() => socialProviders.value.google?.enabled ?? true)
+  const isGithubEnabled = computed(() => false) // GitHub auth not implemented
 
   // Check if any social provider is enabled
   const hasAnySocialProvider = computed(() => {
@@ -39,10 +41,12 @@ export function useTeamAuthConfig() {
     config,
     debug,
     redirectTo,
+    loginPage,
     supabaseUrl,
     supabaseKey,
     socialProviders,
     isGoogleEnabled,
+    isGithubEnabled,
     hasAnySocialProvider,
   }
 }

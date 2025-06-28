@@ -64,10 +64,12 @@
 
 <script setup lang="ts">
 import PasswordSetupForm from '../components/PasswordSetupForm.vue'
+import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
 
 const route = useRoute()
 const router = useRouter()
 const { getSession } = useSession()
+const { loginPage } = useTeamAuthConfig()
 
 // State
 const isLoading = ref(true)
@@ -79,27 +81,33 @@ onMounted(async () => {
   console.log('Accept-invite page loaded with params:', route.query)
 
   try {
-    // Extract team_id from query params
-    const teamIdParam = route.query.team_id as string
-
-    if (!teamIdParam) {
-      console.log('No team_id found, redirecting to signin')
-      router.replace('/signin')
-      return
-    }
-
-    teamId.value = teamIdParam
-
     // Get current session (user should be authenticated from email link)
     const session = await getSession()
 
     if (!session) {
       console.log('No session found, redirecting to signin')
-      router.replace('/signin')
+      router.replace(loginPage.value)
       return
     }
 
     userEmail.value = session.user.email || ''
+
+    // Extract team_id from query params or user metadata
+    let teamIdParam = route.query.team_id as string
+
+    if (!teamIdParam && session.user.user_metadata?.team_id) {
+      // Fallback to team_id from user metadata (set during invite)
+      teamIdParam = session.user.user_metadata.team_id
+      console.log('Using team_id from user metadata:', teamIdParam)
+    }
+
+    if (!teamIdParam) {
+      console.log('No team_id found in query or metadata, redirecting to login page')
+      router.replace(loginPage.value)
+      return
+    }
+
+    teamId.value = teamIdParam
 
     // Get team name from user metadata or database
     const metadata = session.user.user_metadata
@@ -137,7 +145,7 @@ onMounted(async () => {
   }
   catch (error: any) {
     console.error('Invitation setup error:', error)
-    router.replace('/signin')
+    router.replace(loginPage.value)
     return
   }
   finally {
