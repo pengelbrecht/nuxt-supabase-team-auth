@@ -1,4 +1,4 @@
-import { defineNuxtModule, addPlugin, createResolver, addImports, addComponentsDir } from '@nuxt/kit'
+import { defineNuxtModule, addPlugin, createResolver, addImports, addComponentsDir, extendViteConfig } from '@nuxt/kit'
 import { defu } from 'defu'
 
 export interface ModuleOptions {
@@ -75,92 +75,34 @@ export default defineNuxtModule<ModuleOptions>({
       console.warn(`[nuxt-supabase-team-auth] Warning: @nuxt/ui not found in modules. Please add '@nuxt/ui' to your modules array in nuxt.config.ts for components to work properly.`)
     }
 
-    // Fix ESM/CJS module conflicts for Supabase dependencies - aggressive approach
+    // Fix ESM/CJS module conflicts - simple transpilation approach
     nuxt.options.vite = nuxt.options.vite || {}
-    nuxt.options.vite.optimizeDeps = nuxt.options.vite.optimizeDeps || {}
-    nuxt.options.vite.optimizeDeps.exclude = nuxt.options.vite.optimizeDeps.exclude || []
     nuxt.options.vite.ssr = nuxt.options.vite.ssr || {}
-    nuxt.options.vite.ssr.noExternal = nuxt.options.vite.ssr.noExternal || []
-    nuxt.options.vite.resolve = nuxt.options.vite.resolve || {}
-    nuxt.options.vite.resolve.alias = nuxt.options.vite.resolve.alias || {}
-    
-    // Problematic Supabase packages that have ESM/CJS conflicts
-    const supabaseExcludes = ['@supabase/postgrest-js', '@supabase/storage-js', '@supabase/realtime-js']
-    
-    // Comprehensive fix for both client-side and server-side ESM/CJS conflicts
-    
-    // Define all Supabase packages with their correct ESM paths
-    const allSupabasePackages = ['@supabase/supabase-js', '@supabase/postgrest-js', '@supabase/storage-js', '@supabase/realtime-js', '@supabase/gotrue-js', '@supabase/functions-js']
-    
-    // Force ESM resolution for client-side using aliases - this is the critical fix
-    const supabaseAliases = {
-      '@supabase/postgrest-js': '@supabase/postgrest-js/dist/esm/wrapper.mjs',
-      '@supabase/storage-js': '@supabase/storage-js/dist/esm/wrapper.mjs',
-      '@supabase/realtime-js': '@supabase/realtime-js/dist/esm/wrapper.mjs',
-      '@supabase/gotrue-js': '@supabase/gotrue-js/dist/esm/wrapper.mjs',
-      '@supabase/functions-js': '@supabase/functions-js/dist/esm/wrapper.mjs'
-    }
-    
-    // Apply aliases to force ESM resolution on client-side
-    Object.entries(supabaseAliases).forEach(([pkg, esmPath]) => {
-      nuxt.options.vite.resolve.alias[pkg] = esmPath
-    })
-    
-    // Still exclude from optimization to prevent bundling issues
-    allSupabasePackages.forEach(pkg => {
-      if (!nuxt.options.vite.optimizeDeps.exclude.includes(pkg)) {
-        nuxt.options.vite.optimizeDeps.exclude.push(pkg)
-      }
-    })
-    
-    // Handle client-side external packages using rollup options
-    nuxt.options.vite.build = nuxt.options.vite.build || {}
-    nuxt.options.vite.build.rollupOptions = nuxt.options.vite.build.rollupOptions || {}
-    nuxt.options.vite.build.rollupOptions.external = nuxt.options.vite.build.rollupOptions.external || []
-    
-    // Make Supabase packages external for production builds too
-    allSupabasePackages.forEach(pkg => {
-      if (!nuxt.options.vite.build.rollupOptions.external.includes(pkg)) {
-        nuxt.options.vite.build.rollupOptions.external.push(pkg)
-      }
-    })
-    
-    // Force them to be external in SSR for server-side
     nuxt.options.vite.ssr.external = nuxt.options.vite.ssr.external || []
-    allSupabasePackages.forEach(pkg => {
+    
+    // Keep Supabase packages external for SSR to avoid conflicts
+    const supabasePackages = [
+      '@supabase/supabase-js',
+      '@supabase/postgrest-js', 
+      '@supabase/storage-js',
+      '@supabase/realtime-js',
+      '@supabase/gotrue-js',
+      '@supabase/functions-js'
+    ]
+    
+    supabasePackages.forEach(pkg => {
       if (!nuxt.options.vite.ssr.external.includes(pkg)) {
         nuxt.options.vite.ssr.external.push(pkg)
       }
     })
     
-    // Only add our module to noExternal (not the Supabase packages)
-    const noExternalPackages = ['nuxt-supabase-team-auth']
-    noExternalPackages.forEach(pkg => {
-      if (!nuxt.options.vite.ssr.noExternal.includes(pkg)) {
-        nuxt.options.vite.ssr.noExternal.push(pkg)
-      }
-    })
-    
-    // Debug logging for development
     if (nuxt.options.dev) {
-      console.log('[nuxt-supabase-team-auth] Applied ESM aliases for client-side:', Object.keys(supabaseAliases))
-      console.log('[nuxt-supabase-team-auth] Made external for SSR:', allSupabasePackages)
-      console.log('[nuxt-supabase-team-auth] Made external for build:', nuxt.options.vite.build.rollupOptions.external.filter(p => typeof p === 'string' && p.includes('supabase')))
+      console.log('[nuxt-supabase-team-auth] Configured SSR external for:', supabasePackages)
     }
     
-    // Only transpile our module, not Supabase packages (they should be external)
+    // Ensure proper transpilation for the module runtime
     nuxt.options.build = nuxt.options.build || {}
     nuxt.options.build.transpile = nuxt.options.build.transpile || []
-    noExternalPackages.forEach(pkg => {
-      if (!nuxt.options.build.transpile.includes(pkg)) {
-        nuxt.options.build.transpile.push(pkg)
-      }
-    })
-    
-    // Force ESM module resolution for Node.js
-    nuxt.options.nitro = nuxt.options.nitro || {}
-    nuxt.options.nitro.experimental = nuxt.options.nitro.experimental || {}
-    nuxt.options.nitro.experimental.wasm = false // Disable WASM to avoid module issues
 
     // Merge options with runtime config
     // Debug mode hierarchy: explicit option > env var > nuxt dev mode
@@ -251,8 +193,7 @@ export default defineNuxtModule<ModuleOptions>({
       global: true, // Register components globally
     })
     
-    // Also add to transpile array to ensure proper compilation including Supabase packages
-    // (Note: Supabase packages were added earlier in the module setup)
+    // Add our runtime to transpile for proper compilation
     if (!nuxt.options.build.transpile.includes(resolver.resolve('./runtime'))) {
       nuxt.options.build.transpile.push(resolver.resolve('./runtime'))
     }
