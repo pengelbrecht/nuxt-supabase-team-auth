@@ -1,11 +1,11 @@
 import { ref, computed, triggerRef } from 'vue'
+import type { User, Profile, Team, TeamMember, TeamAuth } from '../types'
+import { useSessionSync } from './useSessionSync'
+import { useSession } from './useSession'
 import { useState } from '#app'
 // Types - we'll get the actual client and user from @nuxtjs/supabase composables
 type SupabaseClient = any
 type SupabaseUser = any
-import type { User, Profile, Team, TeamMember, TeamAuth } from '../types'
-import { useSessionSync } from './useSessionSync'
-import { useSession } from './useSession'
 
 interface _TeamAuthError {
   code: string

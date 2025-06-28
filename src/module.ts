@@ -1,4 +1,4 @@
-import { defineNuxtModule, addPlugin, createResolver, addImports, addComponentsDir, extendViteConfig } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addImports, addComponentsDir } from '@nuxt/kit'
 import { defu } from 'defu'
 
 export interface ModuleOptions {
@@ -64,11 +64,11 @@ export default defineNuxtModule<ModuleOptions>({
 
     // Ensure @nuxtjs/supabase is registered first
     nuxt.options.modules = nuxt.options.modules || []
-    const hasSupabaseModule = nuxt.options.modules.some(module => 
-      (typeof module === 'string' && module === '@nuxtjs/supabase') ||
-      (Array.isArray(module) && module[0] === '@nuxtjs/supabase')
+    const hasSupabaseModule = nuxt.options.modules.some(module =>
+      (typeof module === 'string' && module === '@nuxtjs/supabase')
+      || (Array.isArray(module) && module[0] === '@nuxtjs/supabase'),
     )
-    
+
     if (!hasSupabaseModule) {
       nuxt.options.modules.unshift('@nuxtjs/supabase')
       if (nuxt.options.dev) {
@@ -77,18 +77,18 @@ export default defineNuxtModule<ModuleOptions>({
     }
 
     // Validate Nuxt UI dependency
-    const hasNuxtUI = nuxt.options.modules?.some(module => 
-      typeof module === 'string' 
+    const hasNuxtUI = nuxt.options.modules?.some(module =>
+      typeof module === 'string'
         ? module === '@nuxt/ui'
-        : Array.isArray(module) 
+        : Array.isArray(module)
           ? module[0] === '@nuxt/ui'
-          : false
+          : false,
     )
-    
+
     if (!hasNuxtUI && nuxt.options.dev) {
       console.warn(`[nuxt-supabase-team-auth] Warning: @nuxt/ui not found in modules. Please add '@nuxt/ui' to your modules array in nuxt.config.ts for components to work properly.`)
     }
-    
+
     // Ensure proper transpilation for the module runtime
     nuxt.options.build = nuxt.options.build || {}
     nuxt.options.build.transpile = nuxt.options.build.transpile || []
@@ -104,8 +104,8 @@ export default defineNuxtModule<ModuleOptions>({
     // Set up standard Supabase configuration for @nuxtjs/supabase
     const supabaseUrl = options.supabaseUrl || process.env.SUPABASE_URL
     const supabaseKey = options.supabaseKey || process.env.SUPABASE_ANON_KEY
-    const serviceKey = process.env.SUPABASE_SERVICE_KEY 
-      || process.env.SUPABASE_SERVICE_ROLE_KEY 
+    const serviceKey = process.env.SUPABASE_SERVICE_KEY
+      || process.env.SUPABASE_SERVICE_ROLE_KEY
       || process.env.SUPABASE_ANON_KEY // Fallback for development
 
     // Validate required configuration
@@ -175,7 +175,7 @@ export default defineNuxtModule<ModuleOptions>({
       pathPrefix: false, // Don't use path-based prefixes
       global: true, // Register components globally
     })
-    
+
     // Add our runtime to transpile for proper compilation
     if (!nuxt.options.build.transpile.includes(resolver.resolve('./runtime'))) {
       nuxt.options.build.transpile.push(resolver.resolve('./runtime'))

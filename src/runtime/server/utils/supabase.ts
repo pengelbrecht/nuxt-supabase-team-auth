@@ -4,9 +4,9 @@ export { serverSupabaseUser as getCurrentUser } from '#supabase/server'
 export { serverSupabaseClient as createSupabaseClientFromEvent } from '#supabase/server'
 
 // For backward compatibility, also export the @nuxtjs/supabase utilities directly
-export { 
+export {
   serverSupabaseServiceRole,
   serverSupabaseClient,
   serverSupabaseUser,
-  serverSupabaseSession
+  serverSupabaseSession,
 } from '#supabase/server'

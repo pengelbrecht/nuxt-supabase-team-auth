@@ -1,6 +1,7 @@
 // Types - we'll use types from @nuxtjs/supabase composables
-type SupabaseClient = any
 import type { DbProfile, DbTeam, DbTeamMember, DbImpersonationSession } from './database.types'
+
+type SupabaseClient = any
 
 // Social Provider Configuration Types
 export interface SocialProviderConfig {

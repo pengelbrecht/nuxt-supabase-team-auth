@@ -21,7 +21,7 @@ function findSupabaseDir(): string | null {
   const startDir = process.cwd()
   let currentDir = startDir
   const rootDir = '/'
-  
+
   while (currentDir !== rootDir) {
     const supabaseConfigPath = join(currentDir, 'supabase', 'config.toml')
     if (existsSync(supabaseConfigPath)) {
@@ -30,7 +30,7 @@ function findSupabaseDir(): string | null {
       const relativePath = relative(startDir, supabaseDir)
       return relativePath || 'supabase'
     }
-    
+
     // Move up one directory
     const parentDir = dirname(currentDir)
     if (parentDir === currentDir) {
@@ -39,7 +39,7 @@ function findSupabaseDir(): string | null {
     }
     currentDir = parentDir
   }
-  
+
   return null
 }
 
@@ -164,7 +164,7 @@ program
         console.error('   Searched up directory tree from current working directory')
         process.exit(1)
       }
-      
+
       if (supabaseDir !== 'supabase') {
         console.log(`📁 Found Supabase project at: ${supabaseDir}`)
       }
@@ -598,23 +598,26 @@ program
   .action(() => {
     const moduleRoot = getModuleRoot()
     const readmePath = join(moduleRoot, 'README.md')
-    
+
     if (existsSync(readmePath)) {
       console.log('📖 Opening documentation...')
       console.log(`📍 README location: ${readmePath}`)
       try {
         // Try to open with system default
         execSync(`open "${readmePath}"`, { stdio: 'ignore' })
-      } catch {
+      }
+      catch {
         try {
           // Fallback for Linux
           execSync(`xdg-open "${readmePath}"`, { stdio: 'ignore' })
-        } catch {
+        }
+        catch {
           console.log('💡 View the README at the path above, or visit:')
           console.log('   https://github.com/pengelbrecht/nuxt-supabase-team-auth')
         }
       }
-    } else {
+    }
+    else {
       console.log('📖 Documentation: https://github.com/pengelbrecht/nuxt-supabase-team-auth')
     }
   })
