@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Use service role client to delete user
-    const supabaseAdmin = createServiceRoleClient()
+    const supabaseAdmin = createServiceRoleClient(event)
 
     // Verify the current user has permission to delete this user
     // (they must be admin/owner/super_admin in the same team)

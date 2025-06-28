@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Get service role client
-    const adminClient = createServiceRoleClient()
+    const adminClient = createServiceRoleClient(event)
 
     // Verify the impersonation session exists and is active
     const { data: sessionData, error: sessionError } = await adminClient

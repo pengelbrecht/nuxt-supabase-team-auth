@@ -1,5 +1,6 @@
 import { ref, readonly } from 'vue'
-import type { Session } from '@supabase/supabase-js'
+// Use any for Session type since we'll get it from @nuxtjs/supabase
+type Session = any
 
 // Global session state
 const sessionCache = ref<Session | null>(null)

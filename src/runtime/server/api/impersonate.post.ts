@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Get service role client for admin operations
-    const adminClient = createServiceRoleClient()
+    const adminClient = createServiceRoleClient(event)
 
     // Verify user is a super admin
     const { data: memberData, error: memberError } = await adminClient

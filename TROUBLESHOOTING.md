@@ -31,21 +31,21 @@ SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key  # For server operations
 ```
 
-### ESM/CJS Module Conflicts with postgrest-js
-**Fixed in v0.2.4** - The module now handles both client-side and server-side ESM/CJS resolution properly.
+### ESM/CJS Module Conflicts with postgrest-js  
+**Fixed in v0.2.5** - The module now uses a simple SSR external approach to handle ESM/CJS conflicts.
 
-The module automatically configures:
-- `vite.resolve.alias` to force ESM resolution on client-side (uses `/dist/esm/wrapper.mjs`)
-- `vite.ssr.external` for server-side packages to be handled by Node.js  
-- `vite.build.rollupOptions.external` for production build external handling
-- `vite.optimizeDeps.exclude` to prevent pre-bundling conflicts
+The module automatically configures `vite.ssr.external` to keep Supabase packages external for SSR, preventing module resolution conflicts. This simpler approach is more reliable than previous complex alias and optimization configurations.
 
-This comprehensive approach fixes the "does not provide an export named 'default'" error by:
-1. **Client-side**: Forces Vite to use ESM versions (`wrapper.mjs`) instead of CJS (`cjs/index.js`)
-2. **Server-side**: Lets Node.js handle imports directly with proper ESM support
-3. **Production**: Keeps packages external in production builds
+**Previous approaches (v0.2.2-v0.2.4) that were replaced:**
+- ❌ Complex `vite.resolve.alias` with paths that don't exist in all packages
+- ❌ `vite.optimizeDeps.include` with dependency syntax that doesn't resolve properly  
+- ❌ Multiple rollup external configurations
 
-If you're still seeing import errors with v0.2.4+, please report it as a bug. For older versions, manually add to your `nuxt.config.ts`:
+**Current approach (v0.2.5):**
+- ✅ Simple `vite.ssr.external` configuration for Supabase packages
+- ✅ Proper transpilation of module runtime only
+
+If you're still seeing import errors with v0.2.5+, please report it as a bug. For older versions, manually add to your `nuxt.config.ts`:
 ```ts
 export default defineNuxtConfig({
   vite: {

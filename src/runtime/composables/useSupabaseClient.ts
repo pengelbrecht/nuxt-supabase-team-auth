@@ -1,4 +1,2 @@
-export function useSupabaseClient() {
-  const { $teamAuthClient } = useNuxtApp()
-  return $teamAuthClient
-}
+// Re-export useSupabaseClient from @nuxtjs/supabase for backward compatibility
+export { useSupabaseClient } from '#supabase/composables'

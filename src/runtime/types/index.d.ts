@@ -1,4 +1,5 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+// Types - we'll use types from @nuxtjs/supabase composables
+type SupabaseClient = any
 import type { DbProfile, DbTeam, DbTeamMember, DbImpersonationSession } from './database.types'
 
 // Social Provider Configuration Types
@@ -121,20 +122,4 @@ export interface TeamAuthModuleConfig {
   socialProviders?: SocialProvidersConfig
 }
 
-declare global {
-  interface Window {
-    __NUXT_TEAM_AUTH_CLIENT__?: SupabaseClient
-  }
-}
-
-declare module '#app' {
-  interface NuxtApp {
-    $teamAuthClient: SupabaseClient
-  }
-}
-
-declare module '@vue/runtime-core' {
-  interface ComponentCustomProperties {
-    $teamAuthClient: SupabaseClient
-  }
-}
+// Note: $teamAuthClient plugin types removed - now using @nuxtjs/supabase's useSupabaseClient()

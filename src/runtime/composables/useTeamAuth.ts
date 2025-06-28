@@ -1,6 +1,8 @@
 import { ref, computed, triggerRef } from 'vue'
 import { useState } from '#app'
-import type { SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js'
+// Types - we'll get the actual client and user from @nuxtjs/supabase composables
+type SupabaseClient = any
+type SupabaseUser = any
 import type { User, Profile, Team, TeamMember, TeamAuth } from '../types'
 import { useSessionSync } from './useSessionSync'
 import { useSession } from './useSession'
@@ -182,15 +184,12 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   // Session sync utilities
   const sessionSync = useSessionSync()
 
-  // Supabase client initialization - for client-only usage
+  // Supabase client initialization - using @nuxtjs/supabase
   const getSupabaseClient = (): SupabaseClient => {
     if (injectedClient) return injectedClient
 
-    const nuxtApp = useNuxtApp()
-    if (!nuxtApp?.$teamAuthClient) {
-      throw new Error('Supabase client not available. Ensure auth components are wrapped in <ClientOnly>')
-    }
-    return nuxtApp.$teamAuthClient as SupabaseClient
+    // Use @nuxtjs/supabase's useSupabaseClient
+    return useSupabaseClient()
   }
 
   // Lazy client access - only get when needed and only on client

@@ -62,6 +62,20 @@ export default defineNuxtModule<ModuleOptions>({
   async setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
 
+    // Ensure @nuxtjs/supabase is registered first
+    nuxt.options.modules = nuxt.options.modules || []
+    const hasSupabaseModule = nuxt.options.modules.some(module => 
+      (typeof module === 'string' && module === '@nuxtjs/supabase') ||
+      (Array.isArray(module) && module[0] === '@nuxtjs/supabase')
+    )
+    
+    if (!hasSupabaseModule) {
+      nuxt.options.modules.unshift('@nuxtjs/supabase')
+      if (nuxt.options.dev) {
+        console.log('[nuxt-supabase-team-auth] Automatically registered @nuxtjs/supabase module')
+      }
+    }
+
     // Validate Nuxt UI dependency
     const hasNuxtUI = nuxt.options.modules?.some(module => 
       typeof module === 'string' 
@@ -73,31 +87,6 @@ export default defineNuxtModule<ModuleOptions>({
     
     if (!hasNuxtUI && nuxt.options.dev) {
       console.warn(`[nuxt-supabase-team-auth] Warning: @nuxt/ui not found in modules. Please add '@nuxt/ui' to your modules array in nuxt.config.ts for components to work properly.`)
-    }
-
-    // Fix ESM/CJS module conflicts - simple transpilation approach
-    nuxt.options.vite = nuxt.options.vite || {}
-    nuxt.options.vite.ssr = nuxt.options.vite.ssr || {}
-    nuxt.options.vite.ssr.external = nuxt.options.vite.ssr.external || []
-    
-    // Keep Supabase packages external for SSR to avoid conflicts
-    const supabasePackages = [
-      '@supabase/supabase-js',
-      '@supabase/postgrest-js', 
-      '@supabase/storage-js',
-      '@supabase/realtime-js',
-      '@supabase/gotrue-js',
-      '@supabase/functions-js'
-    ]
-    
-    supabasePackages.forEach(pkg => {
-      if (!nuxt.options.vite.ssr.external.includes(pkg)) {
-        nuxt.options.vite.ssr.external.push(pkg)
-      }
-    })
-    
-    if (nuxt.options.dev) {
-      console.log('[nuxt-supabase-team-auth] Configured SSR external for:', supabasePackages)
     }
     
     // Ensure proper transpilation for the module runtime
@@ -112,18 +101,12 @@ export default defineNuxtModule<ModuleOptions>({
         ? true
         : nuxt.options.dev
 
-    // Set up runtime config for both client and server  
-    // Auto-detect service role key from common environment variable names
+    // Set up standard Supabase configuration for @nuxtjs/supabase
+    const supabaseUrl = options.supabaseUrl || process.env.SUPABASE_URL
+    const supabaseKey = options.supabaseKey || process.env.SUPABASE_ANON_KEY
     const serviceKey = process.env.SUPABASE_SERVICE_KEY 
       || process.env.SUPABASE_SERVICE_ROLE_KEY 
       || process.env.SUPABASE_ANON_KEY // Fallback for development
-    
-    nuxt.options.runtimeConfig = defu(nuxt.options.runtimeConfig, {
-      supabaseServiceKey: serviceKey,
-    })
-
-    const supabaseUrl = options.supabaseUrl || process.env.SUPABASE_URL
-    const supabaseKey = options.supabaseKey || process.env.SUPABASE_ANON_KEY
 
     // Validate required configuration
     if (!supabaseUrl) {
@@ -136,6 +119,19 @@ export default defineNuxtModule<ModuleOptions>({
       console.warn(`[nuxt-supabase-team-auth] Warning: No service role key found. Server-side operations may not work. Please set SUPABASE_SERVICE_ROLE_KEY environment variable.`)
     }
 
+    // Configure @nuxtjs/supabase with our values
+    nuxt.options.runtimeConfig = defu(nuxt.options.runtimeConfig, {
+      supabaseUrl,
+      supabaseKey,
+      supabaseServiceKey: serviceKey,
+    })
+
+    nuxt.options.runtimeConfig.public = defu(nuxt.options.runtimeConfig.public, {
+      supabaseUrl,
+      supabaseKey,
+    })
+
+    // Keep our custom teamAuth config for backward compatibility
     nuxt.options.runtimeConfig.public.teamAuth = defu(
       nuxt.options.runtimeConfig.public.teamAuth || {},
       {
@@ -147,20 +143,7 @@ export default defineNuxtModule<ModuleOptions>({
       },
     )
 
-    // Add plugins with dependency order - load after UI framework
-    addPlugin({
-      src: resolver.resolve('./runtime/plugins/supabase.client'),
-      mode: 'client',
-      order: 10, // Load after default plugins (0)
-    })
-
-    addPlugin({
-      src: resolver.resolve('./runtime/plugins/supabase.server'),
-      mode: 'server',
-      order: 10, // Load after default plugins (0)
-    })
-
-    // Add composables
+    // Add composables (useSupabaseClient is now a re-export from @nuxtjs/supabase)
     addImports([
       {
         name: 'useTeamAuth',
