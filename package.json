@@ -73,7 +73,7 @@
     "cookie": "0.7.2",
     "defu": "^6.1.4",
     "jsonwebtoken": "^9.0.2",
-    "pathe": "^1.1.2",
+    "pathe": "^2.0.3",
     "valibot": "^1.1.0"
   },
   "peerDependencies": {
