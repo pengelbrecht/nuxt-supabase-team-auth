@@ -26,6 +26,9 @@ const sessionStorageMock = (() => {
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 Object.defineProperty(window, 'sessionStorage', { value: sessionStorageMock })
 
+// Also define global localStorage to prevent ReferenceError during cleanup
+Object.defineProperty(global, 'localStorage', { value: localStorageMock })
+
 // Mock window location
 Object.defineProperty(window, 'location', {
   value: { href: 'http://localhost:3000/dashboard' },
@@ -55,7 +58,9 @@ describe('useSessionSync', () => {
     mockImpersonationExpiresAt = ref(null)
   })
 
-  afterEach(() => {
+  afterEach(async () => {
+    // Wait for any pending timeouts to complete before cleanup
+    await new Promise(resolve => setTimeout(resolve, 150))
     vi.restoreAllMocks()
   })
 
