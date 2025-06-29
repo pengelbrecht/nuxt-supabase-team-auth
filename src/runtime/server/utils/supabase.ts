@@ -3,8 +3,8 @@
  * These implementations mirror @nuxtjs/supabase's server utilities using direct SDK imports
  */
 import { createClient } from '@supabase/supabase-js'
-import { useRuntimeConfig } from '#imports'
 import type { H3Event } from 'h3'
+import { useRuntimeConfig } from '#imports'
 
 /**
  * Create a Supabase service role client (compatible with @nuxtjs/supabase)
@@ -66,11 +66,11 @@ export const serverSupabaseClient = (event: H3Event) => {
 export const serverSupabaseUser = async (event: H3Event) => {
   const client = serverSupabaseClient(event)
   const { data: { user }, error } = await client.auth.getUser()
-  
+
   if (error) {
     return null
   }
-  
+
   return user
 }
 
@@ -81,11 +81,11 @@ export const serverSupabaseUser = async (event: H3Event) => {
 export const serverSupabaseSession = async (event: H3Event) => {
   const client = serverSupabaseClient(event)
   const { data: { session }, error } = await client.auth.getSession()
-  
+
   if (error) {
     return null
   }
-  
+
   return session
 }
 
