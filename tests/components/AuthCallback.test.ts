@@ -50,8 +50,11 @@ global.ref = ref
 global.onMounted = vi.fn(fn => fn())
 global.definePageMeta = vi.fn()
 
-// Get the mock client instance
+// Get the mock client instance and make it globally available
 const mockSupabaseClient = useSupabaseClient()
+global.useSupabaseClient = vi.fn(() => mockSupabaseClient)
+global.useSupabaseSession = vi.fn(() => null)
+global.useSupabaseUser = vi.fn(() => null)
 
 // Mock useTeamAuth composable
 const mockSignUpWithTeam = vi.fn()

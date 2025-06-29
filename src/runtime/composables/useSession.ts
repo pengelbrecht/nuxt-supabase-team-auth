@@ -1,5 +1,4 @@
 import { ref, readonly } from 'vue'
-import { useSupabaseClient } from '#imports'
 // Use any for Session type since we'll get it from @nuxtjs/supabase
 type Session = any
 

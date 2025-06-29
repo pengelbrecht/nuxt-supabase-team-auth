@@ -179,7 +179,6 @@ import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
-import { useSupabaseClient } from '#imports'
 
 interface AuthSignInProps {
   /** Title displayed in the header */

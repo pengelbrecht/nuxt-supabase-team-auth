@@ -1,4 +1,4 @@
-import { defineNuxtModule, createResolver, addImports, addComponentsDir } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addImports, addComponentsDir, installModule } from '@nuxt/kit'
 import { defu } from 'defu'
 
 export interface ModuleOptions {
@@ -67,19 +67,8 @@ export default defineNuxtModule<ModuleOptions>({
   async setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
 
-    // Ensure @nuxtjs/supabase is registered first
-    nuxt.options.modules = nuxt.options.modules || []
-    const hasSupabaseModule = nuxt.options.modules.some(module =>
-      (typeof module === 'string' && module === '@nuxtjs/supabase')
-      || (Array.isArray(module) && module[0] === '@nuxtjs/supabase'),
-    )
-
-    if (!hasSupabaseModule) {
-      nuxt.options.modules.unshift('@nuxtjs/supabase')
-      if (nuxt.options.dev) {
-        console.log('[nuxt-supabase-team-auth] Automatically registered @nuxtjs/supabase module')
-      }
-    }
+    // Install @nuxtjs/supabase module with proper initialization
+    await installModule('@nuxtjs/supabase')
 
     // Validate Nuxt UI dependency
     const hasNuxtUI = nuxt.options.modules?.some(module =>

@@ -112,7 +112,6 @@
 import { ref, onMounted } from 'vue'
 import PasswordSetupForm from '../../components/PasswordSetupForm.vue'
 import ResetPasswordForm from '../../components/ResetPasswordForm.vue'
-import { useSupabaseClient } from '#imports'
 
 const route = useRoute()
 const router = useRouter()
