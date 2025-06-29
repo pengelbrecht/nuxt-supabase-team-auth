@@ -3,6 +3,7 @@ import type { User, Profile, Team, TeamMember, TeamAuth } from '../types'
 import { useSessionSync } from './useSessionSync'
 import { useSession } from './useSession'
 import { useState, useNuxtApp } from '#app'
+import { useSupabaseClient } from '#imports'
 
 // Helper to get toast function if available (optional dependency)
 const getToast = async () => {

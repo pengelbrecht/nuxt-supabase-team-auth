@@ -192,6 +192,7 @@
 import { ref, reactive, computed } from 'vue'
 import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { useSupabaseClient } from '#imports'
 import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
 
 interface PasswordSetupFormProps {
