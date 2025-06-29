@@ -157,10 +157,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useSupabaseClient } from '#imports'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import SettingsTabContainer from './SettingsTabContainer.vue'
 import RoleBadge from './RoleBadge.vue'
+import { useSupabaseClient } from '#imports'
 
 // Get unified auth and impersonation functionality
 const {

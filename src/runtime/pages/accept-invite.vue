@@ -63,9 +63,9 @@
 </template>
 
 <script setup lang="ts">
-import { useSupabaseClient } from '#imports'
 import PasswordSetupForm from '../components/PasswordSetupForm.vue'
 import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
+import { useSupabaseClient } from '#imports'
 
 const route = useRoute()
 const router = useRouter()

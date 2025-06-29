@@ -110,9 +110,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useSupabaseClient } from '#imports'
 import PasswordSetupForm from '../../components/PasswordSetupForm.vue'
 import ResetPasswordForm from '../../components/ResetPasswordForm.vue'
+import { useSupabaseClient } from '#imports'
 
 const route = useRoute()
 const router = useRouter()

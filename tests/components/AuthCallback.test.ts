@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick, ref } from 'vue'
 import AuthCallback from '../../src/runtime/pages/auth/callback.vue'
+import { useSupabaseClient } from '#imports'
 
 // Mock Nuxt UI components
 const MockUCard = {
@@ -49,18 +50,8 @@ global.ref = ref
 global.onMounted = vi.fn(fn => fn())
 global.definePageMeta = vi.fn()
 
-// Mock Supabase client
-const mockSupabaseClient = {
-  auth: {
-    getSession: vi.fn(),
-  },
-}
-
-vi.mock('#supabase/client', () => ({
-  useSupabaseClient: () => mockSupabaseClient,
-}))
-
-global.useSupabaseClient = vi.fn(() => mockSupabaseClient)
+// Get the mock client instance
+const mockSupabaseClient = useSupabaseClient()
 
 // Mock useTeamAuth composable
 const mockSignUpWithTeam = vi.fn()

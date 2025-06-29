@@ -94,8 +94,8 @@
 </template>
 
 <script setup lang="ts">
-import { useSupabaseClient } from '#imports'
 import { useTeamAuth } from '../../composables/useTeamAuth'
+import { useSupabaseClient } from '#imports'
 
 const route = useRoute()
 const router = useRouter()

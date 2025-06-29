@@ -177,9 +177,9 @@
 import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import { useSupabaseClient } from '#imports'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
+import { useSupabaseClient } from '#imports'
 
 interface AuthSignInProps {
   /** Title displayed in the header */
