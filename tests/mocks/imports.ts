@@ -7,22 +7,22 @@ const mockSupabaseClient = {
     signUp: vi.fn(),
     signOut: vi.fn(),
     updateUser: vi.fn(),
-    getSession: vi.fn().mockResolvedValue({ 
-      data: { 
+    getSession: vi.fn().mockResolvedValue({
+      data: {
         session: {
-          user: { 
+          user: {
             id: 'test-user-id',
             email: 'test@example.com',
-            user_metadata: { full_name: 'Test User' }
-          }
-        }
-      }, 
-      error: null 
+            user_metadata: { full_name: 'Test User' },
+          },
+        },
+      },
+      error: null,
     }),
-    onAuthStateChange: vi.fn().mockReturnValue({ 
-      data: { 
-        subscription: { unsubscribe: vi.fn() } 
-      } 
+    onAuthStateChange: vi.fn().mockReturnValue({
+      data: {
+        subscription: { unsubscribe: vi.fn() },
+      },
     }),
   },
   from: vi.fn().mockReturnValue({
@@ -60,10 +60,10 @@ export const useRuntimeConfig = vi.fn(() => ({
   public: {
     supabase: {
       url: 'http://localhost:54321',
-      anonKey: 'test-anon-key'
-    }
+      anonKey: 'test-anon-key',
+    },
   },
   supabase: {
-    serviceKey: 'test-service-key'
-  }
+    serviceKey: 'test-service-key',
+  },
 }))
