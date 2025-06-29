@@ -24,6 +24,9 @@ importers:
       '@nuxtjs/supabase':
         specifier: ^1.5.0
         version: 1.5.2
+      '@supabase/supabase-js':
+        specifier: ^2.50.2
+        version: 2.50.2
       commander:
         specifier: ^14.0.0
         version: 14.0.0
@@ -67,9 +70,6 @@ importers:
       '@playwright/test':
         specifier: ^1.53.0
         version: 1.53.1
-      '@supabase/supabase-js':
-        specifier: ^2.50.2
-        version: 2.50.2
       '@types/jsdom':
         specifier: ^21.1.7
         version: 21.1.7
