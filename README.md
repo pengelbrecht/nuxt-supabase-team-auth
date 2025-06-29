@@ -24,13 +24,12 @@ Drop-in Nuxt 3 module for team-based authentication with Supabase.
 
 ## Requirements
 
-This module requires the following peer dependencies:
+This module requires the following dependencies:
 
 - **Nuxt 3** (`^3.0.0`)
 - **@nuxt/ui** (`^3.1.0`) - UI component framework
 - **@nuxt/icon** (`^1.0.0`) - Icon framework (required by Nuxt UI)
-
-The module automatically installs and configures **@nuxtjs/supabase** (`^1.5.0`) if not already present.
+- **@nuxtjs/supabase** (`^1.4.0`) - Supabase integration for Nuxt
 
 ## Quick Setup
 
@@ -50,20 +49,21 @@ pnpm add @nuxt/ui
 ### 1. Install the Module
 
 ```bash
-# Add our module to your existing Nuxt UI app
-pnpm add nuxt-supabase-team-auth
+# Install both our module and the required Supabase module
+pnpm add nuxt-supabase-team-auth @nuxtjs/supabase
 ```
 
 ### 2. Configure Nuxt
 
-Add our module to your `nuxt.config.ts`. The module automatically registers `@nuxtjs/supabase` if not already present:
+Add both modules to your `nuxt.config.ts`:
 
 ```typescript
 // nuxt.config.ts
 export default defineNuxtConfig({
   modules: [
     '@nuxt/ui',                    // Should already be here
-    'nuxt-supabase-team-auth'      // Add our module (auto-registers @nuxtjs/supabase)
+    '@nuxtjs/supabase',            // Add Supabase module first
+    'nuxt-supabase-team-auth'      // Then add our module
   ],
 
   // Configure @nuxtjs/supabase (required)

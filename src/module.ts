@@ -1,4 +1,4 @@
-import { defineNuxtModule, createResolver, addImports, addComponentsDir, installModule } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addImports, addComponentsDir } from '@nuxt/kit'
 import { defu } from 'defu'
 
 export interface ModuleOptions {
@@ -67,8 +67,7 @@ export default defineNuxtModule<ModuleOptions>({
   async setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
 
-    // Install @nuxtjs/supabase module with proper initialization
-    await installModule('@nuxtjs/supabase')
+    // Note: @nuxtjs/supabase should be installed by the consumer app as a peer dependency
 
     // Validate Nuxt UI dependency
     const hasNuxtUI = nuxt.options.modules?.some(module =>
