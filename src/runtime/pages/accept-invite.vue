@@ -64,6 +64,7 @@
 
 <script setup lang="ts">
 import PasswordSetupForm from '../components/PasswordSetupForm.vue'
+import { useSupabaseClient } from '../composables/useSupabaseComposables'
 import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
 
 const route = useRoute()

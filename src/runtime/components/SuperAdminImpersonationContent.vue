@@ -157,6 +157,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useSupabaseClient } from '../composables/useSupabaseComposables'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import SettingsTabContainer from './SettingsTabContainer.vue'
 import RoleBadge from './RoleBadge.vue'

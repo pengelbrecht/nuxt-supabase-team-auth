@@ -2,6 +2,7 @@ import { ref, computed, triggerRef } from 'vue'
 import type { User, Profile, Team, TeamMember, TeamAuth } from '../types'
 import { useSessionSync } from './useSessionSync'
 import { useSession } from './useSession'
+import { useSupabaseClient } from './useSupabaseComposables'
 import { useState } from '#app'
 
 // Get toast composable from the app's context (provided by @nuxt/ui)
@@ -208,7 +209,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   const getSupabaseClient = (): SupabaseClient => {
     if (injectedClient) return injectedClient
 
-    // Use @nuxtjs/supabase's useSupabaseClient
+    // Use our wrapper composable (works in published modules)
     return useSupabaseClient()
   }
 

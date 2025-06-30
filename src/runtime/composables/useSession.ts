@@ -1,4 +1,5 @@
 import { ref, readonly } from 'vue'
+import { useSupabaseClient } from './useSupabaseComposables'
 // Use any for Session type since we'll get it from @nuxtjs/supabase
 type Session = any
 
@@ -16,7 +17,7 @@ function getClient() {
   if (!cachedClient) {
     cachedClient = useSupabaseClient()
     if (!cachedClient) {
-      throw new Error('useSupabaseClient() returned undefined - check your Supabase setup')
+      throw new Error('Supabase client not available - check your Supabase setup')
     }
   }
   return cachedClient

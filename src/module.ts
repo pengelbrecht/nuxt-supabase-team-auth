@@ -254,7 +254,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       },
     )
 
-    // Add composables (useSupabaseClient is provided by @nuxtjs/supabase)
+    // Add composables
     addImports([
       {
         name: 'useTeamAuth',
@@ -272,6 +272,9 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
         name: 'useTeamAuthConfig',
         from: resolver.resolve('./runtime/composables/useTeamAuthConfig'),
       },
+      // Note: useSupabaseClient, useSupabaseSession, useSupabaseUser are NOT exported
+      // They're internal wrappers used only within our module's runtime code
+      // Consumer apps should use the composables from @nuxtjs/supabase directly
     ])
 
     // Add components directory with transpilation

@@ -110,6 +110,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useSupabaseClient, useSupabaseSession } from '../../composables/useSupabaseComposables'
 import PasswordSetupForm from '../../components/PasswordSetupForm.vue'
 import ResetPasswordForm from '../../components/ResetPasswordForm.vue'
 

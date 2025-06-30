@@ -102,6 +102,7 @@
 import { ref, reactive } from 'vue'
 import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { useSupabaseClient } from '../composables/useSupabaseComposables'
 
 interface ForgotPasswordForm {
   email: string

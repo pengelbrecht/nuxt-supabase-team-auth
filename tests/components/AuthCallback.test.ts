@@ -36,10 +36,25 @@ vi.mock('vue-router', () => ({
   useRouter: () => mockRouter,
 }))
 
+// Mock Supabase client
+const mockSupabaseClient = {
+  auth: {
+    getSession: vi.fn(),
+  },
+}
+
 // Mock Nuxt router composables
 vi.mock('#app', () => ({
   useRoute: () => mockRoute,
   useRouter: () => mockRouter,
+  useNuxtApp: () => ({
+    $supabase: {
+      client: mockSupabaseClient,
+    },
+  }),
+  useState: vi.fn((key: string, init?: () => any) => ({
+    value: init ? init() : null,
+  })),
 }))
 
 // Global mocks
@@ -48,13 +63,6 @@ global.useRouter = vi.fn(() => mockRouter)
 global.ref = ref
 global.onMounted = vi.fn(fn => fn())
 global.definePageMeta = vi.fn()
-
-// Mock Supabase client
-const mockSupabaseClient = {
-  auth: {
-    getSession: vi.fn(),
-  },
-}
 
 vi.mock('#supabase/client', () => ({
   useSupabaseClient: () => mockSupabaseClient,
