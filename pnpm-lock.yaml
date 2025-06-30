@@ -1,11 +1,11 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
 overrides:
-  cookie: 0.7.2
+  cookie: 1.0.2
   esbuild: '>=0.25.0'
 
 dependencies:
@@ -17,7 +17,7 @@ dependencies:
     version: 3.13.0(rollup@3.29.5)
   '@nuxt/ui':
     specifier: ^3.1.0
-    version: 3.1.0(embla-carousel@8.6.0)(typescript@5.6.2)(valibot@1.1.0)(vite@6.3.5)(vue-router@4.5.1)(vue@3.5.16)
+    version: 3.1.0(embla-carousel@8.6.0)(typescript@5.8.3)(valibot@1.1.0)(vite@6.3.5)(vue-router@4.5.1)(vue@3.5.16)
   '@nuxtjs/supabase':
     specifier: ^1.5.0
     version: 1.5.0
@@ -25,8 +25,8 @@ dependencies:
     specifier: ^14.0.0
     version: 14.0.0
   cookie:
-    specifier: 0.7.2
-    version: 0.7.2
+    specifier: 1.0.2
+    version: 1.0.2
   defu:
     specifier: ^6.1.4
     version: 6.1.4
@@ -458,7 +458,7 @@ packages:
   /@bundled-es-modules/cookie@2.0.1:
     resolution: {integrity: sha512-8o+5fRPLNbjbdGRRmJj3h6Hh1AQJf2dk3qQ/5ZFb+PXkRNiSoMGGUKlsgLfrxneb72axVJyIYji64E2+nNfYyw==}
     dependencies:
-      cookie: 0.7.2
+      cookie: 1.0.2
     dev: true
 
   /@bundled-es-modules/statuses@1.0.1:
@@ -969,7 +969,7 @@ packages:
       vue: '>=3'
     dependencies:
       '@iconify/types': 2.0.0
-      vue: 3.5.16(typescript@5.6.2)
+      vue: 3.5.16(typescript@5.8.3)
     dev: false
 
   /@iconify/vue@5.0.0(vue@3.5.16):
@@ -978,7 +978,7 @@ packages:
       vue: '>=3'
     dependencies:
       '@iconify/types': 2.0.0
-      vue: 3.5.16(typescript@5.6.2)
+      vue: 3.5.16(typescript@5.8.3)
     dev: false
 
   /@inquirer/confirm@5.1.12(@types/node@22.7.4):
@@ -1745,7 +1745,7 @@ packages:
       - magicast
     dev: true
 
-  /@nuxt/ui@3.1.0(embla-carousel@8.6.0)(typescript@5.6.2)(valibot@1.1.0)(vite@6.3.5)(vue-router@4.5.1)(vue@3.5.16):
+  /@nuxt/ui@3.1.0(embla-carousel@8.6.0)(typescript@5.8.3)(valibot@1.1.0)(vite@6.3.5)(vue-router@4.5.1)(vue@3.5.16):
     resolution: {integrity: sha512-TdhIYgpAXIxRtitwWxOh1a8KxBIBFRPwoYZUKenRwHL6XVD+X0ZLnkfVroUUhvLUNp/HyqfP4WlKXvtxpszeWQ==}
     hasBin: true
     peerDependencies:
@@ -1805,16 +1805,16 @@ packages:
       mlly: 1.7.4
       ohash: 2.0.11
       pathe: 2.0.3
-      reka-ui: 2.3.1(typescript@5.6.2)(vue@3.5.16)
+      reka-ui: 2.3.1(typescript@5.8.3)(vue@3.5.16)
       scule: 1.3.0
       tailwind-variants: 1.0.0(tailwindcss@4.1.11)
       tailwindcss: 4.1.11
       tinyglobby: 0.2.14
-      typescript: 5.6.2
+      typescript: 5.8.3
       unplugin: 2.3.5
       unplugin-auto-import: 19.3.0(@nuxt/kit@3.17.5)(@vueuse/core@13.4.0)
       unplugin-vue-components: 28.8.0(@nuxt/kit@3.17.5)(vue@3.5.16)
-      valibot: 1.1.0(typescript@5.6.2)
+      valibot: 1.1.0(typescript@5.8.3)
       vaul-vue: 0.4.1(reka-ui@2.3.1)(vue@3.5.16)
       vue-router: 4.5.1(vue@3.5.16)
     transitivePeerDependencies:
@@ -2579,7 +2579,7 @@ packages:
     dependencies:
       '@supabase/supabase-js': 2.50.2
       '@types/cookie': 0.6.0
-      cookie: 0.7.2
+      cookie: 1.0.2
     dev: false
 
   /@supabase/storage-js@2.7.1:
@@ -2791,7 +2791,7 @@ packages:
       vue: '>=3.2'
     dependencies:
       '@tanstack/table-core': 8.21.3
-      vue: 3.5.16(typescript@5.6.2)
+      vue: 3.5.16(typescript@5.8.3)
     dev: false
 
   /@tanstack/vue-virtual@3.13.12(vue@3.5.16):
@@ -2800,7 +2800,7 @@ packages:
       vue: ^2.7.0 || ^3.0.0
     dependencies:
       '@tanstack/virtual-core': 3.13.12
-      vue: 3.5.16(typescript@5.6.2)
+      vue: 3.5.16(typescript@5.8.3)
     dev: false
 
   /@trysound/sax@0.2.0:
@@ -3099,7 +3099,7 @@ packages:
     dependencies:
       hookable: 5.5.3
       unhead: 2.0.11
-      vue: 3.5.16(typescript@5.6.2)
+      vue: 3.5.16(typescript@5.8.3)
     dev: false
 
   /@unrs/resolver-binding-android-arm-eabi@1.9.2:
@@ -3681,13 +3681,13 @@ packages:
       - vue
     dev: false
 
-  /@vueuse/core@12.8.2(typescript@5.6.2):
+  /@vueuse/core@12.8.2(typescript@5.8.3):
     resolution: {integrity: sha512-HbvCmZdzAu3VGi/pWYm5Ut+Kd9mn1ZHnn4L5G8kOQTPs/IwIAmJoBrmYk2ckLArgMXZj0AW3n5CAejLUO+PhdQ==}
     dependencies:
       '@types/web-bluetooth': 0.0.21
       '@vueuse/metadata': 12.8.2
-      '@vueuse/shared': 12.8.2(typescript@5.6.2)
-      vue: 3.5.16(typescript@5.6.2)
+      '@vueuse/shared': 12.8.2(typescript@5.8.3)
+      vue: 3.5.16(typescript@5.8.3)
     transitivePeerDependencies:
       - typescript
     dev: false
@@ -3700,7 +3700,7 @@ packages:
       '@types/web-bluetooth': 0.0.21
       '@vueuse/metadata': 13.4.0
       '@vueuse/shared': 13.4.0(vue@3.5.16)
-      vue: 3.5.16(typescript@5.6.2)
+      vue: 3.5.16(typescript@5.8.3)
     dev: false
 
   /@vueuse/integrations@13.4.0(fuse.js@7.1.0)(vue@3.5.16):
@@ -3748,7 +3748,7 @@ packages:
       '@vueuse/core': 13.4.0(vue@3.5.16)
       '@vueuse/shared': 13.4.0(vue@3.5.16)
       fuse.js: 7.1.0
-      vue: 3.5.16(typescript@5.6.2)
+      vue: 3.5.16(typescript@5.8.3)
     dev: false
 
   /@vueuse/metadata@10.11.1:
@@ -3772,10 +3772,10 @@ packages:
       - vue
     dev: false
 
-  /@vueuse/shared@12.8.2(typescript@5.6.2):
+  /@vueuse/shared@12.8.2(typescript@5.8.3):
     resolution: {integrity: sha512-dznP38YzxZoNloI0qpEfpkms8knDtaoQ6Y/sfS0L7Yki4zh40LFHEhur0odJC6xTHG5dxWVPiUWBXn+wCG2s5w==}
     dependencies:
-      vue: 3.5.16(typescript@5.6.2)
+      vue: 3.5.16(typescript@5.8.3)
     transitivePeerDependencies:
       - typescript
     dev: false
@@ -3785,7 +3785,7 @@ packages:
     peerDependencies:
       vue: ^3.5.0
     dependencies:
-      vue: 3.5.16(typescript@5.6.2)
+      vue: 3.5.16(typescript@5.8.3)
     dev: false
 
   /@whatwg-node/disposablestack@0.0.6:
@@ -4497,9 +4497,9 @@ packages:
     resolution: {integrity: sha512-RAj4E421UYRgqokKUmotqAwuplYw15qtdXfY+hGzgCJ/MBjCVZcSoHK/kH9kocfjRjcDME7IiDWR/1WX1TM2Pg==}
     dev: true
 
-  /cookie@0.7.2:
-    resolution: {integrity: sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==}
-    engines: {node: '>= 0.6'}
+  /cookie@1.0.2:
+    resolution: {integrity: sha512-9Kr/j4O16ISv8zBBhJoi4bXOYNTkFLOqSL3UDB0njXxCXNezjeyVrJyGOWtgfs/q2km1gwBcfH8q1yEGoMYunA==}
+    engines: {node: '>=18'}
 
   /copy-anything@3.0.5:
     resolution: {integrity: sha512-yCEafptTtb4bk7GLEQoM8KVJpxAfdBJYaXyzQEgQQQgYrZiDp8SJmGKlYza6CYjEDNstAdNdKA3UuoULlEbS6w==}
@@ -5076,7 +5076,7 @@ packages:
     dependencies:
       embla-carousel: 8.6.0
       embla-carousel-reactive-utils: 8.6.0(embla-carousel@8.6.0)
-      vue: 3.5.16(typescript@5.6.2)
+      vue: 3.5.16(typescript@5.8.3)
     dev: false
 
   /embla-carousel-wheel-gestures@8.0.2(embla-carousel@8.6.0):
@@ -6454,6 +6454,7 @@ packages:
 
   /js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
+    requiresBuild: true
 
   /js-tokens@9.0.1:
     resolution: {integrity: sha512-mxa9E9ITFOt0ban3j6L5MpjwegGz6lBQmM1IJkWeBZGcMxto50+eWdjC/52xDbS2vy0k7vIMK0Fe2wfL9OQSpQ==}
@@ -8564,7 +8565,7 @@ packages:
       jsesc: 0.5.0
     dev: true
 
-  /reka-ui@2.3.1(typescript@5.6.2)(vue@3.5.16):
+  /reka-ui@2.3.1(typescript@5.8.3)(vue@3.5.16):
     resolution: {integrity: sha512-2SjGeybd7jvD8EQUkzjgg7GdOQdf4cTwdVMq/lDNTMqneUFNnryGO43dg8WaM/jaG9QpSCZBvstfBFWlDdb2Zg==}
     peerDependencies:
       vue: '>= 3.2.0'
@@ -8574,12 +8575,12 @@ packages:
       '@internationalized/date': 3.8.2
       '@internationalized/number': 3.6.3
       '@tanstack/vue-virtual': 3.13.12(vue@3.5.16)
-      '@vueuse/core': 12.8.2(typescript@5.6.2)
-      '@vueuse/shared': 12.8.2(typescript@5.6.2)
+      '@vueuse/core': 12.8.2(typescript@5.8.3)
+      '@vueuse/shared': 12.8.2(typescript@5.8.3)
       aria-hidden: 1.2.6
       defu: 6.1.4
       ohash: 2.0.11
-      vue: 3.5.16(typescript@5.6.2)
+      vue: 3.5.16(typescript@5.8.3)
     transitivePeerDependencies:
       - '@vue/composition-api'
       - typescript
@@ -9444,12 +9445,6 @@ packages:
   /type-level-regexp@0.1.17:
     resolution: {integrity: sha512-wTk4DH3cxwk196uGLK/E9pE45aLfeKJacKmcEgEOA/q5dnPGNxXt0cfYdFxb57L+sEpf1oJH4Dnx/pnRcku9jg==}
 
-  /typescript@5.6.2:
-    resolution: {integrity: sha512-NW8ByodCSNCwZeghjN3o+JX5OFH0Ojg6sadjEKY4huZ52TqbJTJnDo5+Tw98lSy63NZvi4n+ez5m2u5d4PkZyw==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-    dev: false
-
   /typescript@5.8.3:
     resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
     engines: {node: '>=14.17'}
@@ -9712,7 +9707,7 @@ packages:
       tinyglobby: 0.2.14
       unplugin: 2.3.5
       unplugin-utils: 0.2.4
-      vue: 3.5.16(typescript@5.6.2)
+      vue: 3.5.16(typescript@5.8.3)
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -9954,17 +9949,6 @@ packages:
     hasBin: true
     dev: true
 
-  /valibot@1.1.0(typescript@5.6.2):
-    resolution: {integrity: sha512-Nk8lX30Qhu+9txPYTwM0cFlWLdPFsFr6LblzqIySfbZph9+BFsAHsNvHOymEviUepeIW6KFHzpX8TKhbptBXXw==}
-    peerDependencies:
-      typescript: '>=5'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-    dependencies:
-      typescript: 5.6.2
-    dev: false
-
   /valibot@1.1.0(typescript@5.8.3):
     resolution: {integrity: sha512-Nk8lX30Qhu+9txPYTwM0cFlWLdPFsFr6LblzqIySfbZph9+BFsAHsNvHOymEviUepeIW6KFHzpX8TKhbptBXXw==}
     peerDependencies:
@@ -9990,8 +9974,8 @@ packages:
       vue: ^3.3.0
     dependencies:
       '@vueuse/core': 10.11.1(vue@3.5.16)
-      reka-ui: 2.3.1(typescript@5.6.2)(vue@3.5.16)
-      vue: 3.5.16(typescript@5.6.2)
+      reka-ui: 2.3.1(typescript@5.8.3)(vue@3.5.16)
+      vue: 3.5.16(typescript@5.8.3)
     transitivePeerDependencies:
       - '@vue/composition-api'
     dev: false
@@ -10380,7 +10364,7 @@ packages:
       '@vue/composition-api':
         optional: true
     dependencies:
-      vue: 3.5.16(typescript@5.6.2)
+      vue: 3.5.16(typescript@5.8.3)
     dev: false
 
   /vue-devtools-stub@0.1.0:
@@ -10424,22 +10408,6 @@ packages:
       semver: 7.7.2
       typescript: 5.8.3
     dev: true
-
-  /vue@3.5.16(typescript@5.6.2):
-    resolution: {integrity: sha512-rjOV2ecxMd5SiAmof2xzh2WxntRcigkX/He4YFJ6WdRvVUrbt6DxC1Iujh10XLl8xCDRDtGKMeO3D+pRQ1PP9w==}
-    peerDependencies:
-      typescript: '*'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-    dependencies:
-      '@vue/compiler-dom': 3.5.16
-      '@vue/compiler-sfc': 3.5.16
-      '@vue/runtime-dom': 3.5.16
-      '@vue/server-renderer': 3.5.16(vue@3.5.16)
-      '@vue/shared': 3.5.16
-      typescript: 5.6.2
-    dev: false
 
   /vue@3.5.16(typescript@5.8.3):
     resolution: {integrity: sha512-rjOV2ecxMd5SiAmof2xzh2WxntRcigkX/He4YFJ6WdRvVUrbt6DxC1Iujh10XLl8xCDRDtGKMeO3D+pRQ1PP9w==}
@@ -10711,7 +10679,7 @@ packages:
       '@poppinss/colors': 4.1.4
       '@poppinss/dumper': 0.6.3
       '@speed-highlight/core': 1.2.7
-      cookie: 0.7.2
+      cookie: 1.0.2
       youch-core: 0.3.2
     dev: true
 
