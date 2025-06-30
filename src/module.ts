@@ -1,4 +1,5 @@
 import { defineNuxtModule, createResolver, addImports, addComponentsDir } from '@nuxt/kit'
+import type { NuxtModule } from '@nuxt/schema'
 import { defu } from 'defu'
 
 export interface ModuleOptions {
@@ -44,7 +45,7 @@ export interface ModuleOptions {
   }
 }
 
-export default defineNuxtModule<ModuleOptions>({
+const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
   meta: {
     name: 'nuxt-supabase-team-auth',
     configKey: 'teamAuth',
@@ -304,3 +305,5 @@ export default defineNuxtModule<ModuleOptions>({
     })
   },
 })
+
+export default module
