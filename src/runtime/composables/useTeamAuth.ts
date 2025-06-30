@@ -7,9 +7,21 @@ import { useState } from '#app'
 // Get toast composable from the app's context (provided by @nuxt/ui)
 // This works because the consumer app has @nuxt/ui installed
 const getToast = () => {
-  // In a Nuxt app context, this will be auto-imported by @nuxt/ui
-  // @ts-ignore - useToast is provided by consumer's @nuxt/ui installation
-  return useToast()
+  try {
+    // In a Nuxt app context, this will be auto-imported by @nuxt/ui
+    // @ts-expect-error - useToast is provided by consumer's @nuxt/ui installation
+    return useToast()
+  }
+  catch {
+    // Return a mock toast for test environments or when @nuxt/ui is not available
+    return {
+      add: (options: any) => {
+        if (process.env.NODE_ENV === 'test') {
+          console.log('[MOCK TOAST]', options)
+        }
+      },
+    }
+  }
 }
 // Types - we'll get the actual client and user from @nuxtjs/supabase composables
 type SupabaseClient = any

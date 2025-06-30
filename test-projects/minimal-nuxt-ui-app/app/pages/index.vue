@@ -9,29 +9,39 @@
           <p class="text-xl text-gray-600 dark:text-gray-400 mb-8">
             Minimal test project for team-based authentication
           </p>
-          
+
           <SignedOut>
             <div class="space-y-4">
               <p class="text-lg text-gray-700 dark:text-gray-300">
                 Get started by signing in or creating an account
               </p>
               <div class="flex justify-center space-x-4">
-                <UButton to="/signin" size="lg">
+                <UButton
+                  to="/signin"
+                  size="lg"
+                >
                   Sign In
                 </UButton>
-                <UButton to="/signup" variant="outline" size="lg">
+                <UButton
+                  to="/signup"
+                  variant="outline"
+                  size="lg"
+                >
                   Sign Up
                 </UButton>
               </div>
             </div>
           </SignedOut>
-          
+
           <SignedIn>
             <div class="space-y-4">
               <p class="text-lg text-gray-700 dark:text-gray-300">
                 Welcome back! You're signed in.
               </p>
-              <UButton to="/dashboard" size="lg">
+              <UButton
+                to="/dashboard"
+                size="lg"
+              >
                 Go to Dashboard
               </UButton>
             </div>

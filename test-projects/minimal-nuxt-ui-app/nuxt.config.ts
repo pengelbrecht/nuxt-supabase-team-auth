@@ -17,10 +17,11 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-11-27',
 
   teamAuth: {
-    supabaseUrl: process.env.SUPABASE_URL,
-    supabaseKey: process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY,
     redirectTo: '/dashboard',
-    loginPage: '/login',
+    loginPage: '/signin',
+    defaultProtection: 'public', // Most routes are public by default
+    protectedRoutes: ['/dashboard'], // Only these routes require auth
+    publicRoutes: ['/about', '/pricing'], // Additional public routes
     debug: true,
   },
 })

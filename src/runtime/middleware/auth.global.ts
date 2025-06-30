@@ -33,19 +33,16 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
   }
 
-  // Define protected route patterns
-  const protectedRoutes = [
-    '/dashboard',
-    '/team',
-    '/teams',
-    '/admin',
-    '/profile',
-    '/settings',
-  ]
+  // Get route protection config from runtime config
+  const config = useRuntimeConfig()
+  const teamAuthConfig = config.public.teamAuth || {}
 
-  // Define public routes that don't require authentication
-  const publicRoutes = [
-    '/',
+  const defaultProtection = teamAuthConfig.defaultProtection || 'public'
+  const configuredProtectedRoutes = teamAuthConfig.protectedRoutes || ['/dashboard']
+  const configuredPublicRoutes = teamAuthConfig.publicRoutes || []
+
+  // Always public auth routes
+  const authRoutes = [
     '/login',
     '/signin',
     '/signup',
@@ -54,11 +51,22 @@ export default defineNuxtRouteMiddleware(async (to) => {
     '/reset-password',
     '/forgot-password',
     '/accept-invite',
-    '/about',
-    '/contact',
-    '/privacy',
-    '/terms',
   ]
+
+  // Build final route lists based on protection mode
+  let protectedRoutes: string[]
+  let publicRoutes: string[]
+
+  if (defaultProtection === 'public') {
+    // Public by default - only specific routes are protected
+    protectedRoutes = configuredProtectedRoutes
+    publicRoutes = ['/', ...authRoutes, ...configuredPublicRoutes]
+  }
+  else {
+    // Protected by default - specific routes are public
+    protectedRoutes = ['/dashboard', '/team', '/teams', '/admin', '/profile', '/settings']
+    publicRoutes = ['/', ...authRoutes, ...configuredPublicRoutes]
+  }
 
   const currentPath = to.path
 
@@ -94,8 +102,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Require authentication for protected routes
   if (isProtectedRoute && !currentUser.value) {
     const redirectUrl = `${currentPath}${to.search ? `?${new URLSearchParams(to.query).toString()}` : ''}`
-    const config = useRuntimeConfig()
-    const loginPage = config.public.teamAuth?.loginPage || '/signin'
+    const loginPage = teamAuthConfig.loginPage || '/signin'
     return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
   }
 

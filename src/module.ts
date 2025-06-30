@@ -24,6 +24,21 @@ export interface ModuleOptions {
    */
   loginPage?: string
   /**
+   * Additional routes to exclude from authentication (beyond defaults)
+   */
+  publicRoutes?: string[]
+  /**
+   * Routes that require authentication (if specified, ONLY these routes will be protected)
+   * If not specified, all routes except publicRoutes will be protected
+   */
+  protectedRoutes?: string[]
+  /**
+   * Default protection mode: 'protected' (default) or 'public'
+   * - 'protected': All routes protected except those in publicRoutes
+   * - 'public': All routes public except those in protectedRoutes
+   */
+  defaultProtection?: 'protected' | 'public'
+  /**
    * Custom email templates
    */
   emailTemplates?: {
@@ -56,7 +71,10 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
   defaults: {
     debug: undefined, // Will be auto-detected based on Nuxt dev mode
     redirectTo: '/dashboard',
-    loginPage: '/login',
+    loginPage: '/signin', // Use /signin as default, can be overridden
+    defaultProtection: 'public', // Default to public (opt-in protection)
+    publicRoutes: [], // Additional public routes beyond auth pages
+    protectedRoutes: ['/dashboard'], // Default protected routes
     emailTemplates: {},
     socialProviders: {
       google: {
@@ -123,33 +141,75 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       supabaseKey,
     })
 
-    // Configure @nuxtjs/supabase redirect options to include our auth routes
-    const redirectOptions = {
-      login: options.loginPage || '/login',
-      callback: '/auth/callback', // Use default callback for OAuth
-      exclude: [
-        '/',
-        '/signup',
-        '/signin',
-        '/login',
-        '/accept-invite',
-        '/auth/confirm', // Allow email confirmations
-        '/auth/forgot-password',
-        '/auth/callback', // Allow OAuth callbacks
-        '/auth/reset-password',
-      ],
+    // Configure route protection based on user preferences
+    const authRoutes = [
+      '/signup',
+      '/signin',
+      '/login',
+      '/accept-invite',
+      '/auth/confirm', // Allow email confirmations
+      '/auth/forgot-password',
+      '/auth/callback', // Allow OAuth callbacks
+      '/auth/reset-password',
+    ]
+
+    let excludePaths: string[]
+
+    if (options.defaultProtection === 'public') {
+      // Public by default mode - exclude most routes, let middleware handle protection
+      excludePaths = [
+        '/', // Home page
+        ...authRoutes, // Auth routes always public
+        ...(options.publicRoutes || []), // Additional public routes
+        // Add a catch-all pattern to make most routes public
+        '/api/**', // API routes
+        '/_nuxt/**', // Nuxt assets
+        '/favicon.ico',
+        '/robots.txt',
+        '/sitemap.xml',
+      ]
+    }
+    else {
+      // Protected by default - exclude specific public routes
+      excludePaths = [
+        '/', // Home page public by default
+        ...authRoutes, // Auth routes always public
+        ...(options.publicRoutes || []), // Additional public routes
+      ]
     }
 
-    // Set nuxt.options.supabase before installing the module
+    const redirectOptions = {
+      login: options.loginPage || '/signin',
+      callback: '/auth/callback', // Use default callback for OAuth
+      exclude: excludePaths,
+    }
+
+    // Set both nuxt.options.supabase and runtime config for @nuxtjs/supabase
     nuxt.options.supabase = defu(nuxt.options.supabase || {}, {
       url: supabaseUrl,
       key: supabaseKey,
       redirectOptions,
     })
 
+    // Set up runtime config structure that @nuxtjs/supabase expects
+    // This allows NUXT_PUBLIC_SUPABASE_* env vars to override these defaults
+    nuxt.options.runtimeConfig.public.supabase = defu(
+      nuxt.options.runtimeConfig.public.supabase || {},
+      {
+        url: supabaseUrl,
+        key: supabaseKey,
+        redirectOptions: {
+          login: redirectOptions.login,
+          callback: redirectOptions.callback,
+          exclude: redirectOptions.exclude,
+        },
+      },
+    )
+
     if (nuxt.options.dev) {
       console.log('[team-auth] Supabase redirectOptions configured:', redirectOptions)
       console.log('[team-auth] Final supabase config:', nuxt.options.supabase)
+      console.log('[team-auth] Runtime supabase config:', nuxt.options.runtimeConfig.public.supabase)
     }
 
     // Also ensure the configuration is applied before @nuxtjs/supabase initializes
@@ -166,13 +226,19 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
     })
 
     // Install @nuxtjs/supabase with our configuration
-    await installModule('@nuxtjs/supabase', {
+    const supabaseModuleOptions: any = {
       url: supabaseUrl,
       key: supabaseKey,
-      redirectOptions,
-    })
+    }
 
-    // Keep our custom teamAuth config for backward compatibility
+    // Only add redirectOptions if we're using protected by default mode
+    if (options.defaultProtection !== 'public') {
+      supabaseModuleOptions.redirectOptions = redirectOptions
+    }
+
+    await installModule('@nuxtjs/supabase', supabaseModuleOptions)
+
+    // Keep our custom teamAuth config for backward compatibility + route protection
     nuxt.options.runtimeConfig.public.teamAuth = defu(
       nuxt.options.runtimeConfig.public.teamAuth || {},
       {
@@ -181,6 +247,9 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
         debug: debugMode,
         redirectTo: options.redirectTo,
         loginPage: options.loginPage,
+        defaultProtection: options.defaultProtection,
+        protectedRoutes: options.protectedRoutes,
+        publicRoutes: options.publicRoutes,
         socialProviders: options.socialProviders,
       },
     )

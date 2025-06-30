@@ -6,19 +6,33 @@
           Sign in to your account
         </h2>
       </div>
-      <AuthSignIn @success="handleSignIn" />
+      <ClientOnly>
+        <AuthSignIn
+          @success="handleSignIn"
+          @error="handleError"
+        />
+      </ClientOnly>
     </div>
   </div>
 </template>
 
 <script setup>
 definePageMeta({
-  middleware: 'redirect-authenticated'
+  middleware: 'redirect-authenticated',
 })
 
 const router = useRouter()
+const toast = useToast()
 
 const handleSignIn = () => {
   router.push('/dashboard')
+}
+
+const handleError = (error) => {
+  toast.add({
+    title: 'Sign In Failed',
+    description: error,
+    color: 'red',
+  })
 }
 </script>

@@ -2,7 +2,7 @@ import { defineEventHandler, readBody, getCookie, deleteCookie, createError } fr
 import jwt from 'jsonwebtoken'
 import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
 
-// Create aliases for consistency  
+// Create aliases for consistency
 const createServiceRoleClient = serverSupabaseServiceRole
 const getCurrentUser = serverSupabaseUser
 

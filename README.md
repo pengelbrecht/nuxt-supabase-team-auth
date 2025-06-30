@@ -56,67 +56,67 @@ pnpm add nuxt-supabase-team-auth
 
 ### 2. Configure Nuxt
 
-Add our module to your `nuxt.config.ts`. The module automatically registers `@nuxtjs/supabase` if not already present:
+Add our module to your `nuxt.config.ts`. The module automatically registers and configures `@nuxtjs/supabase`:
 
 ```typescript
 // nuxt.config.ts
 export default defineNuxtConfig({
   modules: [
     '@nuxt/ui',                    // Should already be here
-    'nuxt-supabase-team-auth'      // Add our module (auto-registers @nuxtjs/supabase)
+    'nuxt-supabase-team-auth'      // Add our module (auto-configures @nuxtjs/supabase)
   ],
 
-  // Configure @nuxtjs/supabase (required)
-  supabase: {
-    url: process.env.SUPABASE_URL,
-    key: process.env.SUPABASE_ANON_KEY,
-    redirectOptions: {
-      login: '/signin',            // Your login page route
-      callback: '/auth/callback',  // OAuth callback (provided by module)
-      exclude: ['/', '/signup']    // Public routes that don't require auth
-    }
-  },
-
-  // Configure our team-auth module
+  // Configure team-auth module
   teamAuth: {
-    redirectTo: '/dashboard',      // Where to go after login
+    redirectTo: '/dashboard',           // Where to go after login
+    loginPage: '/signin',              // Your sign-in page route  
+    defaultProtection: 'public',       // Most routes are public by default
+    protectedRoutes: ['/dashboard'],   // Only these routes require auth
+    publicRoutes: ['/about'],          // Additional public routes
     socialProviders: {
-      google: { enabled: true }    // Configure social providers
-    }
-  },
-
-  // Fix ESM/CJS compatibility (required)
-  build: {
-    transpile: ['cookie']
+      google: { enabled: true }        // Configure social providers
+    },
+    debug: true                        // Enable debug logging (optional)
   }
 })
 ```
 
 #### Configuration Options
 
-**@nuxtjs/supabase Configuration (`supabase` key):**
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `url` | `string` | - | Your Supabase project URL |
-| `key` | `string` | - | Your Supabase anon key |
-| `redirectOptions.login` | `string` | `'/signin'` | Your login page route |
-| `redirectOptions.callback` | `string` | `'/auth/callback'` | OAuth callback route |
-| `redirectOptions.exclude` | `string[]` | `[]` | Public routes (no auth redirect) |
-
 **Team Auth Module Configuration (`teamAuth` key):**
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `redirectTo` | `string` | `'/dashboard'` | Where to redirect after successful auth |
+| `loginPage` | `string` | `'/signin'` | Your sign-in page route |
+| `defaultProtection` | `'public'\|'protected'` | `'public'` | Default route protection mode |
+| `protectedRoutes` | `string[]` | `['/dashboard']` | Routes that require authentication |
+| `publicRoutes` | `string[]` | `[]` | Additional public routes |
 | `socialProviders.google.enabled` | `boolean` | `true` | Enable Google OAuth |
 | `debug` | `boolean` | Auto-detected | Enable debug logging |
 
+#### Route Protection Modes
+
+**Public by Default (Recommended)**
+```typescript
+teamAuth: {
+  defaultProtection: 'public',       // Most routes are public
+  protectedRoutes: ['/dashboard'],   // Only specific routes need auth
+}
+```
+
+**Protected by Default**
+```typescript
+teamAuth: {
+  defaultProtection: 'protected',    // All routes require auth
+  publicRoutes: ['/', '/about'],     // Except these specific routes
+}
+```
+
 **Important Notes:**
-- The module automatically registers and configures `@nuxtjs/supabase` if not already present
-- Configure your login routes in `supabase.redirectOptions` to match your app structure  
-- The `build.transpile: ['cookie']` fix is **required** to prevent ESM/CJS import errors
-- Cookie version 0.7.2 is automatically enforced to fix security vulnerabilities
+- The module automatically installs and configures `@nuxtjs/supabase` using the `installModule()` pattern
+- Route protection is configured in `teamAuth.defaultProtection` - no need to configure `@nuxtjs/supabase` separately
+- Environment variables are automatically detected using `NUXT_PUBLIC_SUPABASE_*` prefix pattern
 
 ### 3. Add Required App Structure
 
@@ -133,43 +133,79 @@ Ensure your `app.vue` has the `<UApp>` wrapper (should already exist in Nuxt UI 
 
 ### 4. Environment Variables
 
-Set up your Supabase environment variables:
+Set up your Supabase environment variables using the `NUXT_PUBLIC_` prefix pattern:
 
 ```bash
 # .env
-SUPABASE_URL=http://127.0.0.1:54321              # Your Supabase URL
-SUPABASE_ANON_KEY=your-anon-key                  # Your Supabase anon key
-SUPABASE_SERVICE_KEY=your-service-key            # For server operations
+NUXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321     # Your Supabase URL
+NUXT_PUBLIC_SUPABASE_KEY=your-anon-key              # Your Supabase anon key  
+SUPABASE_SERVICE_KEY=your-service-key               # For server operations
 ```
 
-### 5. Ready to Use
+**Environment Variable Patterns:**
+- `NUXT_PUBLIC_SUPABASE_URL` - Client-side Supabase project URL
+- `NUXT_PUBLIC_SUPABASE_KEY` - Client-side Supabase anon key
+- `SUPABASE_SERVICE_KEY` - Server-side service role key (not prefixed)
 
-You can now use the auth components in your pages:
+The `NUXT_PUBLIC_` prefix allows Nuxt to automatically inject these into runtime config.
+
+### 5. Create Your Pages
+
+Create your authentication pages with proper error handling:
 
 ```vue
-<!-- pages/index.vue -->
+<!-- pages/signin.vue -->
+<template>
+  <div class="min-h-screen flex items-center justify-center">
+    <AuthSignIn 
+      @success="handleSignIn" 
+      @error="handleError" 
+    />
+  </div>
+</template>
+
+<script setup>
+// Redirect authenticated users away from sign-in
+definePageMeta({
+  middleware: 'redirect-authenticated'
+})
+
+const router = useRouter()
+const toast = useToast()
+
+const handleSignIn = () => {
+  router.push('/dashboard')
+}
+
+const handleError = (error) => {
+  toast.add({
+    title: 'Sign In Failed',
+    description: error,
+    color: 'red'
+  })
+}
+</script>
+```
+
+```vue
+<!-- pages/dashboard.vue -->
 <template>
   <div>
-    <SignedOut>
-      <AuthSignIn @success="handleSignedIn" />
-      <AuthSignUpWithTeam @success="handleSignedUp" />
-    </SignedOut>
-
     <SignedIn>
+      <h1>Welcome to Dashboard</h1>
       <UserButton :show-name="true" />
-      <p>Welcome! You're signed in.</p>
+      <p>Your role: <RoleBadge :role="currentRole" /></p>
     </SignedIn>
   </div>
 </template>
 
 <script setup>
-const handleSignedIn = () => {
-  console.log('User signed in!')
-}
+// Require authentication for this page
+definePageMeta({
+  middleware: 'require-auth'
+})
 
-const handleSignedUp = () => {
-  console.log('User signed up!')
-}
+const { currentRole } = useTeamAuth()
 </script>
 ```
 
@@ -889,68 +925,81 @@ Use our minimal test app as reference:
 
 ### Migration from Previous Versions
 
-If you're updating from a previous version of this module (< v0.2.0), you need to update your configuration:
+If you're updating from a previous version of this module (< v0.3.6), you need to update your configuration:
 
 #### Required Changes
 
-1. **Add @nuxtjs/supabase configuration block:**
+1. **Remove separate @nuxtjs/supabase configuration:**
 ```typescript
-// NEW: Required @nuxtjs/supabase configuration
+// REMOVE: No longer needed - module handles this automatically
 supabase: {
-  url: process.env.SUPABASE_URL,
-  key: process.env.SUPABASE_ANON_KEY,
-  redirectOptions: {
-    login: '/signin',
-    callback: '/auth/callback',
-    exclude: ['/', '/signup']
-  }
+  url: process.env.SUPABASE_URL,           // Remove
+  key: process.env.SUPABASE_ANON_KEY,      // Remove
+  redirectOptions: { ... }                 // Remove
 },
 ```
 
 2. **Update teamAuth configuration:**
 ```typescript
-// BEFORE: Direct Supabase credentials
+// BEFORE: Mixed configuration
 teamAuth: {
   supabaseUrl: process.env.SUPABASE_URL,    // Remove
   supabaseKey: process.env.SUPABASE_ANON_KEY, // Remove
   redirectTo: '/dashboard',
-  loginPage: '/',  // Remove - use supabase.redirectOptions.login
+  loginPage: '/signin',
 }
 
-// AFTER: Simplified configuration
+// AFTER: Unified configuration with route protection
 teamAuth: {
   redirectTo: '/dashboard',
+  loginPage: '/signin', 
+  defaultProtection: 'public',              // NEW: Route protection mode
+  protectedRoutes: ['/dashboard'],          // NEW: Specific protected routes
   socialProviders: {
     google: { enabled: true }
   }
 }
 ```
 
-3. **Add ESM/CJS compatibility fix:**
-```typescript
-build: {
-  transpile: ['cookie']
-}
+3. **Update environment variables:**
+```bash
+# BEFORE: Direct Supabase env vars
+SUPABASE_URL=...
+SUPABASE_ANON_KEY=...
+
+# AFTER: Use NUXT_PUBLIC_ prefix for automatic injection
+NUXT_PUBLIC_SUPABASE_URL=...
+NUXT_PUBLIC_SUPABASE_KEY=...
+SUPABASE_SERVICE_KEY=...  # Server-side only (no prefix)
 ```
 
-4. **Add cookie version override to package.json:**
-```json
-{
-  "pnpm": {
-    "overrides": {
-      "cookie": "0.7.2"
-    }
-  }
+4. **Add error handling to auth pages:**
+```vue
+<!-- BEFORE: Only success handler -->
+<AuthSignIn @success="handleSignIn" />
+
+<!-- AFTER: Add error handler for user feedback -->
+<AuthSignIn 
+  @success="handleSignIn" 
+  @error="handleError" 
+/>
+
+<script setup>
+const toast = useToast()
+const handleError = (error) => {
+  toast.add({ title: 'Sign In Failed', description: error, color: 'red' })
 }
+</script>
 ```
-*Use `"overrides"` for npm or `"resolutions"` for Yarn*
+```
 
 #### Benefits of New Architecture
 
-- **Better ESM/CJS compatibility** - No more module import errors
-- **Industry standard patterns** - Built on @nuxtjs/supabase
-- **Flexible routing** - Configure auth routes to match your app
-- **Improved performance** - Better tree-shaking and bundling
+- **Simplified Configuration** - Single `teamAuth` config block, no separate Supabase setup
+- **Automatic Dependency Management** - Uses `installModule()` pattern for proper integration
+- **Flexible Route Protection** - Choose between public-by-default or protected-by-default modes
+- **Better Environment Variables** - Automatic `NUXT_PUBLIC_` prefix detection
+- **Improved Error Handling** - Components emit errors for proper user feedback
 
 ## Development
 

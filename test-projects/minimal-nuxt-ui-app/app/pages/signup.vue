@@ -6,14 +6,16 @@
           Create your account
         </h2>
       </div>
-      <AuthSignUpWithTeam @success="handleSignUp" />
+      <ClientOnly>
+        <AuthSignUpWithTeam @success="handleSignUp" />
+      </ClientOnly>
     </div>
   </div>
 </template>
 
 <script setup>
 definePageMeta({
-  middleware: 'redirect-authenticated'
+  middleware: 'redirect-authenticated',
 })
 
 const router = useRouter()
