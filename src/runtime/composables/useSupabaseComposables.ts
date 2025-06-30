@@ -13,7 +13,21 @@ import { useNuxtApp, useState } from '#app'
  * Equivalent to @nuxtjs/supabase's useSupabaseClient()
  */
 export const useSupabaseClient = () => {
-  return useNuxtApp().$supabase.client
+  const nuxtApp = useNuxtApp()
+  
+  if (!nuxtApp.$supabase) {
+    throw new Error(
+      'Supabase not found in Nuxt app. Make sure @nuxtjs/supabase is properly configured in your nuxt.config.ts modules array and that NUXT_PUBLIC_SUPABASE_URL and NUXT_PUBLIC_SUPABASE_ANON_KEY are set.'
+    )
+  }
+  
+  if (!nuxtApp.$supabase.client) {
+    throw new Error(
+      'Supabase client not found. The @nuxtjs/supabase module may not be properly initialized.'
+    )
+  }
+  
+  return nuxtApp.$supabase.client
 }
 
 /**
