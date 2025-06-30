@@ -1,4 +1,4 @@
-import { defineNuxtModule, createResolver, addImports, addComponentsDir } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addImports, addComponentsDir, installModule } from '@nuxt/kit'
 import type { NuxtModule } from '@nuxt/schema'
 import { defu } from 'defu'
 
@@ -56,7 +56,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
   defaults: {
     debug: undefined, // Will be auto-detected based on Nuxt dev mode
     redirectTo: '/dashboard',
-    loginPage: '/signin',
+    loginPage: '/login',
     emailTemplates: {},
     socialProviders: {
       google: {
@@ -67,20 +67,6 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
   },
   async setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
-
-    // Ensure @nuxtjs/supabase is registered first
-    nuxt.options.modules = nuxt.options.modules || []
-    const hasSupabaseModule = nuxt.options.modules.some(module =>
-      (typeof module === 'string' && module === '@nuxtjs/supabase')
-      || (Array.isArray(module) && module[0] === '@nuxtjs/supabase'),
-    )
-
-    if (!hasSupabaseModule) {
-      nuxt.options.modules.unshift('@nuxtjs/supabase')
-      if (nuxt.options.dev) {
-        console.log('[nuxt-supabase-team-auth] Automatically registered @nuxtjs/supabase module')
-      }
-    }
 
     // Validate Nuxt UI dependency
     const hasNuxtUI = nuxt.options.modules?.some(module =>
@@ -109,7 +95,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 
     // Set up standard Supabase configuration for @nuxtjs/supabase
     const supabaseUrl = options.supabaseUrl || process.env.SUPABASE_URL
-    const supabaseKey = options.supabaseKey || process.env.SUPABASE_ANON_KEY
+    const supabaseKey = options.supabaseKey || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY
     const serviceKey = process.env.SUPABASE_SERVICE_KEY
       || process.env.SUPABASE_SERVICE_ROLE_KEY
       || process.env.SUPABASE_ANON_KEY // Fallback for development
@@ -119,13 +105,13 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       throw new Error(`[nuxt-supabase-team-auth] Missing Supabase URL. Please set SUPABASE_URL environment variable or configure supabaseUrl in module options.`)
     }
     if (!supabaseKey) {
-      throw new Error(`[nuxt-supabase-team-auth] Missing Supabase anon key. Please set SUPABASE_ANON_KEY environment variable or configure supabaseKey in module options.`)
+      throw new Error(`[nuxt-supabase-team-auth] Missing Supabase anon key. Please set SUPABASE_KEY or SUPABASE_ANON_KEY environment variable or configure supabaseKey in module options.`)
     }
     if (!serviceKey && nuxt.options.dev) {
       console.warn(`[nuxt-supabase-team-auth] Warning: No service role key found. Server-side operations may not work. Please set SUPABASE_SERVICE_ROLE_KEY environment variable.`)
     }
 
-    // Configure @nuxtjs/supabase with our values
+    // Configure runtime config before installing @nuxtjs/supabase
     nuxt.options.runtimeConfig = defu(nuxt.options.runtimeConfig, {
       supabaseUrl,
       supabaseKey,
@@ -138,9 +124,8 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
     })
 
     // Configure @nuxtjs/supabase redirect options to include our auth routes
-    // Use defu to merge with any existing configuration
     const redirectOptions = {
-      login: options.loginPage || '/signin',
+      login: options.loginPage || '/login',
       callback: '/auth/callback', // Use default callback for OAuth
       exclude: [
         '/',
@@ -155,6 +140,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       ],
     }
 
+    // Set nuxt.options.supabase before installing the module
     nuxt.options.supabase = defu(nuxt.options.supabase || {}, {
       url: supabaseUrl,
       key: supabaseKey,
@@ -177,6 +163,13 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       if (nuxt.options.dev) {
         console.log('[team-auth] modules:before - Final supabase config:', nuxt.options.supabase)
       }
+    })
+
+    // Install @nuxtjs/supabase with our configuration
+    await installModule('@nuxtjs/supabase', {
+      url: supabaseUrl,
+      key: supabaseKey,
+      redirectOptions,
     })
 
     // Keep our custom teamAuth config for backward compatibility

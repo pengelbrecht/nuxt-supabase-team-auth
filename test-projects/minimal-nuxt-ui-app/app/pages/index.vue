@@ -1,73 +1,43 @@
-<!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="container mx-auto px-4 py-8">
-      <!-- Header -->
-      <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-          Team Auth Demo
-        </h1>
-        <SignedIn>
-          <UserButton :show-name="true" />
-        </SignedIn>
-      </div>
-
-      <!-- Auth State Display -->
-      <SignedOut>
-        <UCard class="max-w-2xl mx-auto">
-          <template #header>
-            <h2 class="text-xl font-semibold">
-              Welcome! Please sign in
-            </h2>
-          </template>
-
-          <div class="space-y-6">
-            <AuthSignIn @signed-in="handleSignedIn" />
-
-            <div class="flex items-center gap-4 my-6">
-              <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-              <span class="text-sm text-gray-500 dark:text-gray-400">or</span>
-              <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-            </div>
-
-            <AuthSignUpWithTeam @signed-up="handleSignedUp" />
-          </div>
-        </UCard>
-      </SignedOut>
-
-      <SignedIn>
-        <div class="space-y-6">
-          <UCard>
-            <template #header>
-              <h2 class="text-xl font-semibold">
-                You're signed in!
-              </h2>
-            </template>
-
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <div class="px-4 py-6 sm:px-0">
+        <div class="text-center">
+          <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            Nuxt Supabase Team Auth
+          </h1>
+          <p class="text-xl text-gray-600 dark:text-gray-400 mb-8">
+            Minimal test project for team-based authentication
+          </p>
+          
+          <SignedOut>
             <div class="space-y-4">
-              <p>Welcome to the team auth demo. You can now access protected pages.</p>
-
-              <UButton
-                to="/dashboard"
-                color="primary"
-                size="lg"
-              >
+              <p class="text-lg text-gray-700 dark:text-gray-300">
+                Get started by signing in or creating an account
+              </p>
+              <div class="flex justify-center space-x-4">
+                <UButton to="/signin" size="lg">
+                  Sign In
+                </UButton>
+                <UButton to="/signup" variant="outline" size="lg">
+                  Sign Up
+                </UButton>
+              </div>
+            </div>
+          </SignedOut>
+          
+          <SignedIn>
+            <div class="space-y-4">
+              <p class="text-lg text-gray-700 dark:text-gray-300">
+                Welcome back! You're signed in.
+              </p>
+              <UButton to="/dashboard" size="lg">
                 Go to Dashboard
               </UButton>
             </div>
-          </UCard>
+          </SignedIn>
         </div>
-      </SignedIn>
+      </div>
     </div>
   </div>
 </template>
-
-<script setup>
-const handleSignedIn = () => {
-  console.log('User signed in successfully')
-}
-
-const handleSignedUp = () => {
-  console.log('User signed up successfully')
-}
-</script>

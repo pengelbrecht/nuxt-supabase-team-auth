@@ -18,9 +18,9 @@ export default defineNuxtConfig({
 
   teamAuth: {
     supabaseUrl: process.env.SUPABASE_URL,
-    supabaseKey: process.env.SUPABASE_ANON_KEY,
+    supabaseKey: process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY,
     redirectTo: '/dashboard',
-    loginPage: '/', // Redirect to home page instead of /signin
+    loginPage: '/login',
     debug: true,
   },
 })

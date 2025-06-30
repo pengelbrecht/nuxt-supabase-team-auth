@@ -1,5 +1,9 @@
 import { defineEventHandler, readBody, createError } from 'h3'
-import { createServiceRoleClient, getCurrentUser } from '../utils/supabase'
+import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
+
+// Create aliases for consistency
+const createServiceRoleClient = serverSupabaseServiceRole
+const getCurrentUser = serverSupabaseUser
 
 interface DeleteUserRequest {
   userId: string

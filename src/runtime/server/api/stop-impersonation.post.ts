@@ -1,6 +1,10 @@
 import { defineEventHandler, readBody, getCookie, deleteCookie, createError } from 'h3'
 import jwt from 'jsonwebtoken'
-import { createServiceRoleClient, getCurrentUser } from '../utils/supabase'
+import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
+
+// Create aliases for consistency  
+const createServiceRoleClient = serverSupabaseServiceRole
+const getCurrentUser = serverSupabaseUser
 
 export default defineEventHandler(async (event) => {
   console.log('Stop impersonation request received')
