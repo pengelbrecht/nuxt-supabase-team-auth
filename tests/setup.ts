@@ -42,9 +42,6 @@ vi.mock('#app', () => ({
     replace: vi.fn(),
   }),
   useState: vi.fn(),
-  useToast: () => ({
-    add: vi.fn(),
-  }),
   useNuxtApp: () => ({
     $teamAuthClient: {
       auth: {

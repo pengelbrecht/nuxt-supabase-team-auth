@@ -78,7 +78,7 @@
   },
   "peerDependencies": {
     "@nuxt/icon": "^1.0.0",
-    "@nuxt/ui": "^3.1.0"
+    "@nuxt/ui": "^3.0.0"
   },
   "devDependencies": {
     "@iconify-json/logos": "^1.2.4",

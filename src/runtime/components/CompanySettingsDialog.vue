@@ -169,7 +169,7 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import * as v from 'valibot'
 import { useTeamAuth } from '../composables/useTeamAuth'
-import { useToast } from '#app'
+import { useToast } from '#imports'
 
 // Form validation schema
 const companySchema = v.object({

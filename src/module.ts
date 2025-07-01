@@ -86,18 +86,8 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
   async setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
 
-    // Validate Nuxt UI dependency
-    const hasNuxtUI = nuxt.options.modules?.some(module =>
-      typeof module === 'string'
-        ? module === '@nuxt/ui'
-        : Array.isArray(module)
-          ? module[0] === '@nuxt/ui'
-          : false,
-    )
-
-    if (!hasNuxtUI && nuxt.options.dev) {
-      console.warn(`[nuxt-supabase-team-auth] Warning: @nuxt/ui not found in modules. Please add '@nuxt/ui' to your modules array in nuxt.config.ts for components to work properly.`)
-    }
+    // Automatically install Nuxt UI for components and composables
+    await installModule('@nuxt/ui')
 
     // Ensure proper transpilation for the module runtime
     nuxt.options.build = nuxt.options.build || {}

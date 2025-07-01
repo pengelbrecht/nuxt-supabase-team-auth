@@ -54,6 +54,12 @@
 - **Use `psql` not supabase cli for terminal/bash sql commands**
 - **Don't use `db push` to run local migrations as a remote might be linked and have them applied unintentionally. Instead use `supabase db reset`**
 
+## Release Process (CRITICAL)
+- **NEVER release/publish before testing locally in the test project**
+- Always test changes in `./test-projects/minimal-nuxt-ui-app` first
+- Only publish after confirming everything works in the local test environment
+- This prevents breaking consumer applications with untested changes
+
 ## Database Schema (Stable)
 ```sql
 -- profiles table stores user data
