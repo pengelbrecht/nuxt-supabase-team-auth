@@ -287,12 +287,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
-import { useNuxtApp } from '#app'
 import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
 import type { User, Team } from '../types'
+import { useNuxtApp } from '#app'
 
 interface AuthSignUpProps {
   /** Title displayed in the header */

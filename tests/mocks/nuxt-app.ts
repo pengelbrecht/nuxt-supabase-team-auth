@@ -67,3 +67,17 @@ export const useRouter = vi.fn(() => ({
 export const useState = vi.fn((key: string, init?: () => any) => ({
   value: init ? init() : null,
 }))
+
+export const navigateTo = vi.fn()
+export const defineNuxtRouteMiddleware = vi.fn((fn: any) => fn)
+export const useRuntimeConfig = vi.fn(() => ({
+  public: {
+    teamAuth: {
+      loginPage: '/signin',
+    },
+  },
+}))
+
+export const useToast = vi.fn(() => ({
+  add: vi.fn(),
+}))

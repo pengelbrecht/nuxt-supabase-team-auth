@@ -168,8 +168,8 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import * as v from 'valibot'
-import { useToast } from '#app'
 import { useTeamAuth } from '../composables/useTeamAuth'
+import { useToast } from '#app'
 
 // Form validation schema
 const companySchema = v.object({

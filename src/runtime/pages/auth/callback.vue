@@ -94,10 +94,10 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute, useRouter } from '#app'
 import { $fetch } from 'ofetch'
 import { useSupabaseClient } from '../../composables/useSupabaseComposables'
 import { useTeamAuth } from '../../composables/useTeamAuth'
+import { useRoute, useRouter } from '#app'
 
 const route = useRoute()
 const router = useRouter()

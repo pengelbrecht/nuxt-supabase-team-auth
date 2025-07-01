@@ -5,6 +5,7 @@ import { config } from '@vue/test-utils'
 Object.assign(globalThis, {
   defineNuxtRouteMiddleware: (fn: any) => fn,
   navigateTo: vi.fn(),
+  $fetch: vi.fn(),
   useRuntimeConfig: () => ({
     public: {
       teamAuth: {
@@ -14,15 +15,35 @@ Object.assign(globalThis, {
   }),
 })
 
+// Mock ofetch
+vi.mock('ofetch', () => ({
+  $fetch: vi.fn(),
+}))
+
 // Mock Nuxt composables and plugins
 vi.mock('#app', () => ({
   navigateTo: vi.fn(),
+  defineNuxtRouteMiddleware: (fn: any) => fn,
   useRuntimeConfig: () => ({
     public: {
       teamAuth: {
         loginPage: '/signin',
       },
     },
+  }),
+  useRoute: () => ({
+    query: {},
+    params: {},
+    path: '/test',
+    search: '',
+  }),
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+  }),
+  useState: vi.fn(),
+  useToast: () => ({
+    add: vi.fn(),
   }),
   useNuxtApp: () => ({
     $teamAuthClient: {

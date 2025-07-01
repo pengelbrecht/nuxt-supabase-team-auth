@@ -8,6 +8,11 @@ import { resetSessionState } from '../../src/runtime/composables/useSession'
 // Mock $fetch globally
 global.$fetch = vi.fn()
 
+// Mock ofetch module (since useTeamAuth now imports from it)
+vi.mock('ofetch', () => ({
+  $fetch: global.$fetch,
+}))
+
 // Mock #app module
 vi.mock('#app', () => ({
   useState: vi.fn(),
