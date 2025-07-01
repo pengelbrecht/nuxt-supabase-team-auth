@@ -92,6 +92,7 @@ import CompanySettingsDialog from './CompanySettingsDialog.vue'
 import TeamMembersDialog from './TeamMembersDialog.vue'
 import UserProfileForm from './UserProfileForm.vue'
 import SuperAdminImpersonationContent from './SuperAdminImpersonationContent.vue'
+import { navigateTo } from '#imports'
 
 // Custom menu item interface
 interface CustomMenuItem {

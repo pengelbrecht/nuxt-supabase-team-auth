@@ -1,5 +1,6 @@
 import { defineEventHandler, readBody, getHeader, createError } from 'h3'
 import { $fetch } from 'ofetch'
+import { useRuntimeConfig } from '#imports'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)

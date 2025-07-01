@@ -256,6 +256,7 @@ import type { Profile } from '../types'
 import ConfirmDialog from './ConfirmDialog.vue'
 import EditUserModal from './EditUserModal.vue'
 import RoleBadge from './RoleBadge.vue'
+import { useToast } from '#imports'
 
 // Team member with profile data
 interface TeamMemberWithProfile {

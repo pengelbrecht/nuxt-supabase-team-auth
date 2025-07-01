@@ -161,6 +161,7 @@ import { useSupabaseClient } from '../composables/useSupabaseComposables'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import SettingsTabContainer from './SettingsTabContainer.vue'
 import RoleBadge from './RoleBadge.vue'
+import { useToast } from '#imports'
 
 // Get unified auth and impersonation functionality
 const {

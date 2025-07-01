@@ -122,6 +122,7 @@ import * as v from 'valibot'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import type { Profile } from '../types'
 import UserCard from './UserCard.vue'
+import { useToast } from '#imports'
 
 // Form validation schema
 const profileSchema = v.object({
