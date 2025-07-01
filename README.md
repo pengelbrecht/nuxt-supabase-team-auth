@@ -368,28 +368,64 @@ The primary composable for team-based authentication and management:
 ```typescript
 const {
   // Authentication state
-  currentUser,           // Ref<User | null>
-  currentTeam,          // Ref<Team | null>
-  currentRole,          // Ref<Role | null>
-  teamMembers,          // Ref<TeamMember[]>
-  isLoading,            // Ref<boolean>
+  currentUser,              // Ref<User | null>
+  currentProfile,           // Ref<Profile | null>
+  currentTeam,              // Ref<Team | null>
+  currentRole,              // Ref<Role | null>
+  teamMembers,              // Ref<TeamMember[]>
+  isLoading,                // Ref<boolean>
+  
+  // Impersonation state
+  isImpersonating,          // Ref<boolean>
+  impersonatedUser,         // Ref<User | null>
+  originalUser,             // Ref<User | null>
+  impersonationExpiresAt,   // Ref<Date | null>
+  justStartedImpersonation, // Ref<boolean> - UI flag for modal dismissal
   
   // Authentication methods
-  signIn,               // (email: string, password: string) => Promise<void>
-  signOut,              // () => Promise<void>
-  signUpWithTeam,       // (email: string, password: string, teamName: string) => Promise<void>
+  signIn,                   // (email: string, password: string) => Promise<void>
+  signOut,                  // () => Promise<void>
+  signUpWithTeam,           // (email: string, password: string, teamName: string) => Promise<void>
+  
+  // Profile management
+  getProfile,               // () => Promise<Profile | null>
+  updateProfile,            // (updates: Partial<Profile>) => Promise<void>
   
   // Team management
-  inviteMember,         // (email: string, role: Role) => Promise<void>
-  updateMemberRole,     // (userId: string, newRole: Role) => Promise<void>
-  removeMember,         // (userId: string) => Promise<void>
+  updateTeam,               // (updates: Partial<Team>) => Promise<void>
+  renameTeam,               // (name: string) => Promise<void>
+  deleteTeam,               // () => Promise<void>
+  
+  // Member management
+  inviteMember,             // (email: string, role: string) => Promise<void>
+  updateMemberRole,         // (userId: string, newRole: string) => Promise<void>
+  removeMember,             // (userId: string) => Promise<void>
+  promote,                  // (userId: string) => Promise<void> - Promote to admin
+  demote,                   // (userId: string) => Promise<void> - Demote to member
+  transferOwnership,        // (userId: string) => Promise<void>
+  getTeamMembers,           // () => Promise<TeamMember[]>
+  
+  // Invitation management
+  getPendingInvitations,    // () => Promise<Invitation[]>
+  revokeInvite,            // (userId: string) => Promise<void>
+  resendInvite,            // (userId: string) => Promise<void>
+  
+  // Member profiles
+  getTeamMemberProfile,     // (userId: string) => Promise<Profile | null>
+  updateTeamMemberProfile,  // (userId: string, updates: Partial<Profile>) => Promise<void>
   
   // Impersonation (Super Admin only)
-  startImpersonation,   // (targetUserId: string, reason: string) => Promise<void>
-  stopImpersonation,    // () => Promise<void>
-  isImpersonating,      // Ref<boolean>
-  impersonatedUser,     // Ref<User | null>
-  originalUser          // Ref<User | null>
+  startImpersonation,       // (targetUserId: string, reason: string) => Promise<void>
+  stopImpersonation,        // () => Promise<void>
+  
+  // Session management
+  sessionHealth,            // () => SessionHealthCheck
+  triggerSessionRecovery,   // () => void
+  refreshAuthState,         // () => Promise<void>
+  
+  // Utility methods
+  getAvatarFallback,        // (overrides?: {fullName?: string, email?: string}) => string
+  clearSuccessFlag          // () => void - Clear justStartedImpersonation flag
 } = useTeamAuth()
 ```
 
