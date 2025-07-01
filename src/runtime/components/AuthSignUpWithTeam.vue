@@ -287,6 +287,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
+import { useNuxtApp } from '#app'
 import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useTeamAuth } from '../composables/useTeamAuth'

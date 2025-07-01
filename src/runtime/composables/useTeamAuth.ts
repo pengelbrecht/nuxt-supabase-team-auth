@@ -1,4 +1,5 @@
 import { ref, computed, triggerRef } from 'vue'
+import { $fetch } from 'ofetch'
 import type { User, Profile, Team, TeamMember, TeamAuth } from '../types'
 import { useSessionSync } from './useSessionSync'
 import { useSession } from './useSession'

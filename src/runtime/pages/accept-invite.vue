@@ -63,6 +63,8 @@
 </template>
 
 <script setup lang="ts">
+import { useRoute, useRouter } from '#app'
+import { $fetch } from 'ofetch'
 import PasswordSetupForm from '../components/PasswordSetupForm.vue'
 import { useSupabaseClient } from '../composables/useSupabaseComposables'
 import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'

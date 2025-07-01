@@ -1,4 +1,5 @@
 import { computed } from 'vue'
+import { useNuxtApp } from '#app'
 import type { SocialProvidersConfig } from '../types'
 
 /**

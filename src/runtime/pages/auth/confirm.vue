@@ -110,6 +110,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from '#app'
+import { $fetch } from 'ofetch'
 import { useSupabaseClient, useSupabaseSession } from '../../composables/useSupabaseComposables'
 import PasswordSetupForm from '../../components/PasswordSetupForm.vue'
 import ResetPasswordForm from '../../components/ResetPasswordForm.vue'

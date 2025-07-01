@@ -104,7 +104,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from '#app'
 
 interface ConfirmationProps {
   /** Custom redirect URL after successful confirmation */

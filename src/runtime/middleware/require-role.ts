@@ -1,5 +1,5 @@
 import { useTeamAuth } from '../composables/useTeamAuth'
-import { navigateTo } from '#app'
+import { navigateTo, defineNuxtRouteMiddleware, useRuntimeConfig } from '#app'
 
 type TeamRole = 'owner' | 'admin' | 'member' | 'super_admin'
 

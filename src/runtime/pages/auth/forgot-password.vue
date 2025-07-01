@@ -9,6 +9,7 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from '#app'
 import ForgotPasswordForm from '../../components/ForgotPasswordForm.vue'
 
 const router = useRouter()

@@ -1,5 +1,5 @@
 import { useTeamAuth } from '../composables/useTeamAuth'
-import { navigateTo } from '#app'
+import { navigateTo, defineNuxtRouteMiddleware, useRuntimeConfig } from '#app'
 
 /**
  * Global authentication middleware
