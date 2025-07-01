@@ -1,5 +1,5 @@
 import { useTeamAuth } from '../composables/useTeamAuth'
-import { navigateTo, defineNuxtRouteMiddleware, useRuntimeConfig } from '#app'
+import { navigateTo, defineNuxtRouteMiddleware, useRuntimeConfig } from '#imports'
 
 /**
  * Middleware to require team membership

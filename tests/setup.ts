@@ -70,6 +70,59 @@ vi.mock('#app', () => ({
   }),
 }))
 
+// Mock #imports for all Nuxt utilities and composables
+vi.mock('#imports', () => ({
+  navigateTo: vi.fn(),
+  defineNuxtRouteMiddleware: (fn: any) => fn,
+  useRuntimeConfig: () => ({
+    public: {
+      teamAuth: {
+        loginPage: '/signin',
+      },
+    },
+  }),
+  useRoute: () => ({
+    query: {},
+    params: {},
+    path: '/test',
+    search: '',
+  }),
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+  }),
+  useState: vi.fn(),
+  useNuxtApp: () => ({
+    $teamAuthClient: {
+      auth: {
+        getSession: vi.fn(),
+        signUp: vi.fn(),
+        signInWithPassword: vi.fn(),
+        signOut: vi.fn(),
+        onAuthStateChange: vi.fn(),
+        setSession: vi.fn(),
+        verifyOtp: vi.fn(),
+        updateUser: vi.fn(),
+      },
+      functions: {
+        invoke: vi.fn(),
+      },
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        insert: vi.fn().mockReturnThis(),
+        update: vi.fn().mockReturnThis(),
+        delete: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        neq: vi.fn().mockReturnThis(),
+        single: vi.fn(),
+      })),
+    },
+  }),
+  useToast: () => ({
+    add: vi.fn(),
+  }),
+}))
+
 vi.mock('vue-router', () => ({
   useRoute: () => ({
     query: {},

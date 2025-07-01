@@ -97,7 +97,7 @@
 import { $fetch } from 'ofetch'
 import { useSupabaseClient } from '../../composables/useSupabaseComposables'
 import { useTeamAuth } from '../../composables/useTeamAuth'
-import { useRoute, useRouter } from '#app'
+import { useRoute, useRouter } from '#imports'
 
 const route = useRoute()
 const router = useRouter()

@@ -4,8 +4,7 @@ import type { User, Profile, Team, TeamMember, TeamAuth } from '../types'
 import { useSessionSync } from './useSessionSync'
 import { useSession } from './useSession'
 import { useSupabaseClient } from './useSupabaseComposables'
-import { useToast } from '#imports'
-import { useState } from '#app'
+import { useToast, useState } from '#imports'
 // Types - we'll get the actual client and user from @nuxtjs/supabase composables
 type SupabaseClient = any
 type SupabaseUser = any

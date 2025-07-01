@@ -1,5 +1,5 @@
 import { useTeamAuth } from '../composables/useTeamAuth'
-import { navigateTo } from '#app'
+import { navigateTo, defineNuxtRouteMiddleware } from '#imports'
 
 /**
  * Middleware to redirect authenticated users away from auth pages

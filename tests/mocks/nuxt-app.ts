@@ -77,3 +77,7 @@ export const useRuntimeConfig = vi.fn(() => ({
     },
   },
 }))
+
+export const useToast = vi.fn(() => ({
+  add: vi.fn(),
+}))
