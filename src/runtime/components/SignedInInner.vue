@@ -5,6 +5,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
 
 const { currentUser, isLoading } = useTeamAuth()
