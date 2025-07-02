@@ -5,7 +5,18 @@ import { config } from '@vue/test-utils'
 Object.assign(globalThis, {
   defineNuxtRouteMiddleware: (fn: any) => fn,
   navigateTo: vi.fn(),
-  $fetch: vi.fn(),
+  $fetch: vi.fn().mockImplementation(async (url: string, _options: any) => {
+    // Default success responses for common API endpoints
+    const responses: Record<string, any> = {
+      '/api/signup-with-team': { success: true },
+      '/api/invite-member': { success: true },
+      '/api/get-pending-invitations': { success: true, invitations: [] },
+      '/api/revoke-invitation': { success: true },
+      '/api/transfer-ownership': { success: true },
+      '/api/delete-user': { success: true },
+    }
+    return responses[url] || { success: true }
+  }),
   useRuntimeConfig: () => ({
     public: {
       teamAuth: {
@@ -17,7 +28,18 @@ Object.assign(globalThis, {
 
 // Mock ofetch
 vi.mock('ofetch', () => ({
-  $fetch: vi.fn(),
+  $fetch: vi.fn().mockImplementation(async (url: string, _options: any) => {
+    // Default success responses for common API endpoints
+    const responses: Record<string, any> = {
+      '/api/signup-with-team': { success: true },
+      '/api/invite-member': { success: true },
+      '/api/get-pending-invitations': { success: true, invitations: [] },
+      '/api/revoke-invitation': { success: true },
+      '/api/transfer-ownership': { success: true },
+      '/api/delete-user': { success: true },
+    }
+    return responses[url] || { success: true }
+  }),
 }))
 
 // Mock Nuxt composables and plugins

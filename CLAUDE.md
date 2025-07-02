@@ -46,6 +46,7 @@
 2. **Watchers and background processes** - Watch specific properties (like user ID) not entire objects to avoid unnecessary triggers
 3. **Form submission** - Use direct @click handlers instead of UForm @submit for complex forms
 4. **Profile reloading** - Don't reload profile data after save, just update local form state
+5. **Root cause before fixes** - ALWAYS investigate and understand the actual problem before implementing solutions. Gather facts, test hypotheses systematically, then implement targeted fixes.
 
 ## Testing Commands
 - `supabase status` - check if services running

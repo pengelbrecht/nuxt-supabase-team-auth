@@ -6,11 +6,22 @@ import { useTeamAuth, resetTeamAuthState } from '../../src/runtime/composables/u
 import { resetSessionState } from '../../src/runtime/composables/useSession'
 
 // Mock $fetch globally
-global.$fetch = vi.fn()
+global.$fetch = vi.fn().mockImplementation(async (url: string, _options: any) => {
+  // Default success responses for common API endpoints
+  const responses: Record<string, any> = {
+    '/api/signup-with-team': { success: true },
+    '/api/invite-member': { success: true },
+    '/api/get-pending-invitations': { success: true, invitations: [] },
+    '/api/revoke-invitation': { success: true },
+    '/api/transfer-ownership': { success: true },
+    '/api/delete-user': { success: true },
+  }
+  return responses[url] || { success: true }
+})
 
 // Mock ofetch module (since useTeamAuth now imports from it)
 vi.mock('ofetch', () => ({
-  $fetch: global.$fetch,
+  $fetch: (...args: any[]) => global.$fetch(...args),
 }))
 
 // Mock #app module
@@ -69,7 +80,6 @@ vi.mock('../../src/runtime/composables/useToast', () => ({
 }))
 
 // Get a handle to the mocked functions
-const mockUseState = vi.fn()
 const mockUseNuxtApp = vi.fn()
 const mockUseRuntimeConfig = vi.fn()
 const mockUseSessionSync = vi.fn()
@@ -173,7 +183,6 @@ describe('useTeamAuth', () => {
     resetTeamAuthState()
 
     // Set up fresh mocks for each test
-    mockUseState.mockClear()
     mockUseNuxtApp.mockClear()
     mockUseSupabaseClient.mockClear()
     mockUseRuntimeConfig.mockClear()
@@ -207,15 +216,23 @@ describe('useTeamAuth', () => {
       initialized: false,
     })
 
-    // Mock Nuxt composables - useState should return the ref directly
-    // We need to mock the actual function calls in the vi.mock() definitions
-    const { useState } = await vi.importMock('#app')
+    // Mock Nuxt composables - need to get the actual mocked function
+    const { useState } = await vi.importMock('#imports')
+    const { useNuxtApp, useRuntimeConfig } = await vi.importMock('#app')
     const { useSupabaseClient } = await vi.importMock('#supabase/composables')
     const { useSessionSync } = await vi.importMock('../../src/runtime/composables/useSessionSync')
     const { useToast } = await vi.importMock('@nuxt/ui')
 
     // Set up the mocks
-    useState.mockReturnValue(mockAuthState)
+    // Configure useState to return our controlled state for 'team-auth' key
+    useState.mockImplementation((key: string, init?: () => any) => {
+      if (key === 'team-auth') {
+        return mockAuthState
+      }
+      // For any other key, provide a default implementation
+      const value = init ? init() : null
+      return { value }
+    })
     useSupabaseClient.mockReturnValue(mockSupabaseClient)
     useSessionSync.mockReturnValue({
       tabId: 'test-tab-id',
@@ -240,7 +257,6 @@ describe('useTeamAuth', () => {
     useToast.mockReturnValue({
       add: vi.fn(),
     })
-    const { useNuxtApp, useRuntimeConfig } = await vi.importMock('#app')
 
     useNuxtApp.mockReturnValue({
       $teamAuthClient: mockSupabaseClient,

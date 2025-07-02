@@ -196,11 +196,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       },
     )
 
-    if (nuxt.options.dev) {
-      console.log('[team-auth] Supabase redirectOptions configured:', redirectOptions)
-      console.log('[team-auth] Final supabase config:', nuxt.options.supabase)
-      console.log('[team-auth] Runtime supabase config:', nuxt.options.runtimeConfig.public.supabase)
-    }
+    // Development logging removed - module is stable
 
     // Also ensure the configuration is applied before @nuxtjs/supabase initializes
     nuxt.hook('modules:before', () => {
@@ -210,9 +206,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
         redirectOptions,
       })
 
-      if (nuxt.options.dev) {
-        console.log('[team-auth] modules:before - Final supabase config:', nuxt.options.supabase)
-      }
+      // Development logging removed - module is stable
     })
 
     // Install @nuxtjs/supabase with our configuration

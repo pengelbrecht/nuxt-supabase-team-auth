@@ -86,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import CompanySettingsDialog from './CompanySettingsDialog.vue'
 import TeamMembersDialog from './TeamMembersDialog.vue'
@@ -196,8 +196,22 @@ const openCompanySettings = () => {
 }
 
 const openTeamMembers = () => {
+  console.log('🔥 openTeamMembers called!')
   showTeamMembersDialog.value = true
 }
+
+// Debug trace for showTeamMembersDialog changes
+watch(
+  () => showTeamMembersDialog.value,
+  (newVal, oldVal) => {
+    console.trace('🔍 showTeamMembersDialog changed:', oldVal, '→', newVal)
+    if (oldVal === true && newVal === false) {
+      console.error('❌ ALERT: showTeamMembersDialog was reset from true to false!')
+      console.trace('❌ Stack trace for reset:')
+    }
+  },
+  { flush: 'sync' },
+)
 
 const openImpersonationSettings = () => {
   showImpersonationDialog.value = true
@@ -438,5 +452,14 @@ watch(justStartedImpersonation, (newValue, _oldValue) => {
     showImpersonationDialog.value = false
     clearSuccessFlag()
   }
+})
+
+// Debug component lifecycle
+onMounted(() => {
+  console.log('🔄 UserButton: onMounted called')
+})
+
+onUnmounted(() => {
+  console.log('🔄 UserButton: onUnmounted called')
 })
 </script>

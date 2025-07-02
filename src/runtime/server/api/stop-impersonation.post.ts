@@ -1,4 +1,4 @@
-import { defineEventHandler, readBody, getCookie, deleteCookie, createError } from 'h3'
+import { defineEventHandler, readBody, createError, getCookie, deleteCookie } from 'h3'
 import jwt from 'jsonwebtoken'
 import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
 
@@ -7,8 +7,6 @@ const createServiceRoleClient = serverSupabaseServiceRole
 const getCurrentUser = serverSupabaseUser
 
 export default defineEventHandler(async (event) => {
-  console.log('Stop impersonation request received')
-
   try {
     // Get the current user session (should be the impersonated user)
     const user = await getCurrentUser(event)
@@ -48,9 +46,8 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Get the admin impersonation JWT from cookie
+    // Get the admin impersonation JWT from cookie using h3's getCookie
     const impersonationCookie = getCookie(event, 'admin-impersonation')
-    console.log('Looking for admin impersonation cookie:', impersonationCookie ? 'Found' : 'Not found')
 
     if (!impersonationCookie) {
       throw createError({
@@ -70,8 +67,6 @@ export default defineEventHandler(async (event) => {
       if (!adminEmail) {
         throw new Error('Admin email not found in JWT')
       }
-
-      console.log('Admin email extracted from JWT:', adminEmail)
     }
     catch (error) {
       console.error('Failed to verify impersonation JWT:', error)
@@ -94,9 +89,7 @@ export default defineEventHandler(async (event) => {
       // Continue anyway - better to restore the session than to fail
     }
 
-    console.log('Impersonation session ended successfully')
-
-    // Clean up the impersonation cookie
+    // Clean up the impersonation cookie using h3's deleteCookie
     deleteCookie(event, 'admin-impersonation', {
       path: '/',
     })
@@ -115,8 +108,6 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    console.log('Magic link generated for admin restoration')
-
     // Immediately verify the OTP to create an admin session
     const { data: adminSessionData, error: verifyError } = await adminClient.auth.verifyOtp({
       token_hash: magicLinkData.properties.hashed_token,
@@ -130,8 +121,6 @@ export default defineEventHandler(async (event) => {
         message: 'Failed to restore admin session',
       })
     }
-
-    console.log('Admin session restored successfully')
 
     // Return the restored admin session
     return {

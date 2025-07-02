@@ -64,9 +64,7 @@ export const useRouter = vi.fn(() => ({
   replace: vi.fn(),
 }))
 
-export const useState = vi.fn((key: string, init?: () => any) => ({
-  value: init ? init() : null,
-}))
+export const useState = vi.fn()
 
 export const navigateTo = vi.fn()
 export const defineNuxtRouteMiddleware = vi.fn((fn: any) => fn)

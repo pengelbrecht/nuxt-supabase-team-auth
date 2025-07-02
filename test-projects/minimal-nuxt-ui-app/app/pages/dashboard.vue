@@ -54,7 +54,7 @@
                     <UButton
                       block
                       variant="outline"
-                      @click="showTeamDialog = true"
+                      @click="handleManageTeamClick"
                     >
                       Manage Team
                     </UButton>
@@ -78,4 +78,10 @@ definePageMeta({
 
 const { currentUser, currentTeam, currentRole, teamMembers } = useTeamAuth()
 const showTeamDialog = ref(false)
+
+const handleManageTeamClick = () => {
+  console.log('Dashboard: Manage Team clicked')
+  showTeamDialog.value = true
+  console.log('Dashboard: showTeamDialog set to:', showTeamDialog.value)
+}
 </script>

@@ -44,9 +44,12 @@ const mockSupabaseClient = {
 }
 
 // Mock Nuxt router composables
-vi.mock('#app', () => ({
+vi.mock('#imports', () => ({
   useRoute: () => mockRoute,
   useRouter: () => mockRouter,
+}))
+
+vi.mock('#app', () => ({
   useNuxtApp: () => ({
     $supabase: {
       client: mockSupabaseClient,
@@ -82,6 +85,11 @@ vi.mock('../../src/runtime/composables/useTeamAuth', () => ({
 const mock$fetch = vi.fn()
 global.$fetch = mock$fetch
 
+// Mock ofetch module since component imports from there
+vi.mock('ofetch', () => ({
+  $fetch: vi.fn(),
+}))
+
 describe('AuthCallback', () => {
   const globalMountOptions = {
     global: {
@@ -116,7 +124,7 @@ describe('AuthCallback', () => {
     access_token: 'access-token-123',
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
 
     // Reset mock values
@@ -128,6 +136,10 @@ describe('AuthCallback', () => {
     mockRouter.push.mockReset()
     mockSignUpWithTeam.mockReset()
     mock$fetch.mockReset()
+
+    // Get the mocked $fetch from ofetch and reset it too
+    const { $fetch } = await vi.importMock('ofetch')
+    $fetch.mockReset()
 
     // Mock console methods to avoid noise in tests
     vi.spyOn(console, 'log').mockImplementation(() => {})
@@ -192,12 +204,14 @@ describe('AuthCallback', () => {
         error: null,
       })
 
-      mock$fetch.mockRejectedValue(new Error('Team name already exists'))
+      // Mock the ofetch $fetch to reject
+      const { $fetch } = await vi.importMock('ofetch')
+      $fetch.mockRejectedValue(new Error('Team name already exists'))
 
       const wrapper = mount(AuthCallback, globalMountOptions)
 
       // Wait for OAuth processing to complete - need longer timeout for polling
-      await new Promise(resolve => setTimeout(resolve, 150))
+      await new Promise(resolve => setTimeout(resolve, 600))
       await nextTick()
       await nextTick()
 

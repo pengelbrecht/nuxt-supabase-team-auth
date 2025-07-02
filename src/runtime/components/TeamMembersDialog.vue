@@ -1,5 +1,5 @@
 <template>
-  <DialogBox
+  <FormDialog
     v-model="isOpen"
     title="Team Members"
     subtitle="Manage your team members and their roles"
@@ -185,7 +185,7 @@
         </UButton>
       </div>
     </UCard>
-  </DialogBox>
+  </FormDialog>
 
   <!-- Invite Member Modal -->
   <ActionDialog
@@ -250,11 +250,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import type { Profile } from '../types'
 import ConfirmDialog from './ConfirmDialog.vue'
 import EditUserModal from './EditUserModal.vue'
+import FormDialog from './FormDialog.vue'
 import RoleBadge from './RoleBadge.vue'
 import { useToast } from '#imports'
 
@@ -285,6 +286,11 @@ const emit = defineEmits<{
 
 // Get auth state and composable functions
 const { currentUser, currentRole, currentTeam, teamMembers, inviteMember, getAvatarFallback, getTeamMembers, updateMemberRole, removeMember, revokeInvite, getPendingInvitations } = useTeamAuth()
+
+// Watch modelValue changes
+watch(() => props.modelValue, (newValue, oldValue) => {
+  console.log('TeamMembersDialog: modelValue changed from', oldValue, 'to', newValue)
+}, { immediate: true })
 
 // Component state
 const isInviteLoading = ref(false)
@@ -337,8 +343,11 @@ watch([currentTeam, currentUser], () => {
 }, { immediate: false, deep: false })
 
 // Manual refresh when dialog opens
-watch(() => props.modelValue, (isOpen) => {
+watch(() => props.modelValue, async (isOpen) => {
   if (isOpen && currentTeam.value?.id) {
+    // Use nextTick to ensure the component is fully rendered before loading data
+    await nextTick()
+    loadTeamMembers()
     refreshPendingInvitations()
   }
 })
@@ -511,8 +520,12 @@ const getMemberActions = (member: any) => {
 
 // Load team members using composable
 const loadTeamMembers = async () => {
+  console.log('TeamMembersDialog: loadTeamMembers called')
+  console.log('TeamMembersDialog: currentTeam.value:', currentTeam.value)
+  console.log('TeamMembersDialog: currentUser.value:', currentUser.value)
   try {
     await getTeamMembers()
+    console.log('TeamMembersDialog: getTeamMembers succeeded')
   }
   catch (error) {
     console.error('Failed to load team members:', error)
@@ -783,10 +796,7 @@ const handleClose = () => {
 
 // Initialize on mount
 onMounted(() => {
-  loadTeamMembers()
-  // Load pending invitations if dialog is open and we have a team
-  if (props.modelValue && currentTeam.value?.id) {
-    refreshPendingInvitations()
-  }
+  console.log('TeamMembersDialog: onMounted called, modelValue:', props.modelValue)
+  // Don't load data on mount - wait for dialog to open via watch
 })
 </script>

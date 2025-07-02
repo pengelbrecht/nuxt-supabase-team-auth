@@ -54,6 +54,22 @@ pnpm add @nuxt/ui
 pnpm add nuxt-supabase-team-auth
 ```
 
+#### Required: Cookie Package Override
+
+Due to a [known dependency conflict](https://github.com/supabase/ssr/issues/62) between Nuxt and Supabase, you need to add a package override to your `package.json`:
+
+```json
+{
+  "pnpm": {
+    "overrides": {
+      "cookie": "0.7.2"
+    }
+  }
+}
+```
+
+**Why is this needed?** Nuxt/Nitro uses `cookie@1.x` while `@supabase/ssr` expects `cookie@0.7.x`. This override ensures compatibility until Supabase resolves the upstream dependency conflict.
+
 ### 2. Configure Nuxt
 
 Add our module to your `nuxt.config.ts`. The module automatically registers and configures `@nuxtjs/supabase`:

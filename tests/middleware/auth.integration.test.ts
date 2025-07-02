@@ -6,7 +6,6 @@ import authGlobal from '../../src/runtime/middleware/auth.global'
 import requireAuth from '../../src/runtime/middleware/require-auth'
 import requireTeam from '../../src/runtime/middleware/require-team'
 import { createRequireRoleMiddleware } from '../../src/runtime/middleware/require-role'
-import { navigateTo } from '#app'
 
 // Test interfaces
 interface MockRoute {
@@ -22,13 +21,28 @@ vi.mock('../../src/runtime/composables/useTeamAuth', () => ({
   useTeamAuth: vi.fn(),
 }))
 
+// Mock #imports for middleware
+vi.mock('#imports', () => ({
+  navigateTo: vi.fn(),
+  defineNuxtRouteMiddleware: vi.fn(fn => fn),
+  useRuntimeConfig: vi.fn(() => ({
+    public: {
+      teamAuth: {
+        loginPage: '/signin',
+      },
+    },
+  })),
+}))
+
 describe('Middleware Integration Tests', () => {
   let mockNavigateTo: MockNavigateTo
   let mockRoute: MockRoute
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
-    mockNavigateTo = vi.mocked(navigateTo)
+    // Get the mocked navigateTo from #imports
+    const { navigateTo: importsNavigateTo } = await vi.importMock('#imports')
+    mockNavigateTo = importsNavigateTo
 
     // Default mock route
     mockRoute = {

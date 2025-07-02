@@ -17,8 +17,7 @@ export default defineEventHandler(async (event) => {
   const supabaseUrl = useRuntimeConfig().supabaseUrl
   const edgeFunctionUrl = `${supabaseUrl}/functions/v1/accept-invite`
 
-  console.log('Proxying to edge function:', edgeFunctionUrl)
-  console.log('Request body:', body)
+  // Proxying to edge function
 
   try {
     const response = await $fetch(edgeFunctionUrl, {
@@ -30,7 +29,6 @@ export default defineEventHandler(async (event) => {
       body,
     })
 
-    console.log('Edge function response:', response)
     return response
   }
   catch (error: any) {

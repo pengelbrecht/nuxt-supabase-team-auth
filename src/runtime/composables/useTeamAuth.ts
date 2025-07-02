@@ -607,7 +607,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       }
 
       try {
-        console.log('invite: step 1 - setting loading state')
         authState.value = { ...authState.value, loading: true }
 
         const headers: Record<string, string> = {
@@ -615,7 +614,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         }
 
         try {
-          console.log('invite: step 2 - getting session')
           // Use direct Supabase client instead of useSession which might be hanging
           const { data: { session }, error: sessionError } = await getClient().auth.getSession()
           if (sessionError) {
@@ -624,13 +622,10 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           else if (session?.access_token) {
             headers['Authorization'] = `Bearer ${session.access_token}`
           }
-          console.log('invite: step 3 - session obtained')
         }
         catch (error) {
           console.warn('Failed to get session for auth headers:', error)
         }
-
-        console.log('invite: step 4 - making API call')
         const response = await $fetch('/api/invite-member', {
           method: 'POST',
           headers,
@@ -947,12 +942,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           }
         }
 
-        const result = await response.json()
-
-        // Log deletion summary for debugging
-        if (result.members_removed > 0) {
-          console.log(`Team deletion completed: ${result.members_removed} members removed, team "${result.deleted_team.name}" deleted`)
-        }
+        await response.json()
 
         // Reset team-related state
         authState.value = {

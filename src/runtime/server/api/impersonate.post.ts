@@ -1,4 +1,4 @@
-import { defineEventHandler, readBody, setCookie, createError } from 'h3'
+import { defineEventHandler, readBody, createError, setCookie } from 'h3'
 import jwt from 'jsonwebtoken'
 import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
 
@@ -7,8 +7,6 @@ const createServiceRoleClient = serverSupabaseServiceRole
 const getCurrentUser = serverSupabaseUser
 
 export default defineEventHandler(async (event) => {
-  console.log('Impersonation request received')
-
   try {
     // Get the current user session
     const user = await getCurrentUser(event)
@@ -43,11 +41,8 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    console.log('Super admin verified:', user.id)
-
     // Get request body
     const { targetUserId, reason } = await readBody(event)
-    console.log('Request body:', { targetUserId, reason })
 
     if (!targetUserId) {
       throw createError({
@@ -106,7 +101,6 @@ export default defineEventHandler(async (event) => {
       started_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutes
     }
-    console.log('Inserting impersonation session with data:', { ...insertData })
 
     const { data: sessionLog, error: logError } = await adminClient
       .from('impersonation_sessions')
@@ -131,7 +125,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    console.log('Creating session for user:', targetUserId, 'with email:', targetEmail)
+    // Creating session for target user
 
     // Use admin API to create a session for the target user
     // This approach uses getUserById to ensure we have the full auth user data
@@ -166,8 +160,6 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    console.log('Magic link generated, verifying OTP...')
-
     // Immediately verify the OTP to create a session
     const { data: sessionData, error: verifyError } = await adminClient.auth.verifyOtp({
       token_hash: magicLinkData.properties.hashed_token,
@@ -181,8 +173,6 @@ export default defineEventHandler(async (event) => {
         message: 'Failed to create impersonation session',
       })
     }
-
-    console.log('Impersonation session created successfully')
 
     // Store admin email in JWT-signed cookie for session termination
     // This replaces the complex refresh token storage approach
@@ -207,7 +197,7 @@ export default defineEventHandler(async (event) => {
       jwtSecret,
     )
 
-    // Store the JWT in an httpOnly cookie
+    // Store the JWT in an httpOnly cookie using h3's setCookie
     setCookie(event, 'admin-impersonation', impersonationToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -215,8 +205,6 @@ export default defineEventHandler(async (event) => {
       maxAge: 30 * 60, // 30 minutes, same as impersonation session
       path: '/',
     })
-
-    console.log('Stored admin impersonation token in secure cookie')
 
     // Return the impersonation data (without sensitive tokens)
     return {
