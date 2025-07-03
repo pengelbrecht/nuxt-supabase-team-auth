@@ -119,9 +119,6 @@ const props = withDefaults(defineProps<ConfirmationProps>(), {
 const route = useRoute()
 const router = useRouter()
 
-// Get debug mode from team auth config
-const { debug: debugMode } = useTeamAuthConfig()
-
 // State management
 const isLoading = ref(true)
 const isSuccess = ref(false)
@@ -262,10 +259,6 @@ const handleInviteAcceptance = async (params: any) => {
 const processConfirmation = async () => {
   try {
     const params = extractParameters()
-
-    if (debugMode.value) {
-      console.log('Confirmation parameters:', params)
-    }
 
     const type = determineConfirmationType(params)
 

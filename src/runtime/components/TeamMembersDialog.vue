@@ -288,8 +288,8 @@ const emit = defineEmits<{
 const { currentUser, currentRole, currentTeam, teamMembers, inviteMember, getAvatarFallback, getTeamMembers, updateMemberRole, removeMember, revokeInvite, getPendingInvitations } = useTeamAuth()
 
 // Watch modelValue changes
-watch(() => props.modelValue, (newValue, oldValue) => {
-  console.log('TeamMembersDialog: modelValue changed from', oldValue, 'to', newValue)
+watch(() => props.modelValue, () => {
+  // Modal state changed
 }, { immediate: true })
 
 // Component state
@@ -520,12 +520,8 @@ const getMemberActions = (member: any) => {
 
 // Load team members using composable
 const loadTeamMembers = async () => {
-  console.log('TeamMembersDialog: loadTeamMembers called')
-  console.log('TeamMembersDialog: currentTeam.value:', currentTeam.value)
-  console.log('TeamMembersDialog: currentUser.value:', currentUser.value)
   try {
     await getTeamMembers()
-    console.log('TeamMembersDialog: getTeamMembers succeeded')
   }
   catch (error) {
     console.error('Failed to load team members:', error)
@@ -723,7 +719,6 @@ const handleRevokeInvitation = async (invitation: any) => {
   try {
     revokingInviteIds.value.add(invitation.id)
 
-    console.log('Revoking invitation:', invitation)
     await revokeInvite(invitation.id)
 
     toast.add({
@@ -796,7 +791,6 @@ const handleClose = () => {
 
 // Initialize on mount
 onMounted(() => {
-  console.log('TeamMembersDialog: onMounted called, modelValue:', props.modelValue)
   // Don't load data on mount - wait for dialog to open via watch
 })
 </script>

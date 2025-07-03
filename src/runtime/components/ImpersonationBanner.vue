@@ -17,7 +17,7 @@
             />
             <div>
               <div class="font-semibold text-sm">
-                Impersonating {{ displayUser?.full_name || displayUser?.email || 'User' }}
+                You are impersonating {{ displayUser?.full_name || displayUser?.email || 'User' }}
               </div>
               <div class="flex items-baseline gap-2 text-xs text-red-100 pb-2">
                 <span v-if="displayUser?.team?.name">

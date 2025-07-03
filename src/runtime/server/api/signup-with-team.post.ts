@@ -1,21 +1,30 @@
-import { defineEventHandler, readBody, getHeader, createError } from 'h3'
+import { defineEventHandler, readBody, createError } from 'h3'
 import { $fetch } from 'ofetch'
 import { useRuntimeConfig } from '#imports'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
 
-  // Get authorization header from the client request
-  const authHeader = getHeader(event, 'authorization')
-  if (!authHeader) {
+  // Get runtime config for Supabase
+  const config = useRuntimeConfig()
+  const supabaseUrl = config.public.supabase.url
+  const serviceKey = config.supabaseServiceKey
+
+  if (!serviceKey) {
     throw createError({
-      statusCode: 401,
-      statusMessage: 'Missing authorization header',
+      statusCode: 500,
+      statusMessage: 'Missing Supabase service key configuration',
     })
   }
 
-  // Forward to Supabase Edge Function
-  const supabaseUrl = useRuntimeConfig().supabaseUrl
+  // Transform body to match Edge Function expectations
+  const transformedBody = {
+    email: body.email,
+    password: body.password,
+    team_name: body.teamName, // Convert camelCase to snake_case
+  }
+
+  // Forward to Supabase Edge Function with service role key
   const edgeFunctionUrl = `${supabaseUrl}/functions/v1/create-team-and-owner`
 
   try {
@@ -23,9 +32,9 @@ export default defineEventHandler(async (event) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': authHeader,
+        'Authorization': `Bearer ${serviceKey}`,
       },
-      body,
+      body: transformedBody,
     })
 
     return response

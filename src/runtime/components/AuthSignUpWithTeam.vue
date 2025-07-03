@@ -152,6 +152,7 @@
                 variant="ghost"
                 size="sm"
                 color="gray"
+                tabindex="-1"
                 :icon="showPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
                 :aria-label="showPassword ? 'Hide password' : 'Show password'"
                 @click="showPassword = !showPassword"
@@ -182,6 +183,7 @@
                 variant="ghost"
                 size="sm"
                 color="gray"
+                tabindex="-1"
                 :icon="showConfirmPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
                 :aria-label="showConfirmPassword ? 'Hide password' : 'Show password'"
                 @click="showConfirmPassword = !showConfirmPassword"
@@ -248,7 +250,7 @@
           variant="subtle"
           :title="getErrorTitle(errorMessage)"
           :description="getErrorDescription(errorMessage)"
-          :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'ghost' }"
+          :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'ghost', tabindex: '-1' }"
           @close="errorMessage = ''"
         />
       </div>

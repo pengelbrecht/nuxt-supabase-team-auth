@@ -11,7 +11,6 @@ export function useTeamAuthConfig() {
 
   const config = computed(() => $config.public.teamAuth || {})
 
-  const debug = computed(() => config.value.debug || false)
   const redirectTo = computed(() => config.value.redirectTo || '/dashboard')
   const loginPage = computed(() => config.value.loginPage || '/signin')
   const supabaseUrl = computed(() => config.value.supabaseUrl)
@@ -40,7 +39,6 @@ export function useTeamAuthConfig() {
 
   return {
     config,
-    debug,
     redirectTo,
     loginPage,
     supabaseUrl,

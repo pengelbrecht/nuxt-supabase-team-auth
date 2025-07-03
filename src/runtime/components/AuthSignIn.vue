@@ -109,6 +109,7 @@
                 variant="ghost"
                 size="sm"
                 color="gray"
+                tabindex="-1"
                 :icon="showPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
                 :aria-label="showPassword ? 'Hide password' : 'Show password'"
                 @click="showPassword = !showPassword"

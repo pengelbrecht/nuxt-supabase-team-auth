@@ -12,10 +12,6 @@ export interface ModuleOptions {
    */
   supabaseKey?: string
   /**
-   * Enable debug mode
-   */
-  debug?: boolean
-  /**
    * Redirect URL after authentication
    */
   redirectTo?: string
@@ -69,7 +65,6 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
     },
   },
   defaults: {
-    debug: undefined, // Will be auto-detected based on Nuxt dev mode
     redirectTo: '/dashboard',
     loginPage: '/signin', // Use /signin as default, can be overridden
     defaultProtection: 'public', // Default to public (opt-in protection)
@@ -93,30 +88,20 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
     nuxt.options.build = nuxt.options.build || {}
     nuxt.options.build.transpile = nuxt.options.build.transpile || []
 
-    // Merge options with runtime config
-    // Debug mode hierarchy: explicit option > env var > nuxt dev mode
-    const debugMode = options.debug !== undefined
-      ? options.debug
-      : process.env.TEAM_AUTH_DEBUG === 'true'
-        ? true
-        : nuxt.options.dev
-
     // Set up standard Supabase configuration for @nuxtjs/supabase
     const supabaseUrl = options.supabaseUrl || process.env.SUPABASE_URL
-    const supabaseKey = options.supabaseKey || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY
+    const supabaseKey = options.supabaseKey || process.env.SUPABASE_ANON_KEY
     const serviceKey = process.env.SUPABASE_SERVICE_KEY
-      || process.env.SUPABASE_SERVICE_ROLE_KEY
-      || process.env.SUPABASE_ANON_KEY // Fallback for development
 
     // Validate required configuration
     if (!supabaseUrl) {
       throw new Error(`[nuxt-supabase-team-auth] Missing Supabase URL. Please set SUPABASE_URL environment variable or configure supabaseUrl in module options.`)
     }
     if (!supabaseKey) {
-      throw new Error(`[nuxt-supabase-team-auth] Missing Supabase anon key. Please set SUPABASE_KEY or SUPABASE_ANON_KEY environment variable or configure supabaseKey in module options.`)
+      throw new Error(`[nuxt-supabase-team-auth] Missing Supabase anon key. Please set SUPABASE_ANON_KEY environment variable or configure supabaseKey in module options.`)
     }
     if (!serviceKey && nuxt.options.dev) {
-      console.warn(`[nuxt-supabase-team-auth] Warning: No service role key found. Server-side operations may not work. Please set SUPABASE_SERVICE_ROLE_KEY environment variable.`)
+      console.warn(`[nuxt-supabase-team-auth] Warning: No service role key found. Server-side operations may not work. Please set SUPABASE_SERVICE_KEY environment variable.`)
     }
 
     // Configure runtime config before installing @nuxtjs/supabase
@@ -228,7 +213,6 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       {
         supabaseUrl,
         supabaseKey,
-        debug: debugMode,
         redirectTo: options.redirectTo,
         loginPage: options.loginPage,
         defaultProtection: options.defaultProtection,
