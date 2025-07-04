@@ -315,6 +315,9 @@ const { currentRole } = useTeamAuth()
 |-----------|-------------|-----------|---------|
 | `<AuthSignIn />` | Email/password sign-in form | `title`, `subtitle`, `showSocialLogin` | User authentication |
 | `<AuthSignUpWithTeam />` | Sign-up form with team creation | `title`, `subtitle`, `showSocialLogin` | New user onboarding |
+| `<ForgotPasswordForm />` | Password reset request form | `title`, `subtitle` | Initiate password reset |
+| `<ResetPasswordForm />` | New password entry form | `title`, `subtitle` | Complete password reset |
+| `<PasswordSetupForm />` | Initial password setup for invites | `title`, `subtitle` | Team invitation completion |
 | `<UserButton />` | User avatar with dropdown menu | `size`, `showName`, `customItems`, `customItemsPosition` | User menu and settings |
 
 ### Conditional Rendering Components  
@@ -456,6 +459,58 @@ const customMenuItems: CustomMenuItem[] = [
 - `before-signout` - Before sign out section *(default)*
 
 Custom items are automatically filtered based on user roles and integrate seamlessly with the existing menu structure.
+
+## Built-in Pages
+
+The module automatically provides several authentication pages that you can use without creating them manually:
+
+| Route | Component | Purpose | Usage |
+|-------|-----------|---------|-------|
+| `/auth/forgot-password` | `<ForgotPasswordForm />` | Password reset request | Link from sign-in page |
+| `/auth/confirm` | Email confirmation handler | Email verification | Automatic redirect from email |
+| `/auth/callback` | OAuth callback handler | Social login completion | Automatic OAuth redirect |
+| `/accept-invite` | `<PasswordSetupForm />` | Team invitation acceptance | Email invitation links |
+
+### Password Reset Flow
+
+The module provides a complete password reset flow:
+
+1. **User clicks "Forgot Password"** on your sign-in page
+2. **Module navigates to** `/auth/forgot-password` 
+3. **User enters email** using `<ForgotPasswordForm />`
+4. **User receives email** with reset link
+5. **Reset link goes to** `/auth/confirm?type=recovery&...`
+6. **User sets new password** using `<ResetPasswordForm />`
+
+### Example: Adding Forgot Password to Sign-in
+
+```vue
+<!-- pages/signin.vue -->
+<template>
+  <AuthSignIn 
+    @forgot-password="handleForgotPassword"
+  />
+</template>
+
+<script setup>
+const router = useRouter()
+
+const handleForgotPassword = () => {
+  // Module provides this route automatically
+  router.push('/auth/forgot-password')
+}
+</script>
+```
+
+The `AuthSignIn` component includes a "Forgot password?" button by default that emits the `@forgot-password` event when clicked.
+
+### Team Invitation Flow
+
+1. **Admin invites user** via `<TeamMembersDialog />`
+2. **User receives email** with invitation link
+3. **Link goes to** `/accept-invite?token=...` 
+4. **User sets password** using `<PasswordSetupForm />`
+5. **User joins team** automatically
 
 ## Composables API
 
