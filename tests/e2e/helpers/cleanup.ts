@@ -1,9 +1,10 @@
-import { Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
 
 /**
  * Test cleanup utilities to ensure tests don't interfere with each other
  */
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class TestCleanup {
   private static createdEmails: string[] = []
   private static createdTeams: string[] = []
@@ -29,13 +30,13 @@ export class TestCleanup {
     try {
       // Try to go to a page first to make sure we're loaded
       await page.goto('/', { timeout: 5000 })
-      
+
       // Check if user is signed in by looking for user button
       const userButton = page.locator('header button').filter({ hasText: /Alpha|Beta|Super|Test/ })
-      
+
       if (await userButton.isVisible({ timeout: 2000 })) {
         await userButton.click()
-        
+
         // Look for sign out option
         const signOutButton = page.locator('text=Sign Out')
         if (await signOutButton.isVisible({ timeout: 2000 })) {
@@ -44,7 +45,8 @@ export class TestCleanup {
           await page.waitForURL('/', { timeout: 5000 })
         }
       }
-    } catch (error) {
+    }
+    catch (error) {
       // Ignore errors during cleanup - just try to get to a clean state
       console.log('Cleanup sign out failed:', error)
     }
@@ -60,11 +62,12 @@ export class TestCleanup {
         localStorage.clear()
         sessionStorage.clear()
       })
-      
+
       // Clear cookies
       const context = page.context()
       await context.clearCookies()
-    } catch (error) {
+    }
+    catch (error) {
       console.log('Cleanup browser data failed:', error)
     }
   }
@@ -88,13 +91,14 @@ export class TestCleanup {
 
     try {
       // Use dynamic import for Node.js modules in ES context
-      const { execSync } = await import('child_process')
-      
+      const { execSync } = await import('node:child_process')
+
       // Clean up users by email
       for (const email of this.createdEmails) {
         try {
           execSync(`psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -c "DELETE FROM auth.users WHERE email = '${email}'"`, { stdio: 'ignore' })
-        } catch (error) {
+        }
+        catch (error) {
           console.log(`Failed to cleanup user ${email}:`, error)
         }
       }
@@ -103,7 +107,8 @@ export class TestCleanup {
       for (const teamName of this.createdTeams) {
         try {
           execSync(`psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -c "DELETE FROM teams WHERE name = '${teamName}'"`, { stdio: 'ignore' })
-        } catch (error) {
+        }
+        catch (error) {
           console.log(`Failed to cleanup team ${teamName}:`, error)
         }
       }
@@ -111,9 +116,10 @@ export class TestCleanup {
       // Reset tracking arrays
       this.createdEmails = []
       this.createdTeams = []
-      
+
       console.log('Test data cleanup completed')
-    } catch (error) {
+    }
+    catch (error) {
       console.log('Test data cleanup failed:', error)
     }
   }
@@ -122,6 +128,7 @@ export class TestCleanup {
 /**
  * Generate unique test data to avoid conflicts
  */
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class TestData {
   private static testRunId = Date.now()
 
@@ -158,6 +165,7 @@ export class TestData {
 /**
  * Common test actions
  */
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class TestActions {
   /**
    * Login with existing test user

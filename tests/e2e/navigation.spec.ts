@@ -10,7 +10,7 @@ test.describe('Navigation & Auth State', () => {
     test('unauthenticated users redirected from dashboard', async ({ page }) => {
       // Try to access dashboard without authentication
       await page.goto('/dashboard')
-      
+
       // Should be redirected to signin page
       await page.waitForURL('/signin', { timeout: 10000 })
       await expect(page.locator('h2')).toContainText('Sign in to your account')
@@ -19,7 +19,7 @@ test.describe('Navigation & Auth State', () => {
     test('authenticated users can access dashboard', async ({ page }) => {
       // Login first
       await TestActions.login(page)
-      
+
       // Should be able to access dashboard
       await expect(page.locator('h1')).toContainText('Welcome to Dashboard')
     })
@@ -28,7 +28,7 @@ test.describe('Navigation & Auth State', () => {
   test.describe('Public routes', () => {
     test('home page accessible without auth', async ({ page }) => {
       await page.goto('/')
-      
+
       // Should see public content
       await expect(page.locator('header')).toContainText('Team Auth Test')
       await expect(page.locator('header')).toContainText('Sign In')
@@ -39,7 +39,7 @@ test.describe('Navigation & Auth State', () => {
       // Should be able to access signin
       await page.goto('/signin')
       await expect(page.locator('h2')).toContainText('Sign in to your account')
-      
+
       // Should be able to access signup
       await page.goto('/signup')
       await expect(page.locator('h2')).toContainText('Create your account')
@@ -85,7 +85,7 @@ test.describe('Navigation & Auth State', () => {
       // Logout
       await page.click('header button:has-text("Alpha Owner")')
       await page.click('text=Sign Out')
-      
+
       // Should update auth state globally
       await expect(page.locator('header')).toContainText('Sign In')
       await expect(page.locator('header')).toContainText('Sign Up')
@@ -122,19 +122,19 @@ test.describe('Navigation & Auth State', () => {
       // Skip - test project doesn't have mobile navigation implemented
       // Set mobile viewport
       await page.setViewportSize({ width: 375, height: 667 })
-      
+
       await page.goto('/')
-      
+
       // Mobile menu button should be visible (look for menu icon in mobile area)
       await expect(page.locator('[class*="i-lucide-menu"]')).toBeVisible()
-      
+
       // Click mobile menu button
       await page.locator('[class*="i-lucide-menu"]').click()
-      
+
       // Mobile navigation should appear
       await expect(page.locator('text=Home')).toBeVisible()
       await expect(page.locator('text=Dashboard')).toBeVisible()
-      
+
       // Mobile navigation should work
       await page.click('text=Dashboard')
       // Should redirect to signin since not authenticated

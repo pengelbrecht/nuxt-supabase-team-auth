@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { TestCleanup, TestData } from './helpers/cleanup'
+import { TestCleanup } from './helpers/cleanup'
 
 test.describe('Team Signup', () => {
   // Clean up after each test
@@ -29,10 +29,10 @@ test.describe('Team Signup', () => {
   test('can navigate to signup from signin', async ({ page }) => {
     // Start at signin page
     await page.goto('/signin')
-    
+
     // Look for signup link
     await page.click('text=Sign Up')
-    
+
     // Should be on signup page
     await page.waitForURL('/signup')
     await expect(page.locator('h2').first()).toContainText('Create your account')
@@ -43,10 +43,10 @@ test.describe('Team Signup', () => {
 
     // Wait for form to load
     await page.waitForSelector('input[type="email"]', { timeout: 10000 })
-    
+
     // Try to submit without filling anything - form should prevent submission
     await page.click('button[type="submit"]')
-    
+
     // Should stay on signup page (form validation prevents submission)
     await expect(page).toHaveURL(/.*signup.*/)
   })

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { TestCleanup, TestActions } from './helpers/cleanup'
+import { TestCleanup } from './helpers/cleanup'
 
 test.describe('Environment Variables', () => {
   // Clean up after each test
@@ -45,15 +45,15 @@ test.describe('Environment Variables', () => {
 
       // Try to open team management (tests server API calls)
       await page.click('button:has-text("Manage Team")')
-      
+
       // Should load team members dialog without errors
       await expect(page.locator('[role="dialog"]')).toBeVisible()
       await expect(page.locator('[role="dialog"] h2:has-text("Team Members")')).toBeVisible()
-      
+
       // Should show team members (from server API)
       await expect(page.locator('[role="dialog"]').locator('text=Alpha Owner')).toBeVisible()
       await expect(page.locator('[role="dialog"]').locator('text=Alpha Admin')).toBeVisible()
-      
+
       // Close dialog
       await page.keyboard.press('Escape')
     })
@@ -63,7 +63,7 @@ test.describe('Environment Variables', () => {
     test('shows helpful error messages', async ({ page }) => {
       // Navigate to a page that would trigger server-side operations
       await page.goto('/signin')
-      
+
       // Test login flow - any server errors should be handled gracefully
       await page.waitForSelector('input[type="email"]', { timeout: 10000 })
       await page.fill('input[type="email"]', 'nonexistent@test.com')
@@ -72,7 +72,7 @@ test.describe('Environment Variables', () => {
 
       // Should show user-friendly error, not expose env var issues
       await expect(page.locator('.bg-default:has-text("Sign In Failed")')).toBeVisible()
-      
+
       // Should not show raw error messages about missing env vars
       await expect(page.locator('text=SUPABASE_SERVICE_ROLE_KEY')).not.toBeVisible()
       await expect(page.locator('text=Missing Supabase')).not.toBeVisible()
@@ -81,14 +81,14 @@ test.describe('Environment Variables', () => {
     test('navigation works even with potential server issues', async ({ page }) => {
       // Test that client-side navigation works regardless of server state
       await page.goto('/')
-      
+
       // Should be able to navigate to auth pages
       await page.click('text=Sign In')
       await expect(page).toHaveURL(/.*signin.*/)
-      
+
       await page.click('text=Sign Up')
       await expect(page).toHaveURL(/.*signup.*/)
-      
+
       // Should show forms even if there are server connectivity issues
       await expect(page.locator('input[type="email"]')).toBeVisible()
       await expect(page.locator('input[name="password"]')).toBeVisible()
@@ -98,18 +98,18 @@ test.describe('Environment Variables', () => {
   test.describe('Performance with minimal setup', () => {
     test('pages load quickly with minimal env vars', async ({ page }) => {
       const startTime = Date.now()
-      
+
       // Test that pages load reasonably fast
       await page.goto('/')
       const homeLoadTime = Date.now() - startTime
       expect(homeLoadTime).toBeLessThan(6000) // Should load in under 6 seconds
-      
+
       const signInStartTime = Date.now()
       await page.goto('/signin')
       await page.waitForSelector('input[type="email"]')
       const signInLoadTime = Date.now() - signInStartTime
       expect(signInLoadTime).toBeLessThan(3000) // Should load in under 3 seconds
-      
+
       const dashboardStartTime = Date.now()
       // Quick login to test dashboard load time
       await page.fill('input[type="email"]', 'owner@a.test')

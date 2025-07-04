@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { TestCleanup, TestActions } from './helpers/cleanup'
+import { TestCleanup } from './helpers/cleanup'
 
 test.describe('Authentication', () => {
   // Clean up after each test
@@ -32,7 +32,7 @@ test.describe('Authentication', () => {
 
     // Verify we're logged in by checking for dashboard content
     await expect(page.locator('h1')).toContainText('Welcome to Dashboard')
-    
+
     // Check that UserButton is visible in header (when signed in)
     await expect(page.locator('header')).toContainText('Alpha Owner')
 
@@ -51,7 +51,7 @@ test.describe('Authentication', () => {
     // Try to login with invalid credentials
     await page.fill('input[type="email"]', 'invalid@test.com')
     await page.fill('input[type="password"]', 'wrongpassword')
-    
+
     // Submit the form
     await page.click('button[type="submit"]')
 
@@ -77,7 +77,7 @@ test.describe('Authentication', () => {
 
     // Should redirect to home page and show signed out state
     await page.waitForURL('/', { timeout: 10000 })
-    
+
     // Should see "Sign In" and "Sign Up" buttons in header (signed out state)
     await expect(page.locator('header')).toContainText('Sign In')
     await expect(page.locator('header')).toContainText('Sign Up')

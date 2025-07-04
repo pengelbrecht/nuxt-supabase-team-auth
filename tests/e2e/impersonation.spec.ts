@@ -17,17 +17,17 @@ test.describe('Impersonation', () => {
 
     // Click the UserButton in header to open dropdown menu
     await page.click('header button:has-text("Super Admin")')
-    
+
     // Look for "Start impersonation" menu item in the dropdown
     await expect(page.locator('text=Start impersonation')).toBeVisible()
     await page.click('text=Start impersonation')
 
     // Should open impersonation dialog
     await expect(page.locator('[role="dialog"]')).toBeVisible()
-    
+
     // Enter a reason for impersonation (required field)
     await page.fill('input[name="reason"]', 'Testing impersonation functionality')
-    
+
     // Click impersonate button for Alpha Owner
     const userRow = page.locator('li').filter({ hasText: 'owner@a.test' })
     await userRow.locator('button', { hasText: 'Impersonate' }).click()
@@ -43,7 +43,7 @@ test.describe('Impersonation', () => {
 
     // Verify the impersonation banner shows correct information
     await expect(page.locator('text=You are impersonating Alpha Owner')).toBeVisible()
-    
+
     // Verify time remaining is shown
     await expect(page.locator('text=remaining')).toBeVisible()
 
@@ -55,10 +55,10 @@ test.describe('Impersonation', () => {
 
     // Verify we're back to the original super admin user
     await expect(page.locator('header')).toContainText('Super Admin')
-    
+
     // Verify we're still on the dashboard page and not redirected
     await expect(page.locator('h1')).toContainText('Welcome to Dashboard')
-    
+
     // Verify super admin still has access to impersonation features
     await page.click('header button:has-text("Super Admin")')
     await expect(page.locator('text=Start impersonation')).toBeVisible()
