@@ -129,17 +129,11 @@ const teamName = ref('')
 const teamId = ref('')
 const userEmail = ref('')
 const inviteRole = ref('member')
+const currentSessionRef = ref(null as any)
 
 // Process the confirmation on mount
 onMounted(async () => {
   try {
-    // Debug: Log all URL information
-    console.log('=== CONFIRMATION DEBUG ===')
-    console.log('Full URL:', window.location.href)
-    console.log('Query params:', route.query)
-    console.log('Hash:', window.location.hash)
-    console.log('========================')
-
     // Get URL parameters
     const { token_hash, type, error, error_description } = route.query
 
@@ -154,8 +148,6 @@ onMounted(async () => {
       const accessToken = hashParams.get('access_token')
       const confirmType = hashParams.get('type')
 
-      console.log('Hash params found:', { accessToken: !!accessToken, confirmType })
-
       if (accessToken && confirmType === 'invite') {
         // This is an invitation confirmation
         await handleInviteConfirmation()
@@ -168,7 +160,6 @@ onMounted(async () => {
       }
       else if (accessToken) {
         // Generic confirmation with access token - likely an invite
-        console.log('Generic access token confirmation, treating as invite')
         await handleInviteConfirmation()
         return
       }
@@ -177,15 +168,12 @@ onMounted(async () => {
     // Handle PKCE code confirmations (modern format)
     const { code } = route.query
     if (code) {
-      console.log('PKCE code confirmation - waiting for @nuxtjs/supabase to process:', { code })
-
       // Wait for @nuxtjs/supabase to automatically process the PKCE code
       let attempts = 0
       const maxAttempts = 20
       const delayMs = 250
 
       while (!session.value && attempts < maxAttempts) {
-        console.log(`Waiting for PKCE session... (attempt ${attempts + 1}/${maxAttempts})`)
         await new Promise(resolve => setTimeout(resolve, delayMs))
         attempts++
       }
@@ -194,8 +182,6 @@ onMounted(async () => {
         throw new Error('Failed to establish session from password reset code')
       }
 
-      console.log('Session established from PKCE code:', session.value.user?.email)
-
       // This is a password reset confirmation
       await handlePasswordReset()
       return
@@ -203,8 +189,6 @@ onMounted(async () => {
 
     // Handle token_hash confirmations (legacy format)
     if (token_hash) {
-      console.log('Token hash confirmation:', { type })
-
       if (type === 'recovery') {
         await handlePasswordReset()
       }
@@ -216,7 +200,6 @@ onMounted(async () => {
       }
     }
     else {
-      console.log('No valid confirmation parameters found')
       throw new Error('Invalid confirmation link')
     }
   }
@@ -232,118 +215,103 @@ const handleInviteConfirmation = async () => {
   try {
     confirmationType.value = 'invite'
 
-    console.log('Starting invitation confirmation...')
+    // Manual token extraction from URL hash
+    if (window.location.hash) {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
 
-    // @nuxtjs/supabase's useSupabaseSession() is just reactive state - it doesn't establish sessions
-    // We need to manually process the hash tokens and set the session
-    console.log('Processing hash tokens manually...')
+      if (accessToken && refreshToken) {
+        try {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          })
 
-    // Extract tokens from hash
-    const hashParams = new URLSearchParams(window.location.hash.substring(1))
-    const accessToken = hashParams.get('access_token')
-    const refreshToken = hashParams.get('refresh_token')
+          if (error) {
+            throw error
+          }
 
-    console.log('Hash tokens:', {
-      hasAccessToken: !!accessToken,
-      hasRefreshToken: !!refreshToken,
-    })
+          if (data.session?.user) {
+            // Continue with the established session
+            const currentSession = data.session
 
-    let currentSession = null
+            // Store session for later use
+            currentSessionRef.value = currentSession
 
-    if (accessToken && refreshToken) {
-      console.log('Setting session with hash tokens...')
+            // Extract user metadata and query params for team info
+            const metadata = currentSession.user.user_metadata
+            userEmail.value = currentSession.user.email || ''
+            teamId.value = route.query.team_id as string || metadata?.team_id || ''
+            teamName.value = metadata?.team_name || ''
+            inviteRole.value = metadata?.role || 'member'
 
-      // Use setSession to establish the session with the tokens from the hash
-      const { data, error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      })
+            if (!teamId.value) {
+              throw new Error('Invalid invitation: missing team information')
+            }
 
-      if (error) {
-        console.error('setSession error:', error)
-        throw new Error(`Failed to establish session: ${error.message}`)
+            // Get team name from database if not in metadata
+            if (!teamName.value) {
+              const { data: team } = await supabase
+                .from('teams')
+                .select('name')
+                .eq('id', teamId.value)
+                .single()
+
+              if (team) {
+                teamName.value = team.name
+              }
+            }
+
+            // Check if user is already a member of this team
+            const { data: membership } = await supabase
+              .from('team_members')
+              .select('id')
+              .eq('user_id', currentSession.user.id)
+              .eq('team_id', teamId.value)
+              .single()
+
+            if (membership) {
+              // Already a member, redirect to dashboard
+              status.value = 'success'
+              setTimeout(() => router.push('/dashboard'), 1000)
+              return
+            }
+
+            // Check if user has a strong password set (not auto-generated)
+            // We'll require password setup for security
+            const userCreatedAt = new Date(currentSession.user.created_at)
+            const userConfirmedAt = new Date(currentSession.user.email_confirmed_at || currentSession.user.created_at)
+            const timeDifference = Math.abs(userConfirmedAt.getTime() - userCreatedAt.getTime())
+
+            // If user was just created via invitation (less than 5 minutes between creation and confirmation)
+            // require password setup
+            if (timeDifference < 5 * 60 * 1000) {
+              status.value = 'password-setup'
+            }
+            else {
+              // Existing user confirming invitation - just add to team
+              await handlePasswordSetupSuccess()
+            }
+            return
+          }
+          else {
+            throw new Error('No session returned from setSession')
+          }
+        }
+        catch {
+          throw new Error('Failed to process invitation link. The link may have expired or already been used.')
+        }
       }
-
-      currentSession = data.session
-      console.log('Session established via setSession:', currentSession?.user?.email)
+      else {
+        throw new Error('Missing access_token or refresh_token in URL')
+      }
     }
     else {
-      // Fallback: check if session already exists
-      const { data: { session: existingSession }, error: sessionError } = await supabase.auth.getSession()
-
-      if (sessionError) {
-        console.error('getSession error:', sessionError)
-        throw new Error(`Session error: ${sessionError.message}`)
-      }
-
-      currentSession = existingSession
-      console.log('Using existing session:', currentSession?.user?.email)
-    }
-
-    if (!currentSession) {
-      throw new Error('Unable to establish session. The invitation link may have expired or already been used.')
-    }
-
-    console.log('Session established for user:', currentSession.user?.email)
-
-    // Extract user metadata and query params for team info
-    const metadata = currentSession.user.user_metadata
-    userEmail.value = currentSession.user.email || ''
-    teamId.value = route.query.team_id as string || metadata?.team_id || ''
-    teamName.value = metadata?.team_name || ''
-    inviteRole.value = metadata?.role || 'member'
-
-    if (!teamId.value) {
-      throw new Error('Invalid invitation: missing team information')
-    }
-
-    // Get team name from database if not in metadata
-    if (!teamName.value) {
-      const { data: team } = await supabase
-        .from('teams')
-        .select('name')
-        .eq('id', teamId.value)
-        .single()
-
-      if (team) {
-        teamName.value = team.name
-      }
-    }
-
-    // Check if user is already a member of this team
-    const { data: membership } = await supabase
-      .from('team_members')
-      .select('id')
-      .eq('user_id', currentSession.user.id)
-      .eq('team_id', teamId.value)
-      .single()
-
-    if (membership) {
-      // Already a member, redirect to dashboard
-      status.value = 'success'
-      setTimeout(() => router.push('/dashboard'), 1000)
-      return
-    }
-
-    // Check if user has a strong password set (not auto-generated)
-    // We'll require password setup for security
-    const userCreatedAt = new Date(currentSession.user.created_at)
-    const userConfirmedAt = new Date(currentSession.user.email_confirmed_at || currentSession.user.created_at)
-    const timeDifference = Math.abs(userConfirmedAt.getTime() - userCreatedAt.getTime())
-
-    // If user was just created via invitation (less than 5 minutes between creation and confirmation)
-    // require password setup
-    if (timeDifference < 5 * 60 * 1000) {
-      console.log('New invited user - requiring password setup')
-      status.value = 'password-setup'
-    }
-    else {
-      // Existing user confirming invitation - just add to team
-      await handlePasswordSetupSuccess()
+      throw new Error('No hash fragment found in URL')
     }
   }
   catch (error: any) {
-    console.error('Invite confirmation error:', error)
     status.value = 'error'
     errorMessage.value = error.message || 'Failed to process invitation'
   }
@@ -360,7 +328,6 @@ const handlePasswordReset = async () => {
     const delayMs = 250
 
     while (!session.value && attempts < maxAttempts) {
-      console.log(`Waiting for recovery session... (attempt ${attempts + 1}/${maxAttempts})`)
       await new Promise(resolve => setTimeout(resolve, delayMs))
       attempts++
     }
@@ -382,8 +349,9 @@ const handlePasswordReset = async () => {
 // Handle successful password setup for invitations
 const handlePasswordSetupSuccess = async () => {
   try {
-    // Add user to the team
-    if (!session.value) {
+    // Add user to the team - use stored session first, fallback to composable
+    const activeSession = currentSessionRef.value || session.value
+    if (!activeSession) {
       throw new Error('No valid session found')
     }
 
@@ -391,7 +359,7 @@ const handlePasswordSetupSuccess = async () => {
     const response = await $fetch('/api/accept-invite', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${session.value.access_token}`,
+        Authorization: `Bearer ${activeSession.access_token}`,
       },
       body: {
         team_id: teamId.value,

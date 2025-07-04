@@ -96,6 +96,7 @@
 import { ref, reactive } from 'vue'
 import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { $fetch } from 'ofetch'
 import { useSupabaseClient } from '../composables/useSupabaseComposables'
 
 interface ResetPasswordForm {
@@ -145,13 +146,29 @@ const handlePasswordReset = async (event: FormSubmitEvent<any>) => {
     isLoading.value = true
     message.value = ''
 
-    // Update user's password
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: event.data.password,
-    })
+    // Get current session
+    const { data: { session: currentSession } } = await supabase.auth.getSession()
 
-    if (updateError) {
-      throw new Error(updateError.message)
+    if (!currentSession) {
+      throw new Error('No valid session found for password update')
+    }
+
+    // Update user's password using direct API approach (same as PasswordSetupForm)
+    try {
+      await $fetch(`${supabase.supabaseUrl}/auth/v1/user`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${currentSession.access_token}`,
+          'Content-Type': 'application/json',
+          'apikey': supabase.supabaseKey,
+        },
+        body: {
+          password: event.data.password,
+        },
+      })
+    }
+    catch (apiError) {
+      throw new Error(`Failed to reset password: ${apiError.message || 'Unknown error'}`)
     }
 
     // Success!

@@ -164,6 +164,13 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       url: supabaseUrl,
       key: supabaseKey,
       redirectOptions,
+      useSsrCookies: false,
+      clientOptions: {
+        auth: {
+          flowType: 'implicit',
+          detectSessionInUrl: true,
+        },
+      },
     })
 
     // Set up runtime config structure that @nuxtjs/supabase expects
@@ -189,6 +196,13 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
         url: supabaseUrl,
         key: supabaseKey,
         redirectOptions,
+        useSsrCookies: false,
+        clientOptions: {
+          auth: {
+            flowType: 'implicit',
+            detectSessionInUrl: true,
+          },
+        },
       })
 
       // Development logging removed - module is stable
@@ -198,6 +212,15 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
     const supabaseModuleOptions: any = {
       url: supabaseUrl,
       key: supabaseKey,
+      // Fix for invitation links: disable SSR cookies to enable implicit flow
+      // This is safe because our server-side auth uses service keys, not SSR cookies
+      useSsrCookies: false,
+      clientOptions: {
+        auth: {
+          flowType: 'implicit', // invite links need implicit flow
+          detectSessionInUrl: true, // parse #access_token automatically
+        },
+      },
     }
 
     // Only add redirectOptions if we're using protected by default mode
@@ -327,6 +350,21 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
         name: 'auth-callback',
         path: '/auth/callback',
         file: resolver.resolve('./runtime/pages/auth/callback.vue'),
+      })
+      pages.push({
+        name: 'auth-confirm',
+        path: '/auth/confirm',
+        file: resolver.resolve('./runtime/pages/auth/confirm.vue'),
+      })
+      pages.push({
+        name: 'auth-forgot-password',
+        path: '/auth/forgot-password',
+        file: resolver.resolve('./runtime/pages/auth/forgot-password.vue'),
+      })
+      pages.push({
+        name: 'accept-invite',
+        path: '/accept-invite',
+        file: resolver.resolve('./runtime/pages/accept-invite.vue'),
       })
     })
 

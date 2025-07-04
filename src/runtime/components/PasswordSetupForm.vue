@@ -277,13 +277,29 @@ const handlePasswordSetup = async (event: FormSubmitEvent<any>) => {
     isLoading.value = true
     message.value = ''
 
-    // Update user's password
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: event.data.password,
-    })
+    // Check if we have a valid session first
+    const { data: { session: currentSession } } = await supabase.auth.getSession()
 
-    if (updateError) {
-      throw new Error(updateError.message)
+    if (!currentSession) {
+      throw new Error('No valid session found for password update')
+    }
+
+    // Update user's password using direct API approach
+    try {
+      await $fetch(`${supabase.supabaseUrl}/auth/v1/user`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${currentSession.access_token}`,
+          'Content-Type': 'application/json',
+          'apikey': supabase.supabaseKey,
+        },
+        body: {
+          password: event.data.password,
+        },
+      })
+    }
+    catch (apiError) {
+      throw new Error(`Failed to set password: ${apiError.message || 'Unknown error'}`)
     }
 
     // Update profile if full name was provided

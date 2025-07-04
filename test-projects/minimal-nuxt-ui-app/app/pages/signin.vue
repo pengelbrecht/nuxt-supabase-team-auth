@@ -10,6 +10,7 @@
         <AuthSignIn
           @success="handleSignIn"
           @error="handleError"
+          @forgot-password="handleForgotPassword"
         />
       </ClientOnly>
     </div>
@@ -34,5 +35,9 @@ const handleError = (error) => {
     description: error,
     color: 'red',
   })
+}
+
+const handleForgotPassword = () => {
+  router.push('/auth/forgot-password')
 }
 </script>
