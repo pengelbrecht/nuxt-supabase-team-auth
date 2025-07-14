@@ -132,7 +132,7 @@ teamAuth: {
 **Important Notes:**
 - The module automatically installs and configures `@nuxtjs/supabase` using the `installModule()` pattern
 - Route protection is configured in `teamAuth.defaultProtection` - no need to configure `@nuxtjs/supabase` separately
-- Environment variables are automatically detected using `NUXT_PUBLIC_SUPABASE_*` prefix pattern
+- Environment variables are automatically detected from your `.env` file
 
 ### 3. Add Required App Structure
 
@@ -149,21 +149,21 @@ Ensure your `app.vue` has the `<UApp>` wrapper (should already exist in Nuxt UI 
 
 ### 4. Environment Variables
 
-Set up your Supabase environment variables using the `NUXT_PUBLIC_` prefix pattern:
+Set up your Supabase environment variables:
 
 ```bash
 # .env
-NUXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321     # Your Supabase URL
-NUXT_PUBLIC_SUPABASE_KEY=your-anon-key              # Your Supabase anon key  
-SUPABASE_SERVICE_KEY=your-service-key               # For server operations
+SUPABASE_URL=http://127.0.0.1:54321          # Your Supabase URL
+SUPABASE_ANON_KEY=your-anon-key             # Your Supabase anon key  
+SUPABASE_SERVICE_KEY=your-service-key        # For server operations
 ```
 
-**Environment Variable Patterns:**
-- `NUXT_PUBLIC_SUPABASE_URL` - Client-side Supabase project URL
-- `NUXT_PUBLIC_SUPABASE_KEY` - Client-side Supabase anon key
-- `SUPABASE_SERVICE_KEY` - Server-side service role key (not prefixed)
+**Environment Variables:**
+- `SUPABASE_URL` - Supabase project URL (used by both client and server)
+- `SUPABASE_ANON_KEY` - Supabase anon key (used by both client and server)
+- `SUPABASE_SERVICE_KEY` - Server-side service role key
 
-The `NUXT_PUBLIC_` prefix allows Nuxt to automatically inject these into runtime config.
+The module automatically reads these variables and configures them for both client and server usage.
 
 ### 5. Create Your Pages
 
@@ -1013,16 +1013,12 @@ teamAuth: {
 }
 ```
 
-3. **Update environment variables:**
+3. **Environment variables remain the same:**
 ```bash
-# BEFORE: Direct Supabase env vars
+# The module reads these standard env vars:
 SUPABASE_URL=...
 SUPABASE_ANON_KEY=...
-
-# AFTER: Use NUXT_PUBLIC_ prefix for automatic injection
-NUXT_PUBLIC_SUPABASE_URL=...
-NUXT_PUBLIC_SUPABASE_KEY=...
-SUPABASE_SERVICE_KEY=...  # Server-side only (no prefix)
+SUPABASE_SERVICE_KEY=...
 ```
 
 4. **Add error handling to auth pages:**
@@ -1050,7 +1046,7 @@ const handleError = (error) => {
 - **Simplified Configuration** - Single `teamAuth` config block, no separate Supabase setup
 - **Automatic Dependency Management** - Uses `installModule()` pattern for proper integration
 - **Flexible Route Protection** - Choose between public-by-default or protected-by-default modes
-- **Better Environment Variables** - Automatic `NUXT_PUBLIC_` prefix detection
+- **Standard Environment Variables** - Uses standard Supabase env var names
 - **Improved Error Handling** - Components emit errors for proper user feedback
 
 ## Development

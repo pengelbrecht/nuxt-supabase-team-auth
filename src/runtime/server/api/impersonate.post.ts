@@ -1,24 +1,55 @@
-import { defineEventHandler, readBody, createError, setCookie } from 'h3'
+import { defineEventHandler, readBody, createError, setCookie, getHeader } from 'h3'
 import jwt from 'jsonwebtoken'
-import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
+import { serverSupabaseServiceRole } from '#supabase/server'
 
 // Create aliases for consistency
 const createServiceRoleClient = serverSupabaseServiceRole
-const getCurrentUser = serverSupabaseUser
 
 export default defineEventHandler(async (event) => {
   try {
-    // Get the current user session
-    const user = await getCurrentUser(event)
-    if (!user) {
+    console.log('=== IMPERSONATE API DEBUG ===')
+    
+    // Get the authorization header
+    const authHeader = getHeader(event, 'authorization')
+    console.log('Auth header present:', !!authHeader)
+    console.log('Auth header value:', authHeader ? authHeader.substring(0, 20) + '...' : 'null')
+    
+    if (!authHeader) {
+      console.log('ERROR: Missing authorization header')
       throw createError({
         statusCode: 401,
-        message: 'Not authenticated',
+        message: 'Missing authorization header',
+      })
+    }
+
+    // Extract the token from the Bearer header
+    const token = authHeader.replace('Bearer ', '')
+    console.log('Token extracted:', token ? token.substring(0, 20) + '...' : 'null')
+    
+    if (!token) {
+      console.log('ERROR: Invalid authorization header format')
+      throw createError({
+        statusCode: 401,
+        message: 'Invalid authorization header format',
       })
     }
 
     // Get service role client for admin operations
     const adminClient = createServiceRoleClient(event)
+
+    // Get user from the token
+    console.log('Attempting to get user from token...')
+    const { data: { user }, error: userError } = await adminClient.auth.getUser(token)
+    console.log('User result:', user ? `User ID: ${user.id}` : 'No user')
+    console.log('User error:', userError)
+    
+    if (userError || !user) {
+      console.log('ERROR: Invalid or expired token')
+      throw createError({
+        statusCode: 401,
+        message: 'Invalid or expired token',
+      })
+    }
 
     // Verify user is a super admin
     const { data: memberData, error: memberError } = await adminClient

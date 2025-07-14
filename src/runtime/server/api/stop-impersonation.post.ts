@@ -1,19 +1,39 @@
-import { defineEventHandler, readBody, createError, getCookie, deleteCookie } from 'h3'
+import { defineEventHandler, readBody, createError, getCookie, deleteCookie, getHeader } from 'h3'
 import jwt from 'jsonwebtoken'
-import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
+import { serverSupabaseServiceRole } from '#supabase/server'
 
 // Create aliases for consistency
 const createServiceRoleClient = serverSupabaseServiceRole
-const getCurrentUser = serverSupabaseUser
 
 export default defineEventHandler(async (event) => {
   try {
-    // Get the current user session (should be the impersonated user)
-    const user = await getCurrentUser(event)
-    if (!user) {
+    // Get the authorization header
+    const authHeader = getHeader(event, 'authorization')
+    if (!authHeader) {
       throw createError({
         statusCode: 401,
-        message: 'Not authenticated',
+        message: 'Missing authorization header',
+      })
+    }
+
+    // Extract the token from the Bearer header
+    const token = authHeader.replace('Bearer ', '')
+    if (!token) {
+      throw createError({
+        statusCode: 401,
+        message: 'Invalid authorization header format',
+      })
+    }
+
+    // Get service role client for admin operations
+    const adminClient = createServiceRoleClient(event)
+
+    // Get user from the token (should be the impersonated user)
+    const { data: { user }, error: userError } = await adminClient.auth.getUser(token)
+    if (userError || !user) {
+      throw createError({
+        statusCode: 401,
+        message: 'Invalid or expired token',
       })
     }
 
@@ -26,9 +46,6 @@ export default defineEventHandler(async (event) => {
         message: 'Session ID is required',
       })
     }
-
-    // Get service role client
-    const adminClient = createServiceRoleClient(event)
 
     // Verify the impersonation session exists and is active
     const { data: sessionData, error: sessionError } = await adminClient
