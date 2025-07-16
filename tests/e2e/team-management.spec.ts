@@ -172,7 +172,6 @@ test.describe('Team Management', () => {
     await expect(sendButton).toBeEnabled({ timeout: 5000 })
     console.log('✅ Send Invitation button is enabled')
 
-
     // Click the Send Invitation button
     console.log('🚀 Clicking Send Invitation button...')
     try {
@@ -304,18 +303,18 @@ test.describe('Team Management', () => {
         console.log('🔍 Checking for password setup form...')
         const passwordField = page1.getByLabel('Password', { exact: true })
         const confirmPasswordField = page1.getByLabel('Confirm Password', { exact: true })
-        
+
         // Wait for password fields to be visible
         await expect(passwordField).toBeVisible({ timeout: 10000 })
         console.log('✅ Password fields detected')
-        
+
         console.log('🔐 Password setup form detected, filling form...')
-        
+
         // Fill password field using the label
         await passwordField.fill('Test123!')
         console.log('✅ Password field filled')
-        
-        // Fill confirm password field using the label  
+
+        // Fill confirm password field using the label
         await confirmPasswordField.fill('Test123!')
         console.log('✅ Confirm password field filled')
 
@@ -353,7 +352,7 @@ test.describe('Team Management', () => {
         // First, we need to log out the invited user from the main page
         console.log('🚪 Logging out the invited user...')
         await page.goto('http://localhost:3000/dashboard')
-        
+
         // Log out the invited user
         try {
           const userButton = page.getByRole('button', { name: /User menu for/ })
@@ -384,7 +383,6 @@ test.describe('Team Management', () => {
         await page.click('button:has-text("Manage Team")')
         await expect(page.locator('[role="dialog"]')).toBeVisible()
         await page.waitForTimeout(2000)
-
 
         // Check if invitation is no longer pending
         const pendingCount = await page.locator(`text=${testEmail}`).count()

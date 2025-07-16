@@ -164,7 +164,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       url: supabaseUrl,
       key: supabaseKey,
       redirectOptions,
-      useSsrCookies: false,
+      useSsrCookies: true,
       clientOptions: {
         auth: {
           flowType: 'implicit',
@@ -196,7 +196,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
         url: supabaseUrl,
         key: supabaseKey,
         redirectOptions,
-        useSsrCookies: false,
+        useSsrCookies: true,
         clientOptions: {
           auth: {
             flowType: 'implicit',
@@ -212,12 +212,18 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
     const supabaseModuleOptions: any = {
       url: supabaseUrl,
       key: supabaseKey,
-      // Fix for invitation links: disable SSR cookies to enable implicit flow
-      // This is safe because our server-side auth uses service keys, not SSR cookies
-      useSsrCookies: false,
+      // Hybrid approach: implicit flow for invitations + SSR cookies for persistence
+      // This solves page reload issues while maintaining invitation functionality
+      //
+      // Key benefits:
+      // - Page reload maintains authentication (no redirect to login)
+      // - Server-side rendering has access to user sessions
+      // - Invitation system continues to work with inviteUserByEmail
+      // - All existing functionality preserved
+      useSsrCookies: true,
       clientOptions: {
         auth: {
-          flowType: 'implicit', // invite links need implicit flow
+          flowType: 'implicit', // Required for inviteUserByEmail compatibility
           detectSessionInUrl: true, // parse #access_token automatically
         },
       },
@@ -318,6 +324,11 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
     nuxt.options.css = nuxt.options.css || []
     nuxt.options.css.push(resolver.resolve('./runtime/assets/css/components.css'))
 
+    // Force auth/confirm page to be client-side only to fix SSR cookie + implicit flow conflict
+    nuxt.options.nitro = nuxt.options.nitro || {}
+    nuxt.options.nitro.routeRules = nuxt.options.nitro.routeRules || {}
+    nuxt.options.nitro.routeRules['/auth/confirm'] = { ssr: false }
+
     // Add server API routes
     nuxt.hook('nitro:config', (nitroConfig) => {
       nitroConfig.handlers = nitroConfig.handlers || []
@@ -329,6 +340,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
         'get-pending-invitations',
         'impersonate',
         'invite-member',
+        'process-invitation',
         'revoke-invitation',
         'signup-with-team',
         'stop-impersonation',
@@ -341,6 +353,13 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
           method: 'post',
           handler: resolver.resolve(`./runtime/server/api/${endpoint}.post`),
         })
+      })
+
+      // Add auth endpoints with nested paths
+      nitroConfig.handlers.push({
+        route: '/api/auth/sync-session',
+        method: 'post',
+        handler: resolver.resolve('./runtime/server/api/auth/sync-session.post'),
       })
     })
 

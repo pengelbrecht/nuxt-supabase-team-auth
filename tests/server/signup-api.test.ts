@@ -87,7 +87,7 @@ describe('signup-with-team API endpoint - Logic Tests', () => {
       const errorMessage = typeof format.error === 'string'
         ? format.error
         : format.error.message
-      
+
       expect(errorMessage).toBeTruthy()
     })
   })

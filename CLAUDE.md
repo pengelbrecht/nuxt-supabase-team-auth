@@ -54,6 +54,7 @@
 - `pnpm run dev` - start dev server
 - **Use `psql` not supabase cli for terminal/bash sql commands**
 - **Don't use `db push` to run local migrations as a remote might be linked and have them applied unintentionally. Instead use `supabase db reset`**
+- **Always use Supabase CLI not npx supabase**
 
 ## Release Process (CRITICAL)
 - **NEVER release/publish before testing locally in the test project**

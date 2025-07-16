@@ -35,6 +35,7 @@
           v-else-if="status === 'password-setup' && confirmationType === 'invite'"
           :email="userEmail"
           :team-name="teamName"
+          :session-data="sessionTokens"
           @success="handlePasswordSetupSuccess"
           @error="handlePasswordSetupError"
         />
@@ -130,11 +131,15 @@ const teamId = ref('')
 const userEmail = ref('')
 const inviteRole = ref('member')
 const currentSessionRef = ref(null as any)
+const sessionTokens = ref<{ access_token: string, refresh_token: string } | undefined>()
 
 // Process the confirmation on mount
 onMounted(async () => {
   try {
-    // Get URL parameters
+    // Check if session already exists
+    await supabase.auth.getSession()
+
+    // Get URL parameters for non-hash confirmations
     const { token_hash, type, error, error_description } = route.query
 
     // Check for errors first
@@ -142,25 +147,110 @@ onMounted(async () => {
       throw new Error(error_description as string || error as string || 'Confirmation failed')
     }
 
-    // Handle hash-based URLs (modern Supabase format)
-    if (window.location.hash) {
+    // Handle hash-based invitations with streamlined approach
+    if (window.location.hash && window.location.hash.includes('access_token')) {
+      // Step 1: Parse tokens from URL hash
       const hashParams = new URLSearchParams(window.location.hash.substring(1))
       const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
       const confirmType = hashParams.get('type')
 
-      if (accessToken && confirmType === 'invite') {
-        // This is an invitation confirmation
-        await handleInviteConfirmation()
-        return
+      if (!accessToken || !refreshToken) {
+        throw new Error('Missing access_token or refresh_token in invitation link')
       }
-      else if (accessToken && confirmType === 'recovery') {
-        // This is a password reset confirmation
-        await handlePasswordReset()
-        return
+
+      try {
+        // Step 2: Store tokens for components (no client setSession needed)
+        sessionTokens.value = {
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        }
+
+        // Step 3: Call sync-session API to set server-side cookies
+        await $fetch('/api/auth/sync-session', {
+          method: 'POST',
+          body: {
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+          },
+        })
+
+        // Step 3.5: Refresh client session to pick up server-side cookies
+        await supabase.auth.getSession()
+
+        // Wait a moment for the session to propagate
+        await new Promise(resolve => setTimeout(resolve, 100))
+
+        // Step 4: Extract user info from JWT token for invitation processing
+        let userInfo
+        try {
+          const tokenPayload = JSON.parse(atob(accessToken.split('.')[1]))
+          userInfo = {
+            id: tokenPayload.sub,
+            email: tokenPayload.email,
+            user_metadata: tokenPayload.user_metadata || {},
+            created_at: tokenPayload.iat ? new Date(tokenPayload.iat * 1000).toISOString() : new Date().toISOString(),
+            email_confirmed_at: tokenPayload.iat ? new Date(tokenPayload.iat * 1000).toISOString() : new Date().toISOString(),
+          }
+        }
+        catch {
+          throw new Error('Invalid invitation token format')
+        }
+
+        // Step 5: Process invitation metadata from JWT
+        const metadata = userInfo.user_metadata
+        teamId.value = metadata?.team_id || ''
+        teamName.value = metadata?.team_name || ''
+        inviteRole.value = metadata?.role || 'member'
+        userEmail.value = userInfo.email || ''
+
+        if (!teamId.value) {
+          throw new Error('Invalid invitation: missing team information')
+        }
+
+        // Step 6: Create session object for components (no setSession call)
+        const sessionForComponents = {
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          user: userInfo,
+        }
+        currentSessionRef.value = sessionForComponents
+
+        // Step 7: Clear the hash from URL for security
+        window.history.replaceState(null, '', window.location.pathname + window.location.search)
+
+        // Step 8: Determine if password setup is needed
+        const userCreatedAt = new Date(userInfo.created_at)
+        const userConfirmedAt = new Date(userInfo.email_confirmed_at || userInfo.created_at)
+        const timeDifference = Math.abs(userConfirmedAt.getTime() - userCreatedAt.getTime())
+
+        // Step 9: Show appropriate UI based on invitation type
+        if (confirmType === 'invite' || !confirmType) {
+          if (timeDifference < 5 * 60 * 1000) {
+            // New user - needs password setup
+            confirmationType.value = 'invite'
+            status.value = 'password-setup'
+          }
+          else {
+            // Existing user - just add to team
+            await handlePasswordSetupSuccess()
+          }
+        }
+        else if (confirmType === 'recovery') {
+          await handlePasswordReset()
+        }
+        else {
+          throw new Error('Unknown confirmation type: ' + confirmType)
+        }
+
+        return // Success - exit early
       }
-      else if (accessToken) {
-        // Generic confirmation with access token - likely an invite
-        await handleInviteConfirmation()
+      catch (e: any) {
+        console.error('Invitation processing failed:', e)
+
+        // Set error state
+        errorMessage.value = 'Failed to process invitation: ' + e.message
+        status.value = 'error'
         return
       }
     }
@@ -210,108 +300,42 @@ onMounted(async () => {
   }
 })
 
-// Handle invitation confirmation
+// Handle invitation confirmation (simplified - most logic moved to server)
 const handleInviteConfirmation = async () => {
   try {
     confirmationType.value = 'invite'
 
-    // Manual token extraction from URL hash
-    if (window.location.hash) {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1))
-      const accessToken = hashParams.get('access_token')
-      const refreshToken = hashParams.get('refresh_token')
+    // Session and team info are already established by server processing
+    if (!session.value) {
+      throw new Error('No session available after invitation processing')
+    }
 
-      if (accessToken && refreshToken) {
-        try {
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          })
+    const currentSession = session.value
+    currentSessionRef.value = currentSession
 
-          if (error) {
-            throw error
-          }
+    // All team info should already be set by server processing
+    if (!teamId.value) {
+      throw new Error('Invalid invitation: missing team information')
+    }
 
-          if (data.session?.user) {
-            // Continue with the established session
-            const currentSession = data.session
+    // Check if user has a strong password set (not auto-generated)
+    // We'll require password setup for security
+    const userCreatedAt = new Date(currentSession.user.created_at)
+    const userConfirmedAt = new Date(currentSession.user.email_confirmed_at || currentSession.user.created_at)
+    const timeDifference = Math.abs(userConfirmedAt.getTime() - userCreatedAt.getTime())
 
-            // Store session for later use
-            currentSessionRef.value = currentSession
-
-            // Extract user metadata and query params for team info
-            const metadata = currentSession.user.user_metadata
-            userEmail.value = currentSession.user.email || ''
-            teamId.value = route.query.team_id as string || metadata?.team_id || ''
-            teamName.value = metadata?.team_name || ''
-            inviteRole.value = metadata?.role || 'member'
-
-            if (!teamId.value) {
-              throw new Error('Invalid invitation: missing team information')
-            }
-
-            // Get team name from database if not in metadata
-            if (!teamName.value) {
-              const { data: team } = await supabase
-                .from('teams')
-                .select('name')
-                .eq('id', teamId.value)
-                .single()
-
-              if (team) {
-                teamName.value = team.name
-              }
-            }
-
-            // Check if user is already a member of this team
-            const { data: membership } = await supabase
-              .from('team_members')
-              .select('id')
-              .eq('user_id', currentSession.user.id)
-              .eq('team_id', teamId.value)
-              .single()
-
-            if (membership) {
-              // Already a member, redirect to dashboard
-              status.value = 'success'
-              setTimeout(() => router.push('/dashboard'), 1000)
-              return
-            }
-
-            // Check if user has a strong password set (not auto-generated)
-            // We'll require password setup for security
-            const userCreatedAt = new Date(currentSession.user.created_at)
-            const userConfirmedAt = new Date(currentSession.user.email_confirmed_at || currentSession.user.created_at)
-            const timeDifference = Math.abs(userConfirmedAt.getTime() - userCreatedAt.getTime())
-
-            // If user was just created via invitation (less than 5 minutes between creation and confirmation)
-            // require password setup
-            if (timeDifference < 5 * 60 * 1000) {
-              status.value = 'password-setup'
-            }
-            else {
-              // Existing user confirming invitation - just add to team
-              await handlePasswordSetupSuccess()
-            }
-            return
-          }
-          else {
-            throw new Error('No session returned from setSession')
-          }
-        }
-        catch {
-          throw new Error('Failed to process invitation link. The link may have expired or already been used.')
-        }
-      }
-      else {
-        throw new Error('Missing access_token or refresh_token in URL')
-      }
+    // If user was just created via invitation (less than 5 minutes between creation and confirmation)
+    // require password setup
+    if (timeDifference < 5 * 60 * 1000) {
+      status.value = 'password-setup'
     }
     else {
-      throw new Error('No hash fragment found in URL')
+      // Existing user confirming invitation - just add to team
+      await handlePasswordSetupSuccess()
     }
   }
   catch (error: any) {
+    console.error('Invitation confirmation error:', error)
     status.value = 'error'
     errorMessage.value = error.message || 'Failed to process invitation'
   }
@@ -349,10 +373,11 @@ const handlePasswordReset = async () => {
 // Handle successful password setup for invitations
 const handlePasswordSetupSuccess = async () => {
   try {
-    // Add user to the team - use stored session first, fallback to composable
-    const activeSession = currentSessionRef.value || session.value
+    // Use the stored session data instead of session.value
+    const activeSession = currentSessionRef.value
+
     if (!activeSession) {
-      throw new Error('No valid session found')
+      throw new Error('No valid session found for team join')
     }
 
     // Call the accept-invite API to add user to team
@@ -445,7 +470,8 @@ const getErrorTitle = () => {
 
 // Navigation methods
 const goToDashboard = () => {
-  router.push('/dashboard')
+  // Use full page navigation to ensure server-side cookies are properly read
+  window.location.href = '/dashboard'
 }
 
 const goToSignin = () => {

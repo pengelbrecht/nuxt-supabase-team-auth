@@ -1,5 +1,6 @@
 import { defineEventHandler, readBody, createError, getCookie, deleteCookie, getHeader } from 'h3'
 import jwt from 'jsonwebtoken'
+import { createSessionFromMagicLink } from '../utils/magicLinkSession'
 import { serverSupabaseServiceRole } from '#supabase/server'
 
 // Create aliases for consistency
@@ -111,39 +112,17 @@ export default defineEventHandler(async (event) => {
       path: '/',
     })
 
-    // Generate a magic link for the admin to log back in
-    const { data: magicLinkData, error: magicLinkError } = await adminClient.auth.admin.generateLink({
-      type: 'magiclink',
-      email: adminEmail,
-    })
-
-    if (magicLinkError || !magicLinkData.properties?.hashed_token) {
-      console.error('Failed to generate magic link for admin restoration:', magicLinkError)
-      throw createError({
-        statusCode: 500,
-        message: 'Failed to generate admin session restoration link',
-      })
-    }
-
-    // Immediately verify the OTP to create an admin session
-    const { data: adminSessionData, error: verifyError } = await adminClient.auth.verifyOtp({
-      token_hash: magicLinkData.properties.hashed_token,
-      type: 'magiclink',
-    })
-
-    if (verifyError || !adminSessionData.session) {
-      console.error('Failed to verify admin restoration OTP:', verifyError)
-      throw createError({
-        statusCode: 500,
-        message: 'Failed to restore admin session',
-      })
-    }
+    // Use shared utility to restore admin session via magic link
+    const { session: adminSession } = await createSessionFromMagicLink(
+      adminClient,
+      adminEmail,
+    )
 
     // Return the restored admin session
     return {
       success: true,
       message: 'Impersonation ended successfully',
-      session: adminSessionData.session,
+      session: adminSession,
     }
   }
   catch (error: unknown) {

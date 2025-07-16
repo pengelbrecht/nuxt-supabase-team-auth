@@ -1,6 +1,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: true },
+  
+  // Explicitly enable SSR to test server-side authentication
+  ssr: true,
 
   modules: [
     '@nuxt/ui',

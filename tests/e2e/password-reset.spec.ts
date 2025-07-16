@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { TestCleanup, TestActions } from './helpers/cleanup'
+import { TestCleanup } from './helpers/cleanup'
 
 test.describe('Password Reset', () => {
   // Clean up after each test
@@ -59,7 +59,7 @@ test.describe('Password Reset', () => {
     const submitButton = page.getByRole('button', { name: /send.*reset|reset.*password|send.*link/i })
     await expect(submitButton).toBeVisible({ timeout: 5000 })
     await expect(submitButton).toBeEnabled({ timeout: 5000 })
-    
+
     console.log('🚀 Clicking send reset link button...')
     await submitButton.click()
 
@@ -67,7 +67,8 @@ test.describe('Password Reset', () => {
     try {
       await expect(page.locator('text=/email.*sent|check.*email|reset.*link.*sent/i')).toBeVisible({ timeout: 10000 })
       console.log('✅ Success message appeared - reset email sent')
-    } catch {
+    }
+    catch {
       console.log('⚠️ No explicit success message found, proceeding to check email...')
     }
 
@@ -86,23 +87,25 @@ test.describe('Password Reset', () => {
     const resetEmailLinks = page.getByRole('link', { name: /Reset/ })
     const emailCount = await resetEmailLinks.count()
     console.log(`📧 Found ${emailCount} emails with "Reset" in the name`)
-    
+
     if (emailCount > 0) {
       // Click the first (most recent) reset email
       await resetEmailLinks.first().click()
       console.log('📧 Clicked on most recent reset email')
       await page.waitForTimeout(2000)
-    } else {
+    }
+    else {
       // Fallback: look for any recent email to member@a.test with today's timestamp
       console.log('📧 No reset emails found, looking for any recent email to member@a.test...')
       const memberEmails = page.getByRole('link', { name: new RegExp(`.*${testEmail.replace('@', '.*').replace('.', '\\.')}`) })
       const memberEmailCount = await memberEmails.count()
-      
+
       if (memberEmailCount > 0) {
         await memberEmails.first().click()
         console.log('📧 Clicked on most recent email to member@a.test')
         await page.waitForTimeout(2000)
-      } else {
+      }
+      else {
         throw new Error('Could not find any password reset email in Inbucket')
       }
     }
@@ -139,19 +142,19 @@ test.describe('Password Reset', () => {
       console.log('🔍 Checking for password reset form...')
       const passwordField = page1.getByLabel('New Password', { exact: true })
       const confirmPasswordField = page1.getByLabel('Confirm New Password', { exact: true })
-      
+
       // Wait for password fields to be visible
       await expect(passwordField).toBeVisible({ timeout: 10000 })
       console.log('✅ Password fields detected')
-      
+
       console.log('🔐 Password reset form detected, filling form...')
-      
+
       // Fill new password - use timestamp to ensure it's different from current password
       const timestamp = Date.now()
       const newPassword = `Reset${timestamp}!`
       await passwordField.fill(newPassword)
       console.log('✅ New password field filled')
-      
+
       // Fill confirm password
       await confirmPasswordField.fill(newPassword)
       console.log('✅ Confirm password field filled')
@@ -164,17 +167,19 @@ test.describe('Password Reset', () => {
 
       // Wait for success state
       console.log('⏳ Waiting for password reset success...')
-      
+
       // Look for success indicators
       try {
         await expect(page1.locator('text=/password.*reset.*successful|password.*updated|success/i')).toBeVisible({ timeout: 10000 })
         console.log('✅ Password reset success message appeared')
-      } catch {
+      }
+      catch {
         // Alternative: look for sign in button or redirect
         const signinButton = page1.getByRole('button', { name: /sign.*in|login|go.*to.*sign.*in/i })
         if (await signinButton.isVisible({ timeout: 5000 })) {
           console.log('✅ Sign in button appeared - password reset successful')
-        } else {
+        }
+        else {
           console.log('⚠️ No explicit success message, but continuing...')
         }
       }
@@ -184,7 +189,7 @@ test.describe('Password Reset', () => {
 
       // *** STEP 9: Test sign in with new password ***
       console.log('🔑 Testing sign in with new password...')
-      
+
       // Navigate to sign in page
       await page.goto('http://localhost:3000/signin')
       await page.waitForTimeout(1000)
@@ -192,7 +197,7 @@ test.describe('Password Reset', () => {
       // Fill in credentials with new password
       const signinEmailInput = page.getByRole('textbox', { name: /email/i })
       const signinPasswordInput = page.getByRole('textbox', { name: /password/i }).or(page.locator('input[type="password"]'))
-      
+
       await expect(signinEmailInput).toBeVisible({ timeout: 5000 })
       await signinEmailInput.fill(testEmail)
       await signinPasswordInput.fill(newPassword)
@@ -258,17 +263,18 @@ test.describe('Password Reset', () => {
 
     // Navigate to forgot password page
     await page.goto('http://localhost:3000/auth/forgot-password')
-    
+
     // Look for back to sign in link
     const backToSignInLink = page.getByRole('link', { name: /back.*sign.*in|sign.*in/i }).or(
-      page.getByRole('button', { name: /back.*sign.*in|sign.*in/i })
+      page.getByRole('button', { name: /back.*sign.*in|sign.*in/i }),
     )
 
     if (await backToSignInLink.isVisible({ timeout: 5000 })) {
       await backToSignInLink.click()
       await page.waitForURL('**/signin', { timeout: 5000 })
       console.log('✅ Successfully navigated back to sign in page')
-    } else {
+    }
+    else {
       console.log('⚠️ No back to sign in link found - this is optional functionality')
     }
 

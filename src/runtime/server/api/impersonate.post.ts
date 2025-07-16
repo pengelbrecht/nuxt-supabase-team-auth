@@ -1,5 +1,6 @@
 import { defineEventHandler, readBody, createError, setCookie, getHeader } from 'h3'
 import jwt from 'jsonwebtoken'
+import { createSessionFromMagicLink } from '../utils/magicLinkSession'
 import { serverSupabaseServiceRole } from '#supabase/server'
 
 // Create aliases for consistency
@@ -8,12 +9,12 @@ const createServiceRoleClient = serverSupabaseServiceRole
 export default defineEventHandler(async (event) => {
   try {
     console.log('=== IMPERSONATE API DEBUG ===')
-    
+
     // Get the authorization header
     const authHeader = getHeader(event, 'authorization')
     console.log('Auth header present:', !!authHeader)
     console.log('Auth header value:', authHeader ? authHeader.substring(0, 20) + '...' : 'null')
-    
+
     if (!authHeader) {
       console.log('ERROR: Missing authorization header')
       throw createError({
@@ -25,7 +26,7 @@ export default defineEventHandler(async (event) => {
     // Extract the token from the Bearer header
     const token = authHeader.replace('Bearer ', '')
     console.log('Token extracted:', token ? token.substring(0, 20) + '...' : 'null')
-    
+
     if (!token) {
       console.log('ERROR: Invalid authorization header format')
       throw createError({
@@ -42,7 +43,7 @@ export default defineEventHandler(async (event) => {
     const { data: { user }, error: userError } = await adminClient.auth.getUser(token)
     console.log('User result:', user ? `User ID: ${user.id}` : 'No user')
     console.log('User error:', userError)
-    
+
     if (userError || !user) {
       console.log('ERROR: Invalid or expired token')
       throw createError({
@@ -170,40 +171,16 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Generate a magic link for the target user
-    const { data: magicLinkData, error: magicLinkError } = await adminClient.auth.admin.generateLink({
-      type: 'magiclink',
-      email: targetEmail,
-      options: {
-        data: {
-          impersonation_session_id: sessionLog.id,
-          impersonated_by: user.id,
-          impersonation_expires_at: sessionLog.expires_at,
-        },
+    // Use shared utility to create session via magic link
+    const { session: targetSession } = await createSessionFromMagicLink(
+      adminClient,
+      targetEmail,
+      {
+        impersonation_session_id: sessionLog.id,
+        impersonated_by: user.id,
+        impersonation_expires_at: sessionLog.expires_at,
       },
-    })
-
-    if (magicLinkError || !magicLinkData.properties?.hashed_token) {
-      console.error('Failed to generate magic link:', magicLinkError)
-      throw createError({
-        statusCode: 500,
-        message: 'Failed to generate impersonation session',
-      })
-    }
-
-    // Immediately verify the OTP to create a session
-    const { data: sessionData, error: verifyError } = await adminClient.auth.verifyOtp({
-      token_hash: magicLinkData.properties.hashed_token,
-      type: 'magiclink',
-    })
-
-    if (verifyError || !sessionData.session) {
-      console.error('Failed to verify OTP:', verifyError)
-      throw createError({
-        statusCode: 500,
-        message: 'Failed to create impersonation session',
-      })
-    }
+    )
 
     // Store admin email in JWT-signed cookie for session termination
     // This replaces the complex refresh token storage approach
@@ -252,7 +229,7 @@ export default defineEventHandler(async (event) => {
         expires_at: sessionLog.expires_at,
       },
       // New session for the impersonated user
-      session: sessionData.session,
+      session: targetSession,
       // Only return admin user ID (tokens stored securely server-side)
       originalUser: {
         id: user.id,

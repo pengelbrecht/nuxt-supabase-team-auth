@@ -206,6 +206,11 @@ interface PasswordSetupFormProps {
   googleAuth?: boolean
   /** Enable GitHub authentication */
   githubAuth?: boolean
+  /** Session data for authentication */
+  sessionData?: {
+    access_token: string
+    refresh_token: string
+  }
 }
 
 interface PasswordSetupForm {
@@ -277,10 +282,20 @@ const handlePasswordSetup = async (event: FormSubmitEvent<any>) => {
     isLoading.value = true
     message.value = ''
 
-    // Check if we have a valid session first
-    const { data: { session: currentSession } } = await supabase.auth.getSession()
+    // Try multiple sources for tokens
+    let accessToken = props.sessionData?.access_token
 
-    if (!currentSession) {
+    if (!accessToken) {
+      const { data: { session } } = await supabase.auth.getSession()
+      accessToken = session?.access_token
+    }
+
+    if (!accessToken) {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      accessToken = hashParams.get('access_token')
+    }
+
+    if (!accessToken) {
       throw new Error('No valid session found for password update')
     }
 
@@ -289,7 +304,7 @@ const handlePasswordSetup = async (event: FormSubmitEvent<any>) => {
       await $fetch(`${supabase.supabaseUrl}/auth/v1/user`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${currentSession.access_token}`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
           'apikey': supabase.supabaseKey,
         },

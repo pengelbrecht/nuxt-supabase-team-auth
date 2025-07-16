@@ -12,7 +12,7 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 1 : 2,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['html', { open: 'never' }], // Don't auto-open HTML report
@@ -34,15 +34,16 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
 
-    // Debug project with slowMo for easier inspection
-    {
-      name: 'debug',
-      use: { 
-        ...devices['Desktop Chrome'], 
-        headless: false,
-        slowMo: 1000, // 1 second delay between actions
-      },
-    },
+    // Debug project with slowMo for easier inspection (only use for debugging specific tests)
+    // To run with debug: pnpm test:e2e -- --project=debug
+    // {
+    //   name: 'debug',
+    //   use: {
+    //     ...devices['Desktop Chrome'],
+    //     headless: false,
+    //     slowMo: 1000, // 1 second delay between actions
+    //   },
+    // },
 
     // Uncomment to test other browsers
     // {
