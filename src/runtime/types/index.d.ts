@@ -1,7 +1,10 @@
 // Types - we'll use types from @nuxtjs/supabase composables
 import type { DbProfile, DbTeam, DbTeamMember, DbImpersonationSession } from './database.types'
 
-type SupabaseClient = any
+// Removed unused SupabaseClient type
+
+// Re-export password policy types
+export type { PasswordPolicy, PasswordValidationResult } from './password-policy'
 
 // Social Provider Configuration Types
 export interface SocialProviderConfig {

@@ -21,7 +21,7 @@
         label="New Password"
         name="password"
         required
-        description="Must be at least 8 characters long"
+        :description="passwordHelpText"
       >
         <UInput
           v-model="form.password"
@@ -93,11 +93,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { $fetch } from 'ofetch'
 import { useSupabaseClient } from '../composables/useSupabaseComposables'
+import { usePasswordPolicy } from '../composables/usePasswordPolicy'
 
 interface ResetPasswordForm {
   password: string
@@ -118,20 +119,14 @@ const form = reactive<ResetPasswordForm>({
   confirmPassword: '',
 })
 
-// Validation schema using Valibot
-const passwordSchema = v.object({
-  password: v.pipe(
-    v.string(),
-    v.minLength(8, 'Password must be at least 8 characters'),
-    v.regex(/[A-Z]/, 'Password must contain at least one uppercase letter'),
-    v.regex(/[a-z]/, 'Password must contain at least one lowercase letter'),
-    v.regex(/\d/, 'Password must contain at least one number'),
-  ),
-  confirmPassword: v.pipe(
-    v.string(),
-    v.custom(value => value === form.password, 'Passwords do not match'),
-  ),
-})
+// Get password policy composable
+const { getPasswordSchema, createConfirmPasswordValidator, passwordHelpText } = usePasswordPolicy()
+
+// Dynamic validation schema using password policy
+const passwordSchema = computed(() => v.object({
+  password: getPasswordSchema(),
+  confirmPassword: createConfirmPasswordValidator(() => form.password),
+}))
 
 // UI state
 const isLoading = ref(false)
