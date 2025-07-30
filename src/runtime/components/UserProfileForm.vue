@@ -75,6 +75,7 @@
       <UFormField
         label="New Password"
         name="password"
+        :description="passwordHelpText"
         class="flex items-center justify-between mb-4 gap-2"
       >
         <UInput
@@ -120,9 +121,13 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import * as v from 'valibot'
 import { useTeamAuth } from '../composables/useTeamAuth'
+import { usePasswordPolicy } from '../composables/usePasswordPolicy'
 import type { Profile } from '../types'
 import UserCard from './UserCard.vue'
 import { useToast } from '#imports'
+
+// Get password policy composable
+const { validate: validatePassword, passwordHelpText } = usePasswordPolicy()
 
 // Form validation schema
 const profileSchema = v.object({
@@ -315,6 +320,17 @@ const handlePasswordUpdate = async () => {
       toast.add({
         title: 'Password Mismatch',
         description: 'Passwords do not match',
+        color: 'red',
+      })
+      return
+    }
+
+    // Validate password against policy
+    const passwordValidation = validatePassword(form.password)
+    if (!passwordValidation.isValid) {
+      toast.add({
+        title: 'Invalid Password',
+        description: passwordValidation.errors.join('. '),
         color: 'red',
       })
       return

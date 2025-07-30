@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Simple server endpoint test focusing on logic validation
 describe('signup-with-team API endpoint - Logic Tests', () => {
-  let mockSupabaseClient: any
+  let _mockSupabaseClient: any
   let mockRequestBody: any
 
   beforeEach(() => {
@@ -14,7 +14,7 @@ describe('signup-with-team API endpoint - Logic Tests', () => {
       teamName: 'Test Team',
     }
 
-    mockSupabaseClient = {
+    _mockSupabaseClient = {
       functions: {
         invoke: vi.fn(),
       },

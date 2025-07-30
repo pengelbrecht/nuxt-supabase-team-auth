@@ -109,6 +109,7 @@ export default defineNuxtConfig({
 | `protectedRoutes` | `string[]` | `['/dashboard']` | Routes that require authentication |
 | `publicRoutes` | `string[]` | `[]` | Additional public routes |
 | `socialProviders.google.enabled` | `boolean` | `true` | Enable Google OAuth |
+| `passwordPolicy` | `object` | See below | Customize password requirements |
 | `debug` | `boolean` | Auto-detected | Enable debug logging |
 
 #### Route Protection Modes
@@ -133,6 +134,87 @@ teamAuth: {
 - The module automatically installs and configures `@nuxtjs/supabase` using the `installModule()` pattern
 - Route protection is configured in `teamAuth.defaultProtection` - no need to configure `@nuxtjs/supabase` separately
 - Environment variables are automatically detected from your `.env` file
+
+#### Password Policy Configuration
+
+Customize password requirements to match your security needs:
+
+```typescript
+// nuxt.config.ts
+export default defineNuxtConfig({
+  teamAuth: {
+    passwordPolicy: {
+      minLength: 8,              // Minimum password length (default: 8)
+      requireUppercase: false,   // Require uppercase letters (default: false)
+      requireLowercase: false,   // Require lowercase letters (default: false)
+      requireNumbers: false,     // Require numbers (default: false)
+      requireSpecialChars: false,// Require special characters (default: false)
+      helpText: 'Custom help'    // Override default help text
+    }
+  }
+})
+```
+
+**Password Policy Options:**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `minLength` | `number` | `8` | Minimum password length |
+| `requireUppercase` | `boolean` | `false` | Require at least one uppercase letter |
+| `requireLowercase` | `boolean` | `false` | Require at least one lowercase letter |
+| `requireNumbers` | `boolean` | `false` | Require at least one number |
+| `requireSpecialChars` | `boolean` | `false` | Require at least one special character |
+| `specialChars` | `string` | `!@#$%^&*()_+-=[]{}|;:,.<>?` | Define allowed special characters |
+| `helpText` | `string` | Auto-generated | Custom help text to display |
+| `customValidator` | `function` | `undefined` | Custom validation function |
+
+**Example Configurations:**
+
+```typescript
+// Default (NIST-aligned) - length over complexity
+// No configuration needed, uses defaults
+
+// Traditional complexity requirements
+passwordPolicy: {
+  minLength: 8,
+  requireUppercase: true,
+  requireLowercase: true,
+  requireNumbers: true,
+  helpText: "Must be at least 8 characters with uppercase, lowercase, and numbers"
+}
+
+// High security for enterprise
+passwordPolicy: {
+  minLength: 12,
+  requireUppercase: true,
+  requireLowercase: true,
+  requireNumbers: true,
+  requireSpecialChars: true,
+  customValidator: (pwd) => {
+    const commonPasswords = ['password123', 'admin123']
+    return !commonPasswords.includes(pwd.toLowerCase()) || "This password is too common"
+  }
+}
+
+// Extra long passphrases
+passwordPolicy: {
+  minLength: 20,
+  helpText: "Use a long passphrase (20+ characters)"
+}
+
+// Development/testing only
+passwordPolicy: {
+  minLength: 4,
+  helpText: "Min 4 characters (dev only)"
+}
+```
+
+**Important:** Remember to also configure your Supabase project's password policy in `supabase/config.toml` to match:
+
+```toml
+[auth]
+minimum_password_length = 8  # Should match your minLength
+```
 
 ### 3. Add Required App Structure
 

@@ -40,7 +40,7 @@
         label="Password"
         name="password"
         required
-        description="Must be at least 8 characters long"
+        :description="passwordHelpText"
       >
         <UInput
           v-model="form.password"
@@ -194,6 +194,7 @@ import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useSupabaseClient } from '../composables/useSupabaseComposables'
 import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
+import { usePasswordPolicy } from '../composables/usePasswordPolicy'
 
 interface PasswordSetupFormProps {
   /** User's email address */
@@ -243,24 +244,16 @@ const form = reactive<PasswordSetupForm>({
   fullName: '',
 })
 
-// Validation schema using Valibot
-const passwordSchema = v.object({
-  password: v.pipe(
-    v.string(),
-    v.minLength(8, 'Password must be at least 8 characters'),
-    v.regex(/[A-Z]/, 'Password must contain at least one uppercase letter'),
-    v.regex(/[a-z]/, 'Password must contain at least one lowercase letter'),
-    v.regex(/\d/, 'Password must contain at least one number'),
-  ),
-  confirmPassword: v.pipe(
-    v.string(),
-    v.custom(value => value === form.password, 'Passwords do not match'),
-  ),
-  fullName: v.optional(v.string()),
-})
-
 // Composables
 const { isGoogleEnabled, isGithubEnabled, hasAnySocialProvider } = useTeamAuthConfig()
+const { getPasswordSchema, createConfirmPasswordValidator, passwordHelpText } = usePasswordPolicy()
+
+// Dynamic validation schema using password policy
+const passwordSchema = computed(() => v.object({
+  password: getPasswordSchema(),
+  confirmPassword: createConfirmPasswordValidator(() => form.password),
+  fullName: v.optional(v.string()),
+}))
 
 // Computed properties for social auth
 const showGoogleAuth = computed(() => props.googleAuth && isGoogleEnabled.value)

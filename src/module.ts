@@ -1,6 +1,7 @@
 import { defineNuxtModule, createResolver, addImports, addComponentsDir, installModule } from '@nuxt/kit'
 import type { NuxtModule } from '@nuxt/schema'
 import { defu } from 'defu'
+import type { PasswordPolicy } from './runtime/types/password-policy'
 
 export interface ModuleOptions {
   /**
@@ -54,6 +55,10 @@ export interface ModuleOptions {
     }
     // Future providers can be added here when implemented: github, apple, microsoft, facebook, etc.
   }
+  /**
+   * Password policy configuration
+   */
+  passwordPolicy?: PasswordPolicy
 }
 
 const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
@@ -248,6 +253,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
         protectedRoutes: options.protectedRoutes,
         publicRoutes: options.publicRoutes,
         socialProviders: options.socialProviders,
+        passwordPolicy: options.passwordPolicy,
       },
     )
 
@@ -268,6 +274,10 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       {
         name: 'useTeamAuthConfig',
         from: resolver.resolve('./runtime/composables/useTeamAuthConfig'),
+      },
+      {
+        name: 'usePasswordPolicy',
+        from: resolver.resolve('./runtime/composables/usePasswordPolicy'),
       },
       // Note: useSupabaseClient, useSupabaseSession, useSupabaseUser are NOT exported
       // They're internal wrappers used only within our module's runtime code

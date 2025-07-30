@@ -134,7 +134,7 @@
           label="Password"
           name="password"
           required
-          :help="passwordHelp"
+          :help="effectivePasswordHelp"
         >
           <UInput
             v-model="form.password"
@@ -293,6 +293,7 @@ import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
+import { usePasswordPolicy } from '../composables/usePasswordPolicy'
 import type { User, Team } from '../types'
 import { useNuxtApp } from '#imports'
 
@@ -344,7 +345,7 @@ const props = withDefaults(defineProps<AuthSignUpProps>(), {
   requireTermsAcceptance: true,
   showMarketingConsent: true,
   teamNameHelp: 'This will be your team workspace name regardless of signup method',
-  passwordHelp: 'Must be at least 8 characters with numbers and letters',
+  passwordHelp: undefined, // Will use auto-generated help text from password policy
 })
 
 const emit = defineEmits<{
@@ -367,35 +368,27 @@ const form = reactive<SignUpForm>({
   marketingConsent: false,
 })
 
-// Custom validation for password confirmation
-const passwordMatchValidation = v.pipe(
-  v.string(),
-  v.check((val) => {
-    return val === form.password
-  }, 'Passwords do not match'),
-)
+// Composables - declared after form to avoid issues
+const { signUpWithTeam } = useTeamAuth()
+const { isGoogleEnabled, isGithubEnabled, hasAnySocialProvider } = useTeamAuthConfig()
+const { getPasswordSchema, createConfirmPasswordValidator, passwordHelpText } = usePasswordPolicy()
 
-// Validation schema using Valibot
-const signUpSchema = v.object({
+// Dynamic validation schema using password policy
+const signUpSchema = computed(() => v.object({
   teamName: v.pipe(
     v.string(),
     v.minLength(2, 'Team name must be at least 2 characters'),
     v.maxLength(50, 'Team name must be less than 50 characters'),
   ),
   email: v.pipe(v.string(), v.email('Please enter a valid email address')),
-  password: v.pipe(
-    v.string(),
-    v.minLength(8, 'Password must be at least 8 characters'),
-    v.regex(/(?=.*[a-z])(?=.*\d)/i, 'Password must contain both letters and numbers'),
-  ),
-  confirmPassword: passwordMatchValidation,
+  password: getPasswordSchema(),
+  confirmPassword: createConfirmPasswordValidator(() => form.password),
   acceptTerms: v.literal(true, 'You must accept the terms and conditions'),
   marketingConsent: v.optional(v.boolean()),
-})
+}))
 
-// Composables - declared after form to avoid issues
-const { signUpWithTeam } = useTeamAuth()
-const { isGoogleEnabled, isGithubEnabled, hasAnySocialProvider } = useTeamAuthConfig()
+// Use password help text from policy or prop override
+const effectivePasswordHelp = computed(() => props.passwordHelp || passwordHelpText.value)
 
 // Computed properties for social auth
 const showGoogleAuth = computed(() => props.googleAuth && isGoogleEnabled.value)
