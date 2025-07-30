@@ -1,5 +1,12 @@
 # Claude Development Notes
 
+## Project Overview
+- **Nuxt 3 Module** - Drop-in authentication module for team-based applications
+- **Version**: 0.4.2
+- **Purpose**: Provides complete team authentication with Supabase integration
+- **Key Features**: Team management, role-based access control (RBAC), user invitations, impersonation
+- **Dependencies**: @nuxtjs/supabase, @nuxt/ui, @nuxt/icon (peer dependencies)
+
 ## Project Type
 - **This is a Nuxt Module** - designed to be installed in other Nuxt projects
 - The `/playground` directory is for testing and showcasing the module
@@ -27,6 +34,8 @@
 ## Database Architecture (Established - Don't Change)
 - **`public.profiles`** table stores user profile data (full_name, avatar_url, etc.)
 - **`public.team_members`** table handles team memberships and roles only
+- **`public.teams`** table stores team information (name, created_at, etc.)
+- **`public.impersonation_sessions`** table tracks active impersonation sessions
 - **No JWT claims** - always fetch team data from database via team_members join
 - User profile data is stored in `public.profiles.id` which equals `auth.uid()`
 
@@ -35,11 +44,19 @@
 - Sign in fetches team membership from database (not JWT claims)
 - Profile updates go to `public.profiles` table
 - Password changes go through Supabase auth system
+- OAuth (Google) authentication supported with automatic profile creation
+- Magic link authentication for team invitations
+- Impersonation system for super admins and team owners
 
 ## Components (Fixed - Don't Modify)
 - **UserButton**: Shows user icon when signed out, user initials when signed in
 - **ProfileForm**: Separated password changes from profile updates for better UX
 - **AuthSignUpWithTeam**: Working with comprehensive error handling
+- **TeamMembersDialog**: Team member management with role assignment
+- **ImpersonationBanner**: Shows when user is being impersonated
+- **DialogBox/FormDialog/ConfirmDialog**: Consistent dialog system
+- **RoleBadge**: Displays user roles with proper styling
+- **TeamAuthConfirmation**: Handles email confirmation flow
 
 ## Key Lessons Learned
 1. **Component loading states** - Use local loading state (`isProfileLoading`) NOT global auth loading state (`isLoading`)
@@ -78,6 +95,24 @@ public.team_members (
   user_id uuid REFERENCES auth.users(id),
   role text -- 'owner', 'admin', 'member', 'super_admin'
 )
+
+-- teams table stores team information
+public.teams (
+  id uuid PRIMARY KEY,
+  name text,
+  created_at timestamp,
+  ...
+)
+
+-- impersonation_sessions tracks active impersonations
+public.impersonation_sessions (
+  id uuid PRIMARY KEY,
+  impersonator_id uuid REFERENCES auth.users(id),
+  impersonated_id uuid REFERENCES auth.users(id),
+  reason text,
+  expires_at timestamp,
+  ...
+)
 ```
 
 ## CLI Commands and Database Management
@@ -115,11 +150,14 @@ team-auth db --users     # List all users
 3. Version tracking prevents duplicate applications via `.team-auth-version.json`
 
 ## Don't Re-implement
--  JWT claims parsing (we don't use custom claims)
--  Profiles table structure 
--  UserButton avatar fallback logic
--  ProfileForm UX improvements
--  RLS policies (keep them simple - users access own data only)
+- JWT claims parsing (we don't use custom claims)
+- Profiles table structure 
+- UserButton avatar fallback logic
+- ProfileForm UX improvements
+- RLS policies (keep them simple - users access own data only)
+- Impersonation system (working with proper security)
+- Team invitation flow (uses native Supabase invitations)
+- Edge Functions for secure operations
 
 ## Form/Dialog Design Patterns
 
@@ -327,3 +365,43 @@ When using forms in modals, pass `isModal="true"` to avoid duplicate headers:
 3. **Section cards only** - Use `UCard variant="subtle"` for field grouping inside dialogs
 4. **Form integration** - Always pass `isModal=true` to form components in modals
 5. **Responsive by default** - Dialogs automatically adjust to screen size
+
+## New Features and Patterns
+
+### Impersonation System
+- **Super admins** can impersonate any user
+- **Team owners** can impersonate team members
+- Sessions tracked in `impersonation_sessions` table
+- Automatic session expiry (24 hours)
+- Clear visual indicator (ImpersonationBanner)
+- Secure stop-impersonation flow
+
+### Team Invitations
+- Native Supabase invitation system
+- Magic link authentication for invitees
+- Automatic team assignment on acceptance
+- Pending invitation management
+- Role assignment during invitation
+
+### Middleware System
+- **auth.global.ts** - Core authentication middleware
+- **require-auth.ts** - Protect authenticated pages
+- **require-team.ts** - Ensure user has team access
+- **require-role.ts** - Role-based access control
+- **redirect-authenticated.ts** - Redirect logged-in users
+- **impersonation.ts** - Handle impersonation sessions
+
+### Edge Functions
+- **create-team-and-owner** - Atomic team creation
+- **delete-team** - Complete team deletion with cleanup
+- **invite-member** - Send team invitations
+- **accept-invite** - Process invitation acceptance
+- **transfer-ownership** - Transfer team ownership
+- **stop-impersonation** - End impersonation session
+
+### Testing Infrastructure
+- E2E tests with Playwright
+- Unit tests with Vitest
+- Integration tests for Edge Functions
+- Test factories for users and teams
+- Automatic test data cleanup
