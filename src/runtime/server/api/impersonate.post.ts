@@ -193,7 +193,13 @@ export default defineEventHandler(async (event) => {
     }
 
     // Create a simple JWT with admin email for impersonation termination
-    const jwtSecret = process.env.SUPABASE_JWT_SECRET || 'fallback-secret-for-dev'
+    const jwtSecret = process.env.SUPABASE_JWT_SECRET
+    if (!jwtSecret) {
+      throw createError({
+        statusCode: 500,
+        message: 'SUPABASE_JWT_SECRET environment variable is required for impersonation functionality',
+      })
+    }
 
     const impersonationToken = jwt.sign(
       {

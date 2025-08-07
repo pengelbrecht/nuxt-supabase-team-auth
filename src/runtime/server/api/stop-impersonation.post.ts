@@ -75,7 +75,13 @@ export default defineEventHandler(async (event) => {
     }
 
     // Verify and decode the JWT
-    const jwtSecret = process.env.SUPABASE_JWT_SECRET || 'fallback-secret-for-dev'
+    const jwtSecret = process.env.SUPABASE_JWT_SECRET
+    if (!jwtSecret) {
+      throw createError({
+        statusCode: 500,
+        message: 'SUPABASE_JWT_SECRET environment variable is required for impersonation functionality',
+      })
+    }
 
     let adminEmail: string
     try {

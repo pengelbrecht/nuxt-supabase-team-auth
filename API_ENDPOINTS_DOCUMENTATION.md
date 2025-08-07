@@ -585,7 +585,7 @@ Creates a Supabase client configured with the request's authorization context.
 SUPABASE_URL=your_supabase_project_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_KEY=your_supabase_service_role_key
-SUPABASE_JWT_SECRET=your_supabase_jwt_secret
+SUPABASE_JWT_SECRET=your_supabase_jwt_secret  # REQUIRED for impersonation endpoints
 ```
 
 ### Runtime Configuration
