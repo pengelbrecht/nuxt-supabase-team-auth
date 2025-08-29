@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody, createError, setCookie, getHeader } from 'h3'
-import jwt from 'jsonwebtoken'
+import { SignJWT } from 'jose'
 import { createSessionFromMagicLink } from '../utils/magicLinkSession'
 import { serverSupabaseServiceRole } from '#supabase/server'
 
@@ -201,15 +201,14 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const impersonationToken = jwt.sign(
-      {
-        admin_email: adminEmail,
-        admin_id: user.id,
-        session_id: sessionLog.id,
-        exp: Math.floor(Date.now() / 1000) + (30 * 60), // 30 minutes
-      },
-      jwtSecret,
-    )
+    const impersonationToken = await new SignJWT({
+      admin_email: adminEmail,
+      admin_id: user.id,
+      session_id: sessionLog.id,
+    })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setExpirationTime('30m')
+      .sign(new TextEncoder().encode(jwtSecret))
 
     // Store the JWT in an httpOnly cookie using h3's setCookie
     setCookie(event, 'admin-impersonation', impersonationToken, {

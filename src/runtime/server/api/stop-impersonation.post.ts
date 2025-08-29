@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody, createError, getCookie, deleteCookie, getHeader } from 'h3'
-import jwt from 'jsonwebtoken'
+import { jwtVerify } from 'jose'
 import { createSessionFromMagicLink } from '../utils/magicLinkSession'
 import { serverSupabaseServiceRole } from '#supabase/server'
 
@@ -85,8 +85,8 @@ export default defineEventHandler(async (event) => {
 
     let adminEmail: string
     try {
-      const decoded = jwt.verify(impersonationCookie, jwtSecret) as any
-      adminEmail = decoded.admin_email
+      const { payload } = await jwtVerify(impersonationCookie, new TextEncoder().encode(jwtSecret))
+      adminEmail = payload.admin_email as string
 
       if (!adminEmail) {
         throw new Error('Admin email not found in JWT')
