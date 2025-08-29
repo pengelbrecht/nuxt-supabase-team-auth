@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.2] - 2025-08-29
+
+### 🐛 Bug Fixes
+
+- **Fixed Cloudflare Workers compatibility** - Replaced `jsonwebtoken` with `jose` library to resolve `superCtor.prototype` runtime errors in Cloudflare Workers environment
+- **Improved edge runtime support** - The module now works seamlessly in modern edge runtimes including Cloudflare Workers, Vercel Edge Runtime, and Deno Deploy
+
+### 🔧 Technical Changes
+
+- Replace `jsonwebtoken ^9.0.2` with `jose ^5.9.6` for better web standards compliance
+- Update JWT signing logic in impersonation endpoints to use `jose.SignJWT`
+- Update JWT verification logic to use `jose.jwtVerify`
+- Remove `@types/jsonwebtoken` dev dependency
+- Maintain identical JWT functionality while improving runtime compatibility
+
 ## [0.4.0] - 2025-07-02
 
 ### 🎉 First Stable Release
