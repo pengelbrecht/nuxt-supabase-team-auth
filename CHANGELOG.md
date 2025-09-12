@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.3] - 2025-09-12
+
+### 🐛 Bug Fixes
+
+- **Fixed module page compatibility** - Removed `definePageMeta` and `defineOptions` from accept-invite page to ensure proper functionality when installed in node_modules
+- **Improved module page architecture** - Module pages now work correctly without relying on Nuxt auto-imports that aren't available in node_modules
+
 ## [0.5.2] - 2025-08-29
 
 ### 🐛 Bug Fixes

@@ -199,14 +199,4 @@ const handlePasswordSetupError = (error: string) => {
   // Error is already displayed by PasswordSetupForm
 }
 
-// Set page meta
-definePageMeta({
-  layout: false, // Use no layout for this page
-  auth: false, // Don't require auth since this is handling invitations
-})
-
-// Define component name for ESLint
-defineOptions({
-  name: 'AcceptInvite',
-})
 </script>
