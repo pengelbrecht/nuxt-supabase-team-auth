@@ -1,5 +1,6 @@
 import type { PasswordPolicy, PasswordValidationResult } from '../types/password-policy'
 import { DEFAULT_PASSWORD_POLICY } from '../types/password-policy'
+import * as v from 'valibot'
 
 /**
  * Validates a password against the provided policy
@@ -89,9 +90,7 @@ export function generatePasswordHelpText(policy: PasswordPolicy = {}): string {
 /**
  * Creates a Valibot schema for password validation based on the policy
  */
-export async function createPasswordSchema(policy: PasswordPolicy = {}) {
-  // Import valibot dynamically to avoid issues if not installed
-  const v = await import('valibot')
+export function createPasswordSchema(policy: PasswordPolicy = {}) {
   const mergedPolicy = { ...DEFAULT_PASSWORD_POLICY, ...policy }
 
   const pipes: any[] = [

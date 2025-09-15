@@ -2,6 +2,7 @@ import { computed } from 'vue'
 import type { PasswordPolicy } from '../types/password-policy'
 import { validatePassword, generatePasswordHelpText, createPasswordSchema } from '../utils/password-validation'
 import { useRuntimeConfig } from '#imports'
+import * as v from 'valibot'
 
 /**
  * Composable to access and use the password policy configuration
@@ -25,13 +26,12 @@ export function usePasswordPolicy() {
   }
 
   // Get Valibot schema for forms
-  const getPasswordSchema = async () => {
-    return await createPasswordSchema(passwordPolicy.value)
+  const getPasswordSchema = () => {
+    return createPasswordSchema(passwordPolicy.value)
   }
 
   // Create a custom validator for confirm password fields
-  const createConfirmPasswordValidator = async (getPasswordValue: () => string) => {
-    const v = await import('valibot')
+  const createConfirmPasswordValidator = (getPasswordValue: () => string) => {
     return v.pipe(
       v.string(),
       v.custom((value: string) => value === getPasswordValue(), 'Passwords do not match'),
