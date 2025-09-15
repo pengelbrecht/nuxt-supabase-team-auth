@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.4] - 2025-09-15
+
+### 🐛 Bug Fixes
+
+- **Fixed module pages node_modules compatibility** - Made all implicit imports explicit in module pages (accept-invite, auth/confirm, auth/callback, auth/forgot-password)
+- **Restored definePageMeta functionality** - Properly import and use `definePageMeta` and `defineOptions` instead of removing them
+- **Enhanced page import reliability** - All module pages now work correctly when installed in node_modules with explicit imports from `#imports`
+
 ## [0.5.3] - 2025-09-12
 
 ### 🐛 Bug Fixes

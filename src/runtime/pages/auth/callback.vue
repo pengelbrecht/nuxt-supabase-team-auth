@@ -94,10 +94,11 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { $fetch } from 'ofetch'
 import { useSupabaseClient } from '../../composables/useSupabaseComposables'
 import { useTeamAuth } from '../../composables/useTeamAuth'
-import { useRoute, useRouter } from '#imports'
+import { useRoute, useRouter, definePageMeta, defineOptions } from '#imports'
 
 const route = useRoute()
 const router = useRouter()
