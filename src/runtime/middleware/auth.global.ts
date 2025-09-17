@@ -88,34 +88,24 @@ export default defineNuxtRouteMiddleware(async (to) => {
       return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
     }
 
-    // For public routes in public mode, skip team/auth-specific logic
-    // Only run team checks for protected routes or authenticated users on specific routes
+    // For public routes (non-protected), return early after security checks
     if (!isProtectedRoute) {
-      // Still run impersonation checks for security
-      if (isImpersonating.value) {
-        if (currentPath.startsWith('/admin/') && !currentPath.includes('/impersonate/stop')) {
-          return navigateTo('/dashboard?error=admin_blocked_during_impersonation')
-        }
+      // Still run critical security checks even for public routes
+      if (isImpersonating.value && currentPath.startsWith('/admin/') && !currentPath.includes('/impersonate/stop')) {
+        return navigateTo('/dashboard?error=admin_blocked_during_impersonation')
       }
 
-      // Still run super admin checks for security
       if (currentPath.includes('/admin/impersonate') || currentPath.includes('/impersonate')) {
         if (currentRole.value !== 'super_admin') {
           return navigateTo('/dashboard?error=insufficient_permissions')
         }
       }
 
-      // Still run team-specific route validation for /teams/ routes
-      if (currentPath.startsWith('/teams/') && currentPath !== '/teams') {
-        const teamIdFromRoute = currentPath.split('/teams/')[1]?.split('/')[0]
-        if (teamIdFromRoute && currentTeam.value?.id !== teamIdFromRoute) {
-          return navigateTo('/teams?error=unauthorized_team_access')
-        }
-      }
-
-      // Skip remaining team membership checks for public routes
+      // Public routes skip all other auth/team checks
       return
     }
+
+    // If we reach here, route is protected - continue to team/role validation
   }
   else {
     // Protected by default - only allow routes explicitly listed in publicRoutes

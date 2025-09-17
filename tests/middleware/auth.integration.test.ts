@@ -27,7 +27,7 @@ const mockRuntimeConfig = {
     teamAuth: {
       loginPage: '/signin',
       defaultProtection: 'public',
-      protectedRoutes: ['/dashboard'],
+      protectedRoutes: ['/dashboard', '/teams'],
       publicRoutes: [],
     },
   },
@@ -63,7 +63,7 @@ describe('Middleware Integration Tests', () => {
     mockRuntimeConfig.public.teamAuth = {
       loginPage: '/signin',
       defaultProtection: 'public',
-      protectedRoutes: ['/dashboard'],
+      protectedRoutes: ['/dashboard', '/teams'],
       publicRoutes: [],
     }
 
