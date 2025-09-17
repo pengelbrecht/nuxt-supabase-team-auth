@@ -104,6 +104,16 @@ describe('Middleware Integration Tests', () => {
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
+    it('should allow access to non-protected routes when defaultProtection is public', async () => {
+      // Test a route that's NOT in protectedRoutes array - should be allowed
+      mockRoute.path = '/privacy'
+
+      const _result = await authGlobal(mockRoute)
+
+      expect(_result).toBeUndefined() // No redirect
+      expect(mockNavigateTo).not.toHaveBeenCalled()
+    })
+
     it('should redirect unauthenticated users from protected routes', async () => {
       mockRoute.path = '/dashboard'
 

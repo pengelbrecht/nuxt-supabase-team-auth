@@ -51,6 +51,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const currentPath = to.path
 
+  // Debug logging for troubleshooting
+  console.log('[Team Auth] Middleware debug:', {
+    currentPath,
+    defaultProtection,
+    configuredProtectedRoutes,
+    configuredPublicRoutes,
+    currentUser: currentUser.value ? 'logged in' : 'not logged in'
+  })
+
   // Always allow access to auth routes and root
   const alwaysPublicRoutes = ['/', ...authRoutes]
   const isAlwaysPublic = alwaysPublicRoutes.some(route =>
@@ -58,6 +67,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   )
 
   if (isAlwaysPublic) {
+    console.log('[Team Auth] Allowing always public route:', currentPath)
     return
   }
 
@@ -73,12 +83,20 @@ export default defineNuxtRouteMiddleware(async (to) => {
       currentPath === route || currentPath.startsWith(route + '/'),
     )
 
+    console.log('[Team Auth] Public mode - Route analysis:', {
+      isProtectedRoute,
+      isExplicitlyPublic,
+      currentUser: currentUser.value ? 'logged in' : 'not logged in'
+    })
+
     if (isExplicitlyPublic) {
+      console.log('[Team Auth] Allowing explicitly public route:', currentPath)
       return
     }
 
     // Require authentication only for explicitly protected routes
     if (isProtectedRoute && !currentUser.value) {
+      console.log('[Team Auth] Redirecting from protected route to login:', currentPath)
       const redirectUrl = `${currentPath}${to.search || ''}`
       const loginPage = teamAuthConfig.loginPage || '/signin'
       return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
@@ -86,6 +104,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
     // For public routes (non-protected), return early after security checks
     if (!isProtectedRoute) {
+      console.log('[Team Auth] Allowing non-protected route (public by default):', currentPath)
       // Still run critical security checks even for public routes
       if (isImpersonating.value && currentPath.startsWith('/admin/') && !currentPath.includes('/impersonate/stop')) {
         return navigateTo('/dashboard?error=admin_blocked_during_impersonation')
@@ -109,12 +128,19 @@ export default defineNuxtRouteMiddleware(async (to) => {
       currentPath === route || currentPath.startsWith(route + '/'),
     )
 
+    console.log('[Team Auth] Protected mode - Route analysis:', {
+      isExplicitlyPublic,
+      currentUser: currentUser.value ? 'logged in' : 'not logged in'
+    })
+
     if (isExplicitlyPublic) {
+      console.log('[Team Auth] Allowing explicitly public route (protected mode):', currentPath)
       return
     }
 
     // All other routes require authentication in protected mode
     if (!currentUser.value) {
+      console.log('[Team Auth] Redirecting to login (protected mode):', currentPath)
       const redirectUrl = `${currentPath}${to.search || ''}`
       const loginPage = teamAuthConfig.loginPage || '/signin'
       return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
