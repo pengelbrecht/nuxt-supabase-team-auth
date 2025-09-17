@@ -136,18 +136,8 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
     let excludePaths: string[]
 
     if (options.defaultProtection === 'public') {
-      // Public by default mode - exclude most routes, let middleware handle protection
-      excludePaths = [
-        '/', // Home page
-        ...authRoutes, // Auth routes always public
-        ...(options.publicRoutes || []), // Additional public routes
-        // Add a catch-all pattern to make most routes public
-        '/api/**', // API routes
-        '/_nuxt/**', // Nuxt assets
-        '/favicon.ico',
-        '/robots.txt',
-        '/sitemap.xml',
-      ]
+      // Public by default mode - not used since we disable redirects entirely below
+      excludePaths = []
     }
     else {
       // Protected by default - exclude specific public routes
@@ -173,10 +163,22 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
     }
 
     // Configure redirect options for Supabase middleware
-    const redirectOptions = {
-      login: options.loginPage || '/signin',
-      callback: '/auth/callback',
-      exclude: excludePaths,
+    let redirectOptions
+
+    if (options.defaultProtection === 'public') {
+      // For public mode, disable Supabase redirects entirely - our middleware handles everything
+      redirectOptions = {
+        login: false, // Disable automatic login redirects
+        callback: '/auth/callback', // Still handle OAuth callbacks
+        exclude: ['/**'], // Exclude everything from Supabase auth redirects
+      }
+    } else {
+      // For protected mode, use normal redirect behavior
+      redirectOptions = {
+        login: options.loginPage || '/signin',
+        callback: '/auth/callback',
+        exclude: excludePaths,
+      }
     }
 
     supabaseConfig.redirectOptions = redirectOptions

@@ -6,7 +6,13 @@ import { navigateTo, defineNuxtRouteMiddleware, useRuntimeConfig } from '#import
  * Runs on every route change to ensure proper authentication state
  */
 export default defineNuxtRouteMiddleware(async (to) => {
+
+  // During SSR, ensure authentication state is properly handled
+  // On server-side, we might not have complete auth state yet
+  const isSSR = import.meta.server
+
   const { currentUser, currentTeam, currentRole, isLoading, isImpersonating } = useTeamAuth()
+
 
   // More efficient auth loading wait with early exit
   if (isLoading.value) {
@@ -51,14 +57,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const currentPath = to.path
 
-  // Debug logging for troubleshooting
-  console.log('[Team Auth] Middleware debug:', {
-    currentPath,
-    defaultProtection,
-    configuredProtectedRoutes,
-    configuredPublicRoutes,
-    currentUser: currentUser.value ? 'logged in' : 'not logged in'
-  })
 
   // Always allow access to auth routes and root
   const alwaysPublicRoutes = ['/', ...authRoutes]
@@ -67,7 +65,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   )
 
   if (isAlwaysPublic) {
-    console.log('[Team Auth] Allowing always public route:', currentPath)
     return
   }
 
@@ -83,41 +80,28 @@ export default defineNuxtRouteMiddleware(async (to) => {
       currentPath === route || currentPath.startsWith(route + '/'),
     )
 
-    console.log('[Team Auth] Public mode - Route analysis:', {
-      isProtectedRoute,
-      isExplicitlyPublic,
-      currentUser: currentUser.value ? 'logged in' : 'not logged in'
-    })
 
     if (isExplicitlyPublic) {
-      console.log('[Team Auth] Allowing explicitly public route:', currentPath)
+      return
+    }
+
+    // For public routes (non-protected), return early - this must come FIRST
+    if (!isProtectedRoute) {
+      // Public routes skip ALL auth/team validation checks (including data integrity)
+      return
+    }
+
+    // For SSR: if auth is still loading and route is protected, allow access initially
+    // The client-side middleware will re-run with proper auth state after hydration
+    if (isSSR && isLoading.value && isProtectedRoute) {
       return
     }
 
     // Require authentication only for explicitly protected routes
-    if (isProtectedRoute && !currentUser.value) {
-      console.log('[Team Auth] Redirecting from protected route to login:', currentPath)
+    if (!currentUser.value) {
       const redirectUrl = `${currentPath}${to.search || ''}`
       const loginPage = teamAuthConfig.loginPage || '/signin'
       return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
-    }
-
-    // For public routes (non-protected), return early after security checks
-    if (!isProtectedRoute) {
-      console.log('[Team Auth] Allowing non-protected route (public by default):', currentPath)
-      // Still run critical security checks even for public routes
-      if (isImpersonating.value && currentPath.startsWith('/admin/') && !currentPath.includes('/impersonate/stop')) {
-        return navigateTo('/dashboard?error=admin_blocked_during_impersonation')
-      }
-
-      if (currentPath.includes('/admin/impersonate') || currentPath.includes('/impersonate')) {
-        if (currentRole.value !== 'super_admin') {
-          return navigateTo('/dashboard?error=insufficient_permissions')
-        }
-      }
-
-      // Public routes skip all other auth/team checks
-      return
     }
 
     // If we reach here, route is protected - continue to team/role validation
@@ -128,44 +112,27 @@ export default defineNuxtRouteMiddleware(async (to) => {
       currentPath === route || currentPath.startsWith(route + '/'),
     )
 
-    console.log('[Team Auth] Protected mode - Route analysis:', {
-      isExplicitlyPublic,
-      currentUser: currentUser.value ? 'logged in' : 'not logged in'
-    })
 
     if (isExplicitlyPublic) {
-      console.log('[Team Auth] Allowing explicitly public route (protected mode):', currentPath)
+      // Public routes skip ALL auth/team validation checks (including data integrity)
       return
     }
 
     // All other routes require authentication in protected mode
     if (!currentUser.value) {
-      console.log('[Team Auth] Redirecting to login (protected mode):', currentPath)
       const redirectUrl = `${currentPath}${to.search || ''}`
       const loginPage = teamAuthConfig.loginPage || '/signin'
       return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
     }
   }
 
-  // Handle impersonation restrictions
-  if (isImpersonating.value) {
-    // Block admin routes during impersonation (except stop impersonation)
-    if (currentPath.startsWith('/admin/') && !currentPath.includes('/impersonate/stop')) {
-      return navigateTo('/dashboard?error=admin_blocked_during_impersonation')
-    }
-  }
-
-  // Handle super admin impersonation routes
-  if (currentPath.includes('/admin/impersonate') || currentPath.includes('/impersonate')) {
-    if (currentRole.value !== 'super_admin') {
-      return navigateTo('/dashboard?error=insufficient_permissions')
-    }
-  }
+  // Impersonation restrictions are handled by the impersonation system itself
+  // via API endpoints, not frontend route middleware
 
   // Handle data integrity check: users should always have a team
   // This should never happen in single-team model, but guard against data corruption
   if (currentUser.value && !currentTeam.value) {
-    console.error('[Team Auth] User exists without team - data integrity issue. User ID:', currentUser.value.id)
+    console.error('[Team Auth] REDIRECT POINT 3: User exists without team - data integrity issue. User ID:', currentUser.value.id)
     return navigateTo('/signin?error=account_misconfigured')
   }
 })

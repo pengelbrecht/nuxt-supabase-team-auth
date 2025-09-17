@@ -153,35 +153,8 @@ describe('Middleware Integration Tests', () => {
       expect(mockNavigateTo).toHaveBeenCalledWith('/signin?error=account_misconfigured')
     })
 
-    it('should block admin routes during impersonation', async () => {
-      mockRoute.path = '/admin/users'
-      vi.mocked(useTeamAuth).mockReturnValue({
-        currentUser: { value: { id: 'user-123' } },
-        currentRole: { value: 'super_admin' },
-        isImpersonating: { value: true },
-        isLoading: { value: false },
-      })
-
-      const _result = await authGlobal(mockRoute)
-
-      expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=admin_blocked_during_impersonation')
-    })
-
-    // Legacy team-specific route validation removed - no longer needed in single-team model
-
-    it('should block impersonation routes for non-super admins', async () => {
-      mockRoute.path = '/admin/impersonate'
-      vi.mocked(useTeamAuth).mockReturnValue({
-        currentUser: { value: { id: 'user-123' } },
-        currentRole: { value: 'admin' },
-        isLoading: { value: false },
-        isImpersonating: { value: false },
-      })
-
-      const _result = await authGlobal(mockRoute)
-
-      expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=insufficient_permissions')
-    })
+    // Impersonation functionality is handled via API endpoints, not frontend routes
+    // The middleware no longer hardcodes assumptions about /admin routes
 
     // Skipping this test as it relies on complex async timing behavior
     // The loading state functionality works in production but is complex to test reliably
