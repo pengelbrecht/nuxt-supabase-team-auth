@@ -158,17 +158,11 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       ]
     }
 
-    const redirectOptions = {
-      login: options.loginPage || '/signin',
-      callback: '/auth/callback', // Use default callback for OAuth
-      exclude: excludePaths,
-    }
-
-    // Set both nuxt.options.supabase and runtime config for @nuxtjs/supabase
-    nuxt.options.supabase = defu(nuxt.options.supabase || {}, {
+    // Only set redirect options for protected mode
+    // In public mode, let our middleware handle everything
+    let supabaseConfig = {
       url: supabaseUrl,
       key: supabaseKey,
-      redirectOptions,
       useSsrCookies: true,
       clientOptions: {
         auth: {
@@ -176,39 +170,43 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
           detectSessionInUrl: true,
         },
       },
-    })
+    }
+
+    let runtimeConfig = {
+      url: supabaseUrl,
+      key: supabaseKey,
+    }
+
+    // Only add redirectOptions if we're NOT in public mode
+    if (options.defaultProtection !== 'public') {
+      const redirectOptions = {
+        login: options.loginPage || '/signin',
+        callback: '/auth/callback',
+        exclude: excludePaths,
+      }
+
+      supabaseConfig.redirectOptions = redirectOptions
+      runtimeConfig.redirectOptions = {
+        login: redirectOptions.login,
+        callback: redirectOptions.callback,
+        exclude: redirectOptions.exclude,
+      }
+    }
+
+    // Set both nuxt.options.supabase and runtime config for @nuxtjs/supabase
+    nuxt.options.supabase = defu(nuxt.options.supabase || {}, supabaseConfig)
 
     // Set up runtime config structure that @nuxtjs/supabase expects
-    // This allows NUXT_PUBLIC_SUPABASE_* env vars to override these defaults
     nuxt.options.runtimeConfig.public.supabase = defu(
       nuxt.options.runtimeConfig.public.supabase || {},
-      {
-        url: supabaseUrl,
-        key: supabaseKey,
-        redirectOptions: {
-          login: redirectOptions.login,
-          callback: redirectOptions.callback,
-          exclude: redirectOptions.exclude,
-        },
-      },
+      runtimeConfig,
     )
 
     // Development logging removed - module is stable
 
     // Also ensure the configuration is applied before @nuxtjs/supabase initializes
     nuxt.hook('modules:before', () => {
-      nuxt.options.supabase = defu(nuxt.options.supabase || {}, {
-        url: supabaseUrl,
-        key: supabaseKey,
-        redirectOptions,
-        useSsrCookies: true,
-        clientOptions: {
-          auth: {
-            flowType: 'implicit',
-            detectSessionInUrl: true,
-          },
-        },
-      })
+      nuxt.options.supabase = defu(nuxt.options.supabase || {}, supabaseConfig)
 
       // Development logging removed - module is stable
     })
