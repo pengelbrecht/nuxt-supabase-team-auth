@@ -105,7 +105,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
         }
       }
 
-      // Skip team membership checks for public routes
+      // Still run team-specific route validation for /teams/ routes
+      if (currentPath.startsWith('/teams/') && currentPath !== '/teams') {
+        const teamIdFromRoute = currentPath.split('/teams/')[1]?.split('/')[0]
+        if (teamIdFromRoute && currentTeam.value?.id !== teamIdFromRoute) {
+          return navigateTo('/teams?error=unauthorized_team_access')
+        }
+      }
+
+      // Skip remaining team membership checks for public routes
       return
     }
   }
