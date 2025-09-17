@@ -31,7 +31,8 @@
           label="Reason for Impersonation"
           name="reason"
           required
-          description="Required for audit trail"
+          description="Required for audit trail (minimum 10 characters)"
+          :error="reasonError"
           class="flex items-center justify-between mb-4 gap-2"
         >
           <UInput
@@ -39,6 +40,7 @@
             placeholder="e.g., Customer support ticket #12345 - investigating login issues"
             :disabled="isLoading"
             size="md"
+            @blur="validateReason"
           />
         </UFormField>
 
@@ -107,7 +109,7 @@
                 <RoleBadge :role="user.role" />
 
                 <UButton
-                  :disabled="user.id === currentUser?.id || !impersonationReason.trim() || isStarting"
+                  :disabled="user.id === currentUser?.id || !isReasonValid || isStarting"
                   :loading="isStarting && impersonatingUserId === user.id"
                   size="sm"
                   icon="i-lucide-arrow-right"
@@ -184,9 +186,15 @@ const searchResults = ref<any[]>([])
 const isSearching = ref(false)
 const isLoadingUsers = ref(false)
 const impersonatingUserId = ref<string | null>(null)
+const reasonError = ref<string | null>(null)
 
 // Get Supabase client
 const supabase = useSupabaseClient()
+
+// Validation computed properties
+const isReasonValid = computed(() => {
+  return impersonationReason.value.trim().length >= 10
+})
 
 // Computed property for displayed users with instant client-side filtering
 const displayedUsers = computed(() => {
@@ -345,14 +353,24 @@ const performSearch = async () => {
   }
 }
 
+// Validation function
+const validateReason = () => {
+  const reason = impersonationReason.value.trim()
+  if (!reason) {
+    reasonError.value = 'Reason is required'
+  } else if (reason.length < 10) {
+    reasonError.value = 'Reason must be at least 10 characters long'
+  } else {
+    reasonError.value = null
+  }
+}
+
 // Handle impersonation start
 const handleStartImpersonation = async (userId: string) => {
-  if (!impersonationReason.value.trim()) {
-    toast.add({
-      title: 'Reason Required',
-      description: 'Please provide a reason for impersonation',
-      color: 'orange',
-    })
+  // Validate reason before submitting
+  validateReason()
+
+  if (!isReasonValid.value) {
     return
   }
 

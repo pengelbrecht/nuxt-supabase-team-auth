@@ -1277,6 +1277,12 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           access_token: response.session.access_token,
           refresh_token: response.session.refresh_token,
         })
+
+        // Redirect to dashboard after successful impersonation to avoid middleware confusion
+        if (import.meta.client) {
+          const { navigateTo } = await import('#imports')
+          await navigateTo('/dashboard', { replace: true })
+        }
       }
       catch (error: unknown) {
         console.error('Start impersonation failed:', error)

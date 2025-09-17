@@ -58,8 +58,10 @@
 
 ## Release Process (CRITICAL)
 - **NEVER release/publish before testing locally in the test project**
+- **NEVER publish without explicit user permission**
 - Always test changes in `./test-projects/minimal-nuxt-ui-app` first
 - Only publish after confirming everything works in the local test environment
+- Get explicit approval from user before running `pnpm publish`
 - This prevents breaking consumer applications with untested changes
 
 ## Database Schema (Stable)
