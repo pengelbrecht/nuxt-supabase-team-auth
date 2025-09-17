@@ -1278,10 +1278,12 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           refresh_token: response.session.refresh_token,
         })
 
-        // Redirect to dashboard after successful impersonation to avoid middleware confusion
+        // Redirect to configured redirectTo location after successful impersonation to avoid middleware confusion
         if (import.meta.client) {
-          const { navigateTo } = await import('#imports')
-          await navigateTo('/dashboard', { replace: true })
+          const { navigateTo, useRuntimeConfig } = await import('#imports')
+          const config = useRuntimeConfig()
+          const redirectTo = config.public.teamAuth?.redirectTo || '/dashboard'
+          await navigateTo(redirectTo, { replace: true })
         }
       }
       catch (error: unknown) {

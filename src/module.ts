@@ -260,10 +260,6 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
         from: resolver.resolve('./runtime/composables/useTeamAuth'),
       },
       {
-        name: 'useImpersonation',
-        from: resolver.resolve('./runtime/composables/useImpersonation'),
-      },
-      {
         name: 'useSession',
         from: resolver.resolve('./runtime/composables/useSession'),
       },
