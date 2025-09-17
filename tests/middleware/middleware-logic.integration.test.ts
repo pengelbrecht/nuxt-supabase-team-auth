@@ -60,7 +60,7 @@ async function globalAuthMiddlewareLogic(route: MockRoute, authState: MockAuthSt
   const protectedRoutes = [
     '/dashboard',
     '/team',
-    '/teams',
+    // Legacy /teams route removed - no longer needed in single-team model
     '/admin',
     '/profile',
     '/settings',
@@ -118,21 +118,11 @@ async function globalAuthMiddlewareLogic(route: MockRoute, authState: MockAuthSt
     }
   }
 
-  // Handle team-specific routes
-  if (currentPath.startsWith('/teams/') && currentPath !== '/teams') {
-    const teamIdFromRoute = currentPath.split('/teams/')[1]?.split('/')[0]
-
-    if (teamIdFromRoute && _currentTeam.value?.id !== teamIdFromRoute) {
-      return navigateTo('/teams?error=unauthorized_team_access')
-    }
-  }
-
-  // Handle routes that require team membership
-  const teamRequiredRoutes = ['/team/', '/dashboard']
-  const requiresTeam = teamRequiredRoutes.some(routePath => currentPath.startsWith(routePath))
-
-  if (requiresTeam && currentUser.value && !_currentTeam.value) {
-    return navigateTo('/teams?message=select_team_first')
+  // Handle data integrity check: users should always have a team
+  // This should never happen in single-team model, but guard against data corruption
+  if (currentUser.value && !_currentTeam.value) {
+    console.error('[Team Auth] User exists without team - data integrity issue. User ID:', currentUser.value.id)
+    return navigateTo('/signin?error=account_misconfigured')
   }
 }
 
@@ -173,14 +163,11 @@ async function requireTeamLogic(route: MockRoute, authState: MockAuthState, navi
     return navigateTo(`/login?redirect=${encodeURIComponent(redirectUrl)}`)
   }
 
-  // Redirect if no team selected
+  // In single-team model, authenticated users should always have a team
+  // This should never happen, but guard against data corruption
   if (!currentTeam.value) {
-    return navigateTo('/teams?message=select_team_first')
-  }
-
-  // Validate team ID from route parameters
-  if (route.params?.teamId && route.params.teamId !== currentTeam.value.id) {
-    return navigateTo('/teams?error=unauthorized_team_access')
+    console.error('[Team Auth] Authenticated user missing team - data integrity issue. User ID:', currentUser.value.id)
+    return navigateTo('/signin?error=account_misconfigured')
   }
 }
 
@@ -204,9 +191,11 @@ function createRequireRoleLogic(requiredRole: string, options: RequireRoleOption
       return navigateTo(`/login?redirect=${encodeURIComponent(redirectUrl)}`)
     }
 
-    // Redirect if no role (need team)
+    // In single-team model, authenticated users should always have a role
+    // This should never happen, but guard against data corruption
     if (!currentRole.value) {
-      return navigateTo('/teams?message=select_team_first')
+      console.error('[Team Auth] Authenticated user missing role - data integrity issue. User ID:', currentUser.value.id)
+      return navigateTo('/signin?error=account_misconfigured')
     }
 
     // Role hierarchy: super_admin > owner > admin > member
@@ -302,13 +291,13 @@ describe('Middleware Logic Integration Tests', () => {
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
-    it('should redirect users without team to team selection', async () => {
+    it('should redirect users without team to account misconfigured', async () => {
       mockRoute.path = '/dashboard'
       mockAuthState.currentUser.value = { id: 'user-123' }
 
       await globalAuthMiddlewareLogic(mockRoute, mockAuthState, mockNavigateTo)
 
-      expect(mockNavigateTo).toHaveBeenCalledWith('/teams?message=select_team_first')
+      expect(mockNavigateTo).toHaveBeenCalledWith('/signin?error=account_misconfigured')
     })
 
     it('should block admin routes during impersonation', async () => {
@@ -322,16 +311,7 @@ describe('Middleware Logic Integration Tests', () => {
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=admin_blocked_during_impersonation')
     })
 
-    it('should validate team-specific routes', async () => {
-      mockRoute.path = '/teams/wrong-team-id/dashboard'
-      mockAuthState.currentUser.value = { id: 'user-123' }
-      mockAuthState.currentTeam.value = { id: 'team-456' }
-      mockAuthState.currentRole.value = 'member'
-
-      await globalAuthMiddlewareLogic(mockRoute, mockAuthState, mockNavigateTo)
-
-      expect(mockNavigateTo).toHaveBeenCalledWith('/teams?error=unauthorized_team_access')
-    })
+    // Legacy team-specific route validation test removed - no longer needed in single-team model
 
     it('should block impersonation routes for non-super admins', async () => {
       mockRoute.path = '/admin/impersonate'
@@ -391,36 +371,17 @@ describe('Middleware Logic Integration Tests', () => {
       expect(mockNavigateTo).toHaveBeenCalledWith('/login?redirect=%2Fdashboard')
     })
 
-    it('should redirect users without team to team selection', async () => {
+    it('should redirect users without team to account misconfigured', async () => {
       mockAuthState.currentUser.value = { id: 'user-123' }
 
       await requireTeamLogic(mockRoute, mockAuthState, mockNavigateTo)
 
-      expect(mockNavigateTo).toHaveBeenCalledWith('/teams?message=select_team_first')
+      expect(mockNavigateTo).toHaveBeenCalledWith('/signin?error=account_misconfigured')
     })
 
-    it('should validate team ID from route parameters', async () => {
-      mockRoute.params = { teamId: 'wrong-team-id' }
-      mockAuthState.currentUser.value = { id: 'user-123' }
-      mockAuthState.currentTeam.value = { id: 'team-456' }
-      mockAuthState.currentRole.value = 'member'
+    // Legacy team ID validation test removed - no longer needed in single-team model
 
-      await requireTeamLogic(mockRoute, mockAuthState, mockNavigateTo)
-
-      expect(mockNavigateTo).toHaveBeenCalledWith('/teams?error=unauthorized_team_access')
-    })
-
-    it('should allow access when route team matches user team', async () => {
-      mockRoute.params = { teamId: 'team-456' }
-      mockAuthState.currentUser.value = { id: 'user-123' }
-      mockAuthState.currentTeam.value = { id: 'team-456' }
-      mockAuthState.currentRole.value = 'member'
-
-      const result = await requireTeamLogic(mockRoute, mockAuthState, mockNavigateTo)
-
-      expect(result).toBeUndefined()
-      expect(mockNavigateTo).not.toHaveBeenCalled()
-    })
+    // Legacy team matching test removed - no longer needed in single-team model
   })
 
   describe('Require Role Logic', () => {
@@ -462,7 +423,7 @@ describe('Middleware Logic Integration Tests', () => {
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=insufficient_permissions')
     })
 
-    it('should redirect users without role to team selection', async () => {
+    it('should redirect users without role to account misconfigured', async () => {
       const requireAdminLogic = createRequireRoleLogic('admin')
 
       mockAuthState.currentUser.value = { id: 'user-123' }
@@ -471,7 +432,7 @@ describe('Middleware Logic Integration Tests', () => {
 
       await requireAdminLogic(mockRoute, mockAuthState, mockNavigateTo)
 
-      expect(mockNavigateTo).toHaveBeenCalledWith('/teams?message=select_team_first')
+      expect(mockNavigateTo).toHaveBeenCalledWith('/signin?error=account_misconfigured')
     })
 
     it('should redirect unauthenticated users to login', async () => {

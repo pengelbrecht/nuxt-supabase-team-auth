@@ -140,20 +140,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
   }
 
-  // Handle team-specific routes
-  if (currentPath.startsWith('/teams/') && currentPath !== '/teams') {
-    const teamIdFromRoute = currentPath.split('/teams/')[1]?.split('/')[0]
-
-    if (teamIdFromRoute && currentTeam.value?.id !== teamIdFromRoute) {
-      return navigateTo('/teams?error=unauthorized_team_access')
-    }
-  }
-
-  // Handle routes that require team membership
-  const teamRequiredRoutes = ['/team/', '/dashboard']
-  const requiresTeam = teamRequiredRoutes.some(route => currentPath.startsWith(route))
-
-  if (requiresTeam && currentUser.value && !currentTeam.value) {
-    return navigateTo('/teams?message=select_team_first')
+  // Handle data integrity check: users should always have a team
+  // This should never happen in single-team model, but guard against data corruption
+  if (currentUser.value && !currentTeam.value) {
+    console.error('[Team Auth] User exists without team - data integrity issue. User ID:', currentUser.value.id)
+    return navigateTo('/signin?error=account_misconfigured')
   }
 })

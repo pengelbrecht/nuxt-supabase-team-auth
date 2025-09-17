@@ -48,15 +48,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
       }
     }
 
-    // Default redirect logic based on user state
-    if (currentTeam.value) {
-      // User has a team, redirect to dashboard
-      return navigateTo('/dashboard')
+    // In single-team model, authenticated users always have a team
+    // This should never happen, but guard against data corruption
+    if (!currentTeam.value) {
+      console.error('[Team Auth] Authenticated user missing team - data integrity issue. User ID:', currentUser.value.id)
+      return navigateTo('/signin?error=account_misconfigured')
     }
-    else {
-      // User needs to select/create a team
-      return navigateTo('/teams')
-    }
+
+    // Redirect to dashboard (user has team guaranteed)
+    return navigateTo('/dashboard')
   }
 })
 
@@ -114,7 +114,4 @@ export function createRedirectAuthenticated(
  * Predefined redirect middleware variants
  */
 export const redirectToDashboard = createRedirectAuthenticated('/dashboard')
-export const redirectToTeams = createRedirectAuthenticated('/teams')
-export const redirectBasedOnTeam = createRedirectAuthenticated(
-  (user, team) => team ? '/dashboard' : '/teams',
-)
+// Legacy multi-team variants removed - not needed in single-team model

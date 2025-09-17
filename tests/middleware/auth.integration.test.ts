@@ -27,7 +27,7 @@ const mockRuntimeConfig = {
     teamAuth: {
       loginPage: '/signin',
       defaultProtection: 'public',
-      protectedRoutes: ['/dashboard', '/teams'],
+      protectedRoutes: ['/dashboard'],
       publicRoutes: [],
     },
   },
@@ -63,7 +63,7 @@ describe('Middleware Integration Tests', () => {
     mockRuntimeConfig.public.teamAuth = {
       loginPage: '/signin',
       defaultProtection: 'public',
-      protectedRoutes: ['/dashboard', '/teams'],
+      protectedRoutes: ['/dashboard'],
       publicRoutes: [],
     }
 
@@ -128,7 +128,7 @@ describe('Middleware Integration Tests', () => {
       expect(mockNavigateTo).not.toHaveBeenCalled()
     })
 
-    it('should redirect users without team to team selection', async () => {
+    it('should redirect users without team to account misconfigured', async () => {
       mockRoute.path = '/dashboard'
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: { id: 'user-123' } },
@@ -140,7 +140,7 @@ describe('Middleware Integration Tests', () => {
 
       const _result = await authGlobal(mockRoute)
 
-      expect(mockNavigateTo).toHaveBeenCalledWith('/teams?message=select_team_first')
+      expect(mockNavigateTo).toHaveBeenCalledWith('/signin?error=account_misconfigured')
     })
 
     it('should block admin routes during impersonation', async () => {
@@ -157,20 +157,7 @@ describe('Middleware Integration Tests', () => {
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=admin_blocked_during_impersonation')
     })
 
-    it('should validate team-specific routes', async () => {
-      mockRoute.path = '/teams/wrong-team-id/dashboard'
-      vi.mocked(useTeamAuth).mockReturnValue({
-        currentUser: { value: { id: 'user-123' } },
-        currentTeam: { value: { id: 'team-456' } },
-        currentRole: { value: 'member' },
-        isLoading: { value: false },
-        isImpersonating: { value: false },
-      })
-
-      const _result = await authGlobal(mockRoute)
-
-      expect(mockNavigateTo).toHaveBeenCalledWith('/teams?error=unauthorized_team_access')
-    })
+    // Legacy team-specific route validation removed - no longer needed in single-team model
 
     it('should block impersonation routes for non-super admins', async () => {
       mockRoute.path = '/admin/impersonate'
@@ -262,7 +249,7 @@ describe('Middleware Integration Tests', () => {
       expect(mockNavigateTo).toHaveBeenCalledWith('/signin?redirect=%2Fdashboard')
     })
 
-    it('should redirect users without team to team selection', async () => {
+    it('should redirect users without team to account misconfigured', async () => {
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: { id: 'user-123' } },
         currentTeam: { value: null },
@@ -272,37 +259,12 @@ describe('Middleware Integration Tests', () => {
 
       const _result = await requireTeam(mockRoute)
 
-      expect(mockNavigateTo).toHaveBeenCalledWith('/teams?message=select_team_first')
+      expect(mockNavigateTo).toHaveBeenCalledWith('/signin?error=account_misconfigured')
     })
 
-    it('should validate team ID from route parameters', async () => {
-      mockRoute.params = { teamId: 'wrong-team-id' }
-      vi.mocked(useTeamAuth).mockReturnValue({
-        currentUser: { value: { id: 'user-123' } },
-        currentTeam: { value: { id: 'team-456' } },
-        currentRole: { value: 'member' },
-        isLoading: { value: false },
-      })
+    // Legacy team ID validation removed - no longer needed in single-team model
 
-      const _result = await requireTeam(mockRoute)
-
-      expect(mockNavigateTo).toHaveBeenCalledWith('/teams?error=unauthorized_team_access')
-    })
-
-    it('should allow access when route team matches user team', async () => {
-      mockRoute.params = { teamId: 'team-456' }
-      vi.mocked(useTeamAuth).mockReturnValue({
-        currentUser: { value: { id: 'user-123' } },
-        currentTeam: { value: { id: 'team-456' } },
-        currentRole: { value: 'member' },
-        isLoading: { value: false },
-      })
-
-      const _result = await requireTeam(mockRoute)
-
-      expect(_result).toBeUndefined()
-      expect(mockNavigateTo).not.toHaveBeenCalled()
-    })
+    // Legacy team matching test removed - no longer needed in single-team model
   })
 
   describe('Require Role Middleware', () => {
@@ -353,7 +315,7 @@ describe('Middleware Integration Tests', () => {
       expect(mockNavigateTo).toHaveBeenCalledWith('/dashboard?error=insufficient_permissions')
     })
 
-    it('should redirect users without role to team selection', async () => {
+    it('should redirect users without role to account misconfigured', async () => {
       const requireAdminMiddleware = createRequireRoleMiddleware('admin')
 
       vi.mocked(useTeamAuth).mockReturnValue({
@@ -365,7 +327,7 @@ describe('Middleware Integration Tests', () => {
 
       const _result = await requireAdminMiddleware(mockRoute)
 
-      expect(mockNavigateTo).toHaveBeenCalledWith('/teams?message=select_team_first')
+      expect(mockNavigateTo).toHaveBeenCalledWith('/signin?error=account_misconfigured')
     })
 
     it('should redirect unauthenticated users to login', async () => {

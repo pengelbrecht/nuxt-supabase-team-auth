@@ -61,9 +61,11 @@ export function createRequireRoleMiddleware(
       return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
     }
 
-    // Check if user has a role (requires team membership)
+    // In single-team model, authenticated users should always have a role
+    // This should never happen, but guard against data corruption
     if (!currentRole.value) {
-      return navigateTo('/teams?message=select_team_first')
+      console.error('[Team Auth] Authenticated user missing role - data integrity issue. User ID:', currentUser.value.id)
+      return navigateTo('/signin?error=account_misconfigured')
     }
 
     // Check role permissions
