@@ -21,17 +21,23 @@ vi.mock('../../src/runtime/composables/useTeamAuth', () => ({
   useTeamAuth: vi.fn(),
 }))
 
+// Mock runtime config with configurable teamAuth
+const mockRuntimeConfig = {
+  public: {
+    teamAuth: {
+      loginPage: '/signin',
+      defaultProtection: 'public',
+      protectedRoutes: ['/dashboard'],
+      publicRoutes: [],
+    },
+  },
+}
+
 // Mock #imports for middleware
 vi.mock('#imports', () => ({
   navigateTo: vi.fn(),
   defineNuxtRouteMiddleware: vi.fn(fn => fn),
-  useRuntimeConfig: vi.fn(() => ({
-    public: {
-      teamAuth: {
-        loginPage: '/signin',
-      },
-    },
-  })),
+  useRuntimeConfig: vi.fn(() => mockRuntimeConfig),
 }))
 
 describe('Middleware Integration Tests', () => {
@@ -51,6 +57,14 @@ describe('Middleware Integration Tests', () => {
       params: {},
       search: '',
       meta: {},
+    }
+
+    // Reset runtime config to default public mode
+    mockRuntimeConfig.public.teamAuth = {
+      loginPage: '/signin',
+      defaultProtection: 'public',
+      protectedRoutes: ['/dashboard'],
+      publicRoutes: [],
     }
 
     // Default auth state - unauthenticated
@@ -433,6 +447,42 @@ describe('Middleware Integration Tests', () => {
     // The timeout functionality works in production
     it.skip('should handle auth loading timeout', async () => {
       // Timeout testing - skipped for performance
+    })
+  })
+
+  describe('Protection Mode Configuration', () => {
+    it('should respect defaultProtection: "public" mode', async () => {
+      mockRuntimeConfig.public.teamAuth.defaultProtection = 'public'
+      mockRuntimeConfig.public.teamAuth.protectedRoutes = ['/dashboard']
+
+      // Route not in any array should be public
+      mockRoute.path = '/some-random-route'
+      let result = await authGlobal(mockRoute)
+      expect(result).toBeUndefined()
+      expect(mockNavigateTo).not.toHaveBeenCalled()
+
+      // Protected route should require auth
+      vi.clearAllMocks()
+      mockRoute.path = '/dashboard'
+      await authGlobal(mockRoute)
+      expect(mockNavigateTo).toHaveBeenCalledWith('/signin?redirect=%2Fdashboard')
+    })
+
+    it('should respect defaultProtection: "protected" mode', async () => {
+      mockRuntimeConfig.public.teamAuth.defaultProtection = 'protected'
+      mockRuntimeConfig.public.teamAuth.publicRoutes = ['/about']
+
+      // Route not in publicRoutes should require auth
+      mockRoute.path = '/some-random-route'
+      await authGlobal(mockRoute)
+      expect(mockNavigateTo).toHaveBeenCalledWith('/signin?redirect=%2Fsome-random-route')
+
+      // Public route should be allowed
+      vi.clearAllMocks()
+      mockRoute.path = '/about'
+      const result = await authGlobal(mockRoute)
+      expect(result).toBeUndefined()
+      expect(mockNavigateTo).not.toHaveBeenCalled()
     })
   })
 

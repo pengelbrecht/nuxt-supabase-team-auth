@@ -106,8 +106,8 @@ export default defineNuxtConfig({
 | `redirectTo` | `string` | `'/dashboard'` | Where to redirect after successful auth |
 | `loginPage` | `string` | `'/signin'` | Your sign-in page route |
 | `defaultProtection` | `'public'\|'protected'` | `'public'` | Default route protection mode |
-| `protectedRoutes` | `string[]` | `['/dashboard']` | Routes that require authentication |
-| `publicRoutes` | `string[]` | `[]` | Additional public routes |
+| `protectedRoutes` | `string[]` | `['/dashboard']` | Routes that require authentication (used with `defaultProtection: 'public'`) |
+| `publicRoutes` | `string[]` | `[]` | Routes that don't require authentication (used with `defaultProtection: 'protected'`) |
 | `socialProviders.google.enabled` | `boolean` | `true` | Enable Google OAuth |
 | `passwordPolicy` | `object` | See below | Customize password requirements |
 | `debug` | `boolean` | Auto-detected | Enable debug logging |

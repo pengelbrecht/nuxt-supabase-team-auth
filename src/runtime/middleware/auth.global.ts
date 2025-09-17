@@ -53,43 +53,60 @@ export default defineNuxtRouteMiddleware(async (to) => {
     '/accept-invite',
   ]
 
-  // Build final route lists based on protection mode
-  let protectedRoutes: string[]
-  let publicRoutes: string[]
-
-  if (defaultProtection === 'public') {
-    // Public by default - only specific routes are protected
-    protectedRoutes = configuredProtectedRoutes
-    publicRoutes = ['/', ...authRoutes, ...configuredPublicRoutes]
-  }
-  else {
-    // Protected by default - specific routes are public
-    protectedRoutes = ['/dashboard', '/team', '/teams', '/admin', '/profile', '/settings']
-    publicRoutes = ['/', ...authRoutes, ...configuredPublicRoutes]
-  }
-
   const currentPath = to.path
 
-  // Check if current route is public
-  const isPublicRoute = publicRoutes.some(route =>
+  // Always allow access to auth routes and root
+  const alwaysPublicRoutes = ['/', ...authRoutes]
+  const isAlwaysPublic = alwaysPublicRoutes.some(route =>
     currentPath === route || currentPath.startsWith(route + '/'),
   )
 
-  // Allow access to public routes
-  if (isPublicRoute) {
+  if (isAlwaysPublic) {
     return
   }
 
-  // Check if current route is protected
-  const isProtectedRoute = protectedRoutes.some(route =>
-    currentPath.startsWith(route),
-  )
+  // Apply protection logic based on defaultProtection setting
+  if (defaultProtection === 'public') {
+    // Public by default - only protect routes explicitly listed in protectedRoutes
+    const isProtectedRoute = configuredProtectedRoutes.some(route =>
+      currentPath === route || currentPath.startsWith(route + '/'),
+    )
 
-  // Require authentication for protected routes
-  if (isProtectedRoute && !currentUser.value) {
-    const redirectUrl = `${currentPath}${to.search ? `?${new URLSearchParams(to.query).toString()}` : ''}`
-    const loginPage = teamAuthConfig.loginPage || '/signin'
-    return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
+    // Also allow access to additional configured public routes
+    const isExplicitlyPublic = configuredPublicRoutes.some(route =>
+      currentPath === route || currentPath.startsWith(route + '/'),
+    )
+
+    if (isExplicitlyPublic) {
+      return
+    }
+
+    // Require authentication only for explicitly protected routes
+    if (isProtectedRoute && !currentUser.value) {
+      const redirectUrl = `${currentPath}${to.search || ''}`
+      const loginPage = teamAuthConfig.loginPage || '/signin'
+      return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
+    }
+
+    // For public default mode, allow all other routes (the key fix!)
+    // Note: Don't return here - continue to team/impersonation logic below
+  }
+  else {
+    // Protected by default - only allow routes explicitly listed in publicRoutes
+    const isExplicitlyPublic = configuredPublicRoutes.some(route =>
+      currentPath === route || currentPath.startsWith(route + '/'),
+    )
+
+    if (isExplicitlyPublic) {
+      return
+    }
+
+    // All other routes require authentication in protected mode
+    if (!currentUser.value) {
+      const redirectUrl = `${currentPath}${to.search || ''}`
+      const loginPage = teamAuthConfig.loginPage || '/signin'
+      return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
+    }
   }
 
   // Handle impersonation restrictions
