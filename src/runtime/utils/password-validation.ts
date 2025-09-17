@@ -1,6 +1,6 @@
+import * as v from 'valibot'
 import type { PasswordPolicy, PasswordValidationResult } from '../types/password-policy'
 import { DEFAULT_PASSWORD_POLICY } from '../types/password-policy'
-import * as v from 'valibot'
 
 /**
  * Validates a password against the provided policy

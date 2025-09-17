@@ -1,8 +1,8 @@
 import { computed } from 'vue'
+import * as v from 'valibot'
 import type { PasswordPolicy } from '../types/password-policy'
 import { validatePassword, generatePasswordHelpText, createPasswordSchema } from '../utils/password-validation'
 import { useRuntimeConfig } from '#imports'
-import * as v from 'valibot'
 
 /**
  * Composable to access and use the password policy configuration

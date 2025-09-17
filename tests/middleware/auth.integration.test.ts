@@ -457,7 +457,7 @@ describe('Middleware Integration Tests', () => {
 
       // Route not in any array should be public
       mockRoute.path = '/some-random-route'
-      let result = await authGlobal(mockRoute)
+      const result = await authGlobal(mockRoute)
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
 

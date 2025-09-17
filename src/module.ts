@@ -160,7 +160,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 
     // Only set redirect options for protected mode
     // In public mode, let our middleware handle everything
-    let supabaseConfig = {
+    const supabaseConfig = {
       url: supabaseUrl,
       key: supabaseKey,
       useSsrCookies: true,
@@ -181,14 +181,14 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 
     supabaseConfig.redirectOptions = redirectOptions
 
-    let runtimeConfig = {
+    const runtimeConfig = {
       url: supabaseUrl,
       key: supabaseKey,
       redirectOptions: {
         login: redirectOptions.login,
         callback: redirectOptions.callback,
         exclude: redirectOptions.exclude,
-      }
+      },
     }
 
     // Set both nuxt.options.supabase and runtime config for @nuxtjs/supabase

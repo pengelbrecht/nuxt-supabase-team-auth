@@ -365,9 +365,10 @@ describe('Auth Middleware Configuration Tests', () => {
         if (testCase.shouldAllow) {
           expect(result).toBeUndefined()
           expect(mockNavigateTo).not.toHaveBeenCalled()
-        } else {
+        }
+        else {
           expect(mockNavigateTo).toHaveBeenCalledWith(
-            expect.stringContaining('/signin?redirect=')
+            expect.stringContaining('/signin?redirect='),
           )
         }
       }
@@ -401,9 +402,10 @@ describe('Auth Middleware Configuration Tests', () => {
         if (testCase.shouldAllow) {
           expect(result).toBeUndefined()
           expect(mockNavigateTo).not.toHaveBeenCalled()
-        } else {
+        }
+        else {
           expect(mockNavigateTo).toHaveBeenCalledWith(
-            expect.stringContaining('/signin?redirect=')
+            expect.stringContaining('/signin?redirect='),
           )
         }
       }
