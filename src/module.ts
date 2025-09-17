@@ -172,21 +172,19 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       },
     }
 
+    // Configure redirect options for Supabase middleware
+    const redirectOptions = {
+      login: options.loginPage || '/signin',
+      callback: '/auth/callback',
+      exclude: excludePaths,
+    }
+
+    supabaseConfig.redirectOptions = redirectOptions
+
     let runtimeConfig = {
       url: supabaseUrl,
       key: supabaseKey,
-    }
-
-    // Only add redirectOptions if we're NOT in public mode
-    if (options.defaultProtection !== 'public') {
-      const redirectOptions = {
-        login: options.loginPage || '/signin',
-        callback: '/auth/callback',
-        exclude: excludePaths,
-      }
-
-      supabaseConfig.redirectOptions = redirectOptions
-      runtimeConfig.redirectOptions = {
+      redirectOptions: {
         login: redirectOptions.login,
         callback: redirectOptions.callback,
         exclude: redirectOptions.exclude,
@@ -232,10 +230,8 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       },
     }
 
-    // Only add redirectOptions if we're using protected by default mode
-    if (options.defaultProtection !== 'public') {
-      supabaseModuleOptions.redirectOptions = redirectOptions
-    }
+    // Always add redirectOptions - our middleware will handle the public logic
+    supabaseModuleOptions.redirectOptions = redirectOptions
 
     await installModule('@nuxtjs/supabase', supabaseModuleOptions)
 
