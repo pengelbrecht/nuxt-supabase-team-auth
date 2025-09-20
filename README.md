@@ -708,15 +708,15 @@ Super admins can temporarily act as other users for support and debugging:
 
 ```vue
 <script setup>
-const { 
-  startImpersonation, 
-  stopImpersonation, 
+const {
+  startImpersonation,
+  stopImpersonation,
   isImpersonating,
-  currentRole 
+  currentRole
 } = useTeamAuth()
 
 // Check permission
-const canImpersonate = computed(() => 
+const canImpersonate = computed(() =>
   currentRole.value === 'super_admin'
 )
 
@@ -725,7 +725,7 @@ const impersonateUser = async (userId) => {
   await startImpersonation(userId, 'Customer support request')
 }
 
-// Stop impersonation  
+// Stop impersonation
 const endImpersonation = async () => {
   await stopImpersonation()
 }
@@ -734,11 +734,87 @@ const endImpersonation = async () => {
 <template>
   <!-- Impersonation banner shows automatically -->
   <ImpersonationBanner />
-  
+
   <!-- Impersonation controls for super admins -->
   <SuperAdminImpersonationContent v-if="canImpersonate" />
 </template>
 ```
+
+### ImpersonationBanner Component
+
+The `ImpersonationBanner` component provides a visual indicator when a super admin is impersonating another user. It automatically handles content displacement to ensure the banner remains visible without overlapping page content.
+
+#### Features
+
+- **Automatic positioning**: Fixed at the top of the viewport with proper z-index
+- **Content displacement**: Automatically pushes page content down to remain visible
+- **Responsive layout**: Adjusts fixed elements (sidebars, navigation) to respect banner height
+- **Clean lifecycle**: Properly manages styles when banner appears/disappears
+- **Real-time countdown**: Shows remaining impersonation time
+- **Quick exit**: One-click "Stop Impersonation" button
+
+#### Usage
+
+```vue
+<template>
+  <!-- Add to your app layout - usually in app.vue or layout file -->
+  <ImpersonationBanner />
+
+  <!-- Your app content -->
+  <div>
+    <!-- Content automatically pushed down when banner is active -->
+  </div>
+</template>
+```
+
+#### Styling Integration
+
+The banner automatically applies the following CSS when active:
+
+```css
+/* Applied to <body> when impersonating */
+body.has-impersonation-banner {
+  padding-top: var(--impersonation-banner-height, 64px);
+}
+
+/* Fixed elements are adjusted to respect banner height */
+body.has-impersonation-banner .fixed,
+body.has-impersonation-banner aside.fixed,
+body.has-impersonation-banner main.fixed {
+  top: var(--impersonation-banner-height, 64px) !important;
+  height: calc(100vh - var(--impersonation-banner-height, 64px)) !important;
+}
+```
+
+#### Dashboard Integration
+
+For applications using fixed layouts (like Nuxt UI Dashboard), the banner automatically:
+
+- Calculates its actual height dynamically (not hardcoded)
+- Sets CSS custom property `--impersonation-banner-height`
+- Adjusts dashboard sidebars and main content areas
+- Ensures proper viewport calculations
+
+#### Properties
+
+The component doesn't accept props - it automatically detects impersonation state from `useTeamAuth()`:
+
+| State | Source | Description |
+|-------|--------|-------------|
+| `isImpersonating` | `useTeamAuth()` | Controls banner visibility |
+| `impersonatedUser` | `useTeamAuth()` | User being impersonated |
+| `impersonationExpiresAt` | `useTeamAuth()` | Session expiry time |
+
+#### Layout Compatibility
+
+The banner works with various layout patterns:
+
+- **Static layouts**: Uses body padding to push content down
+- **Fixed sidebars**: Adjusts `top` and `height` properties
+- **Dashboard layouts**: Handles Nuxt UI Dashboard components specifically
+- **Custom layouts**: Generic `.fixed` class handling for custom components
+
+**No manual styling required** - the component handles all layout adjustments automatically.
 
 ## Database & Edge Functions Setup
 

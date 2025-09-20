@@ -2,7 +2,8 @@
   <!-- Impersonation Banner - Only shows when impersonating -->
   <div
     v-if="isImpersonating"
-    class="!bg-red-600 dark:!bg-red-700 !text-white !border-b !border-red-700 dark:!border-red-800 shadow-lg"
+    ref="bannerRef"
+    class="fixed inset-x-0 top-0 z-50 !bg-red-600 dark:!bg-red-700 !text-white !border-b !border-red-700 dark:!border-red-800 shadow-lg"
     style="background-color: #dc2626 !important; color: white !important; border-color: #b91c1c !important;"
   >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -61,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import RoleBadge from './RoleBadge.vue'
 
@@ -110,20 +111,63 @@ const isStopping = computed(() => isLoading.value)
 // Current time for countdown
 const currentTime = ref(new Date())
 
+// Banner element ref for height calculation
+const bannerRef = ref<HTMLElement>()
+
 // Update current time every second for countdown
 let timeInterval: NodeJS.Timeout | null = null
+
+// Function to apply banner height to CSS custom property and body class
+const applyBannerStyles = () => {
+  if (!process.client || !bannerRef.value) return
+
+  const height = bannerRef.value.offsetHeight
+  document.documentElement.style.setProperty('--impersonation-banner-height', `${height}px`)
+  document.body.classList.add('has-impersonation-banner')
+}
+
+// Function to remove banner styles
+const removeBannerStyles = () => {
+  if (!process.client) return
+
+  document.documentElement.style.removeProperty('--impersonation-banner-height')
+  document.body.classList.remove('has-impersonation-banner')
+}
 
 onMounted(() => {
   timeInterval = setInterval(() => {
     currentTime.value = new Date()
   }, 1000)
+
+  // Apply banner styles if impersonating on mount
+  if (isImpersonating.value) {
+    nextTick(() => {
+      applyBannerStyles()
+    })
+  }
 })
 
 onUnmounted(() => {
   if (timeInterval) {
     clearInterval(timeInterval)
   }
+
+  // Clean up banner styles
+  removeBannerStyles()
 })
+
+// Watch for changes in impersonation state
+watch(isImpersonating, (newValue) => {
+  if (!process.client) return
+
+  if (newValue) {
+    nextTick(() => {
+      applyBannerStyles()
+    })
+  } else {
+    removeBannerStyles()
+  }
+}, { immediate: false })
 
 // Computed properties
 const timeRemaining = computed(() => {
@@ -157,3 +201,32 @@ const handleStopImpersonation = async () => {
   }
 }
 </script>
+
+<style>
+/* Global styles for when impersonation banner is active */
+body.has-impersonation-banner {
+  padding-top: var(--impersonation-banner-height, 64px);
+}
+
+/* Adjust fixed elements to respect the banner */
+body.has-impersonation-banner .fixed {
+  top: var(--impersonation-banner-height, 64px) !important;
+}
+
+/* Specific adjustments for common dashboard layouts */
+body.has-impersonation-banner aside.fixed,
+body.has-impersonation-banner aside#default {
+  top: var(--impersonation-banner-height, 64px) !important;
+  height: calc(100vh - var(--impersonation-banner-height, 64px)) !important;
+}
+
+body.has-impersonation-banner main.fixed {
+  top: var(--impersonation-banner-height, 64px) !important;
+  height: calc(100vh - var(--impersonation-banner-height, 64px)) !important;
+}
+
+/* Ensure the banner itself is not affected by its own styles */
+.has-impersonation-banner .fixed.inset-x-0.top-0 {
+  top: 0 !important;
+}
+</style>
