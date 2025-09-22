@@ -1,4 +1,4 @@
-import { ref, computed, triggerRef } from 'vue'
+import { ref, computed, triggerRef, nextTick } from 'vue'
 import { $fetch } from 'ofetch'
 import type { User, Profile, Team, TeamMember, TeamAuth } from '../types'
 import { useSessionSync } from './useSessionSync'
@@ -416,6 +416,17 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   // Initialize on client-side only
   if (import.meta.client && !authState.value.initialized) {
     initializeAuth()
+
+    // CRITICAL: Sync impersonation state from localStorage after SSR hydration
+    // This fixes the SSR/client state mismatch where localStorage data exists
+    // but the reactive state remains false from SSR initialization
+    nextTick(() => {
+      const storedImpersonation = loadImpersonationFromStorage()
+      if (Object.keys(storedImpersonation).length > 0) {
+        console.log('[TeamAuth] Syncing impersonation state from localStorage after hydration')
+        updateAuthState(storedImpersonation)
+      }
+    })
   }
 
   return {

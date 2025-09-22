@@ -7,58 +7,58 @@
       class="fixed inset-x-0 top-0 z-50 !bg-red-600 dark:!bg-red-700 !text-white !border-b !border-red-700 dark:!border-red-800 shadow-lg"
       style="background-color: #dc2626 !important; color: white !important; border-color: #b91c1c !important;"
     >
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="py-4">
-        <div class="flex items-center justify-between">
-          <!-- Left side - Impersonation info -->
-          <div class="flex items-center gap-3">
-            <UIcon
-              name="i-lucide-user-check"
-              class="h-5 w-5 !text-red-100"
-              style="color: #fecaca !important;"
-            />
-            <div>
-              <div class="font-semibold text-sm">
-                You are impersonating {{ displayUser?.full_name || displayUser?.email || 'User' }}
-              </div>
-              <div class="flex items-baseline gap-2 text-xs text-red-100 pb-2">
-                <span v-if="displayUser?.team?.name">
-                  {{ displayUser.team.name }}
-                </span>
-                <span v-if="displayUser?.team?.name">•</span>
-                <div class="inline-block mb-1">
-                  <RoleBadge
-                    :role="displayUser?.role"
-                    size="xs"
-                    variant="solid"
-                  />
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="py-4">
+          <div class="flex items-center justify-between">
+            <!-- Left side - Impersonation info -->
+            <div class="flex items-center gap-3">
+              <UIcon
+                name="i-lucide-user-check"
+                class="h-5 w-5 !text-red-100"
+                style="color: #fecaca !important;"
+              />
+              <div>
+                <div class="font-semibold text-sm">
+                  You are impersonating {{ displayUser?.full_name || displayUser?.email || 'User' }}
                 </div>
-                <span v-if="timeRemaining">
-                  • {{ timeRemaining }} remaining
-                </span>
+                <div class="flex items-baseline gap-2 text-xs text-red-100 pb-2">
+                  <span v-if="displayUser?.team?.name">
+                    {{ displayUser.team.name }}
+                  </span>
+                  <span v-if="displayUser?.team?.name">•</span>
+                  <div class="inline-block mb-1">
+                    <RoleBadge
+                      :role="displayUser?.role"
+                      size="xs"
+                      variant="solid"
+                    />
+                  </div>
+                  <span v-if="timeRemaining">
+                    • {{ timeRemaining }} remaining
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Right side - Stop button -->
-          <UButton
-            variant="solid"
-            size="sm"
-            color="neutral"
-            :loading="isStopping"
-            @click="handleStopImpersonation"
-          >
-            <template #leading>
-              <UIcon
-                name="i-lucide-user-x"
-                class="h-4 w-4"
-              />
-            </template>
-            Stop Impersonation
-          </UButton>
+            <!-- Right side - Stop button -->
+            <UButton
+              variant="solid"
+              size="sm"
+              color="neutral"
+              :loading="isStopping"
+              @click="handleStopImpersonation"
+            >
+              <template #leading>
+                <UIcon
+                  name="i-lucide-user-x"
+                  class="h-4 w-4"
+                />
+              </template>
+              Stop Impersonation
+            </UButton>
+          </div>
         </div>
       </div>
-    </div>
     </div>
   </ClientOnly>
 </template>
@@ -162,7 +162,8 @@ watch(isImpersonating, (newValue) => {
     nextTick(() => {
       applyBannerStyles()
     })
-  } else {
+  }
+  else {
     removeBannerStyles()
   }
 }, { immediate: false })

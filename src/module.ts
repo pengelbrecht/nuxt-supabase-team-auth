@@ -172,7 +172,8 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
         callback: '/auth/callback', // Still handle OAuth callbacks
         exclude: ['/**'], // Exclude everything from Supabase auth redirects
       }
-    } else {
+    }
+    else {
       // For protected mode, use normal redirect behavior
       redirectOptions = {
         login: options.loginPage || '/signin',

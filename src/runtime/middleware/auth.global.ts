@@ -6,13 +6,11 @@ import { navigateTo, defineNuxtRouteMiddleware, useRuntimeConfig } from '#import
  * Runs on every route change to ensure proper authentication state
  */
 export default defineNuxtRouteMiddleware(async (to) => {
-
   // During SSR, ensure authentication state is properly handled
   // On server-side, we might not have complete auth state yet
   const isSSR = import.meta.server
 
-  const { currentUser, currentTeam, currentRole, isLoading, isImpersonating } = useTeamAuth()
-
+  const { currentUser, currentTeam, isLoading } = useTeamAuth()
 
   // More efficient auth loading wait with early exit
   if (isLoading.value) {
@@ -57,7 +55,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const currentPath = to.path
 
-
   // Always allow access to auth routes and root
   const alwaysPublicRoutes = ['/', ...authRoutes]
   const isAlwaysPublic = alwaysPublicRoutes.some(route =>
@@ -79,7 +76,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const isExplicitlyPublic = configuredPublicRoutes.some(route =>
       currentPath === route || currentPath.startsWith(route + '/'),
     )
-
 
     if (isExplicitlyPublic) {
       return
@@ -111,7 +107,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const isExplicitlyPublic = configuredPublicRoutes.some(route =>
       currentPath === route || currentPath.startsWith(route + '/'),
     )
-
 
     if (isExplicitlyPublic) {
       // Public routes skip ALL auth/team validation checks (including data integrity)

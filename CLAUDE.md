@@ -329,3 +329,179 @@ When using forms in modals, pass `isModal="true"` to avoid duplicate headers:
 3. **Section cards only** - Use `UCard variant="subtle"` for field grouping inside dialogs
 4. **Form integration** - Always pass `isModal=true` to form components in modals
 5. **Responsive by default** - Dialogs automatically adjust to screen size
+
+## Server-Side Rendering (SSR) Considerations
+
+**CRITICAL**: Always consider SSR compatibility when building components and composables. This is a Nuxt module that will be used in SSR applications.
+
+### Common SSR Issues We've Encountered
+
+1. **Direct DOM manipulation** - `document.body`, `window` access without client checks
+2. **Browser APIs** - localStorage, sessionStorage, geolocation, etc.
+3. **Layout measurement** - `offsetHeight`, `getBoundingClientRect()` during SSR
+4. **Hydration mismatches** - Different server vs client render output
+
+### SSR-Safe Development Patterns
+
+#### 1. Client-Only Components
+For components that manipulate DOM or require browser APIs:
+
+```vue
+<template>
+  <ClientOnly>
+    <ComponentWithDOMManipulation />
+    <!-- Optional fallback for SSR -->
+    <template #fallback>
+      <div class="h-16">Loading...</div>
+    </template>
+  </ClientOnly>
+</template>
+```
+
+**When to use `<ClientOnly>`:**
+- Components that manipulate `document.body` or global styles
+- Components that measure DOM elements (`offsetHeight`, `getBoundingClientRect`)
+- Components using browser-only APIs (localStorage, geolocation, etc.)
+- Third-party libraries that expect browser environment
+
+#### 2. Process Client Guards
+For functions that need conditional client-only execution:
+
+```typescript
+// ❌ WRONG - Will cause hydration mismatches
+const applyStyles = () => {
+  document.body.style.paddingTop = '64px'
+}
+
+// ✅ CORRECT - But prefer ClientOnly for components
+const applyStyles = () => {
+  if (process.client) {
+    document.body.style.paddingTop = '64px'
+  }
+}
+
+// 🎯 BEST - Use ClientOnly wrapper for components
+<ClientOnly>
+  <ComponentThatAppliesStyles />
+</ClientOnly>
+```
+
+#### 3. Reactive Composables with SSR
+Composables should handle SSR gracefully:
+
+```typescript
+// ❌ WRONG - Will break on server
+export function useBrowserSize() {
+  const width = ref(window.innerWidth)
+  const height = ref(window.innerHeight)
+
+  return { width, height }
+}
+
+// ✅ CORRECT - SSR-safe with fallbacks
+export function useBrowserSize() {
+  const width = ref(process.client ? window.innerWidth : 1024)
+  const height = ref(process.client ? window.innerHeight : 768)
+
+  if (process.client) {
+    // Setup resize listeners
+    const updateSize = () => {
+      width.value = window.innerWidth
+      height.value = window.innerHeight
+    }
+    window.addEventListener('resize', updateSize)
+  }
+
+  return { width, height }
+}
+```
+
+#### 4. CSS Custom Properties Strategy
+For dynamic styling that affects layout:
+
+```vue
+<template>
+  <ClientOnly>
+    <div ref="elementRef" @mounted="updateCSSVariables">
+      Dynamic content
+    </div>
+  </ClientOnly>
+</template>
+
+<script setup>
+const elementRef = ref()
+
+const updateCSSVariables = () => {
+  const height = elementRef.value.offsetHeight
+  document.documentElement.style.setProperty('--dynamic-height', `${height}px`)
+}
+</script>
+
+<style>
+/* CSS with fallback values */
+.layout-affected {
+  padding-top: var(--dynamic-height, 64px); /* 64px fallback */
+}
+</style>
+```
+
+### SSR Testing Checklist
+
+Before releasing components:
+
+1. **Test with `nuxt build && nuxt preview`** - Ensure SSR build works
+2. **Check for hydration warnings** - Look for client/server mismatch errors
+3. **Verify fallback behavior** - Ensure graceful degradation without JS
+4. **Test on slow connections** - Ensure no layout shift during hydration
+5. **Mobile testing** - SSR particularly important for mobile performance
+
+### Component Categories for SSR
+
+#### Safe for SSR (No special handling needed)
+- Pure display components (badges, cards, text)
+- Form inputs and validation
+- Static layout components
+- Components using only Vue reactivity
+
+#### Requires ClientOnly Wrapper
+- Global style manipulation (like ImpersonationBanner)
+- DOM measurement dependent components
+- Browser API dependent features
+- Third-party widgets (maps, analytics, etc.)
+
+#### Hybrid Approach (SSR + Client Enhancement)
+- Authentication state (render signed-out first, then enhance)
+- Loading states (show loading on server, update on client)
+- Progressive enhancement features
+
+### Real Examples from Our Codebase
+
+#### ✅ Good: ImpersonationBanner (Fixed)
+```vue
+<template>
+  <ClientOnly>
+    <div v-if="isImpersonating" ref="bannerRef">
+      <!-- Banner content -->
+    </div>
+  </ClientOnly>
+</template>
+```
+
+#### ❌ Bad: Previous ImpersonationBanner
+```vue
+<template>
+  <!-- Ran DOM manipulation during SSR -->
+  <div v-if="isImpersonating" @mounted="applyBodyStyles">
+    <!-- Would cause hydration mismatches -->
+  </div>
+</template>
+```
+
+### Remember: Prevention > Fixes
+
+- **Design for SSR from the start** - Don't retrofit SSR compatibility later
+- **Question browser API usage** - Do you really need client-only features?
+- **Favor CSS over JS** - Let CSS handle layout when possible
+- **Test early and often** - SSR issues are easier to catch early
+
+**When in doubt, wrap in `<ClientOnly>`** - It's better to have a working SSR app with client-only enhancements than a broken SSR build.

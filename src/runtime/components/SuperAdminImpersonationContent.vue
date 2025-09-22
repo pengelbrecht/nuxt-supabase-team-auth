@@ -358,9 +358,11 @@ const validateReason = () => {
   const reason = impersonationReason.value.trim()
   if (!reason) {
     reasonError.value = 'Reason is required'
-  } else if (reason.length < 10) {
+  }
+  else if (reason.length < 10) {
     reasonError.value = 'Reason must be at least 10 characters long'
-  } else {
+  }
+  else {
     reasonError.value = null
   }
 }
