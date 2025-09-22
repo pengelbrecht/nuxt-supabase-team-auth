@@ -1,11 +1,12 @@
 <template>
   <!-- Impersonation Banner - Only shows when impersonating -->
-  <div
-    v-if="isImpersonating"
-    ref="bannerRef"
-    class="fixed inset-x-0 top-0 z-50 !bg-red-600 dark:!bg-red-700 !text-white !border-b !border-red-700 dark:!border-red-800 shadow-lg"
-    style="background-color: #dc2626 !important; color: white !important; border-color: #b91c1c !important;"
-  >
+  <ClientOnly>
+    <div
+      v-if="isImpersonating"
+      ref="bannerRef"
+      class="fixed inset-x-0 top-0 z-50 !bg-red-600 dark:!bg-red-700 !text-white !border-b !border-red-700 dark:!border-red-800 shadow-lg"
+      style="background-color: #dc2626 !important; color: white !important; border-color: #b91c1c !important;"
+    >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="py-4">
         <div class="flex items-center justify-between">
@@ -58,7 +59,8 @@
         </div>
       </div>
     </div>
-  </div>
+    </div>
+  </ClientOnly>
 </template>
 
 <script setup lang="ts">
@@ -119,7 +121,7 @@ let timeInterval: NodeJS.Timeout | null = null
 
 // Function to apply banner height to CSS custom property and body class
 const applyBannerStyles = () => {
-  if (!process.client || !bannerRef.value) return
+  if (!bannerRef.value) return
 
   const height = bannerRef.value.offsetHeight
   document.documentElement.style.setProperty('--impersonation-banner-height', `${height}px`)
@@ -128,8 +130,6 @@ const applyBannerStyles = () => {
 
 // Function to remove banner styles
 const removeBannerStyles = () => {
-  if (!process.client) return
-
   document.documentElement.style.removeProperty('--impersonation-banner-height')
   document.body.classList.remove('has-impersonation-banner')
 }
@@ -158,8 +158,6 @@ onUnmounted(() => {
 
 // Watch for changes in impersonation state
 watch(isImpersonating, (newValue) => {
-  if (!process.client) return
-
   if (newValue) {
     nextTick(() => {
       applyBannerStyles()
