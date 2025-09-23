@@ -118,10 +118,17 @@ team-auth db --users     # List all users
 
 ## Don't Re-implement
 -  JWT claims parsing (we don't use custom claims)
--  Profiles table structure 
+-  Profiles table structure
 -  UserButton avatar fallback logic
 -  ProfileForm UX improvements
 -  RLS policies (keep them simple - users access own data only)
+
+## Commit Message Guidelines
+- **NEVER reference Claude or AI assistance** in commit messages
+- **NEVER add "Co-Authored-By: Claude" credits** to commits
+- Keep commit messages focused on the technical changes only
+- Use conventional commit format: `type: description`
+- Example: `fix: add timeout to prevent auth initialization hangs`
 
 ## Form/Dialog Design Patterns
 
