@@ -381,25 +381,32 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         authListenerRegistered = true
 
         getClient().auth.onAuthStateChange(async (event, session) => {
+          console.log('[useTeamAuth] Auth state change event:', event, 'Session exists:', !!session)
+
           // Deduplicate events
           const eventKey = `${event}:${session?.user?.id || 'none'}:${session?.user?.email || 'none'}`
           if (lastProcessedEvent.value === eventKey) {
+            console.log('[useTeamAuth] Skipping duplicate event:', eventKey)
             return
           }
           lastProcessedEvent.value = eventKey
+          console.log('[useTeamAuth] Processing auth event:', event)
 
           switch (event) {
             case 'SIGNED_IN':
             case 'TOKEN_REFRESHED':
             case 'USER_UPDATED':
               if (session?.user) {
+                console.log('[useTeamAuth] Updating auth state for user:', session.user.email)
                 await updateCompleteAuthState(session.user)
               }
               break
 
             case 'SIGNED_OUT':
+              console.log('[useTeamAuth] Processing SIGNED_OUT event, resetting auth state...')
               resetAuthState()
               lastProcessedEvent.value = '' // Reset on signout
+              console.log('[useTeamAuth] Auth state reset complete')
               break
           }
         })
@@ -509,16 +516,37 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
     signOut: async (): Promise<void> => {
       try {
+        console.log('[useTeamAuth] Starting signOut process...')
         authState.value = { ...authState.value, loading: true }
-        await getClient().auth.signOut()
+
+        // Get current session before signing out for debugging
+        const { data: { session: currentSession } } = await getClient().auth.getSession()
+        console.log('[useTeamAuth] Current session before signOut:', currentSession ? 'exists' : 'null')
+
+        const result = await getClient().auth.signOut()
+        console.log('[useTeamAuth] Supabase signOut result:', result)
+
+        // Verify session was actually cleared
+        const { data: { session: afterSession } } = await getClient().auth.getSession()
+        console.log('[useTeamAuth] Session after signOut:', afterSession ? 'still exists' : 'null')
+
+        if (afterSession) {
+          console.warn('[useTeamAuth] Warning: Session still exists after signOut call')
+        }
+
         // State will be reset by the auth listener
+        console.log('[useTeamAuth] SignOut process completed, waiting for auth listener...')
       }
       catch (error) {
-        console.error('Sign out failed:', error)
+        console.error('[useTeamAuth] Sign out failed:', error)
+        // Reset loading state on error
+        authState.value = { ...authState.value, loading: false }
         throw error
       }
       finally {
-        authState.value = { ...authState.value, loading: false }
+        // Don't reset loading here - let the auth listener handle it
+        // This ensures loading state persists until logout is confirmed
+        console.log('[useTeamAuth] SignOut finally block executed')
       }
     },
 

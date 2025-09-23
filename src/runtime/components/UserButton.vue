@@ -423,9 +423,19 @@ const dropdownItems = computed(() => {
     label: 'Sign Out',
     icon: 'i-lucide-log-out',
     onSelect: async () => {
-      await signOut()
-      // Redirect to home page after sign out
-      await navigateTo('/')
+      try {
+        console.log('[UserButton] Sign out clicked, starting logout process...')
+        await signOut()
+        console.log('[UserButton] SignOut completed, navigating to home...')
+        // Redirect to home page after sign out
+        await navigateTo('/')
+        console.log('[UserButton] Navigation completed')
+      }
+      catch (error) {
+        console.error('[UserButton] Logout failed:', error)
+        // You could add user feedback here, e.g., a toast notification
+        // For now, just log the error
+      }
     },
   })
 
