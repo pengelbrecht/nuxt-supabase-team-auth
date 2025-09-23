@@ -28,6 +28,16 @@ function getErrorForLogging(error: unknown): any {
   return { message: String(error) }
 }
 
+// Helper function to add timeout to Supabase calls to prevent infinite hangs
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number = 10000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Operation timed out after ${timeoutMs}ms`)), timeoutMs),
+    ),
+  ])
+}
+
 // Helper function to create headers with auth token
 async function createAuthHeaders(supabaseClient?: any): Promise<Record<string, string>> {
   const headers: Record<string, string> = {
@@ -344,13 +354,26 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
   // Initialize auth state once
   const initializeAuth = async () => {
+    console.log('[useTeamAuth] 🚀 Starting auth initialization...')
+    console.log('[useTeamAuth] 📊 Initial state:', {
+      initialized: authState.value.initialized,
+      loading: authState.value.loading,
+      hasUser: !!authState.value.user,
+      authListenerRegistered,
+    })
+
     if (authState.value.initialized) {
+      console.log('[useTeamAuth] ⏭️ Auth already initialized, skipping')
       return
     }
 
     try {
       // Get initial session
-      const { data: { session } } = await getClient().auth.getSession()
+      console.log('[useTeamAuth] 🔑 Getting initial session...')
+      const sessionStart = Date.now()
+      const { data: { session } } = await withTimeout(getClient().auth.getSession(), 8000)
+      console.log('[useTeamAuth] ✅ getSession completed in', Date.now() - sessionStart, 'ms')
+      console.log('[useTeamAuth] 📄 Session result:', { hasSession: !!session, hasUser: !!session?.user })
 
       if (session?.user) {
         await updateCompleteAuthState(session.user)
@@ -520,7 +543,10 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         authState.value = { ...authState.value, loading: true }
 
         // Get current session before signing out for debugging
-        const { data: { session: currentSession } } = await getClient().auth.getSession()
+        console.log('[useTeamAuth] 🔍 Getting current session before signOut...')
+        const sessionStartTime = Date.now()
+        const { data: { session: currentSession } } = await withTimeout(getClient().auth.getSession(), 5000)
+        console.log('[useTeamAuth] ✅ Pre-signOut getSession completed in', Date.now() - sessionStartTime, 'ms')
         console.log('[useTeamAuth] Current session before signOut:', currentSession ? 'exists' : 'null')
 
         const result = await getClient().auth.signOut()
