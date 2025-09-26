@@ -38,6 +38,41 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number = 10000): Promise
   ])
 }
 
+// Helper function to get session with client reset on timeout
+async function getSessionWithReset(getClientFn: () => any, maxRetries: number = 1): Promise<any> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`[useTeamAuth] 🔑 Attempt ${attempt + 1}: Getting session...`)
+      const sessionStart = Date.now()
+
+      const result = await withTimeout(getClientFn().auth.getSession(), 5000)
+
+      console.log(`[useTeamAuth] ✅ getSession completed in ${Date.now() - sessionStart}ms`)
+      return result
+    }
+    catch (error: any) {
+      if (error.message.includes('timed out') && attempt < maxRetries) {
+        console.warn(`[useTeamAuth] ⚠️  getSession timeout on attempt ${attempt + 1}, resetting client...`)
+
+        // Mark client as corrupted and force reset
+        clientCorrupted = true
+        authListenerRegistered = false // Reset listener state too
+        cachedClient = null
+
+        console.log('[useTeamAuth] 🔄 Client reset complete, retrying...')
+        continue
+      }
+      else {
+        console.error(`[useTeamAuth] ❌ getSession failed after ${attempt + 1} attempts:`, error)
+        throw error
+      }
+    }
+  }
+
+  // This should never be reached, but TypeScript requires it
+  throw new Error('Unexpected end of getSessionWithReset')
+}
+
 // Helper function to create headers with auth token
 async function createAuthHeaders(supabaseClient?: any): Promise<Record<string, string>> {
   const headers: Record<string, string> = {
@@ -46,8 +81,8 @@ async function createAuthHeaders(supabaseClient?: any): Promise<Record<string, s
 
   try {
     if (supabaseClient) {
-      // Use the provided client directly for auth
-      const { data: { session }, error } = await supabaseClient.auth.getSession()
+      // Use the provided client directly for auth with timeout protection
+      const { data: { session }, error } = await withTimeout(supabaseClient.auth.getSession(), 5000)
       if (!error && session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`
       }
@@ -74,9 +109,15 @@ let authListenerRegistered = false
 // Cache the Supabase client to avoid repeated calls
 let cachedClient: any = null
 
+// Client health tracking
+let clientCorrupted = false
+let lastResetTime = 0
+
 // Reset cached client for testing
 export function resetTeamAuthState() {
   cachedClient = null
+  clientCorrupted = false
+  authListenerRegistered = false
 }
 
 const IMPERSONATION_STORAGE_KEY = 'team_auth_impersonation'
@@ -209,9 +250,19 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     if (import.meta.server) {
       throw new Error('Supabase client not available during SSR')
     }
-    if (!cachedClient) {
+
+    // Force new client if marked corrupted or not cached
+    if (clientCorrupted || !cachedClient) {
+      console.log('[useTeamAuth] Creating fresh Supabase client...', {
+        reason: clientCorrupted ? 'corrupted' : 'not_cached',
+        lastResetTime: lastResetTime ? new Date(lastResetTime).toISOString() : 'never',
+      })
+
       cachedClient = getSupabaseClient()
+      clientCorrupted = false
+      lastResetTime = Date.now()
     }
+
     return cachedClient
   }
 
@@ -370,9 +421,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     try {
       // Get initial session
       console.log('[useTeamAuth] 🔑 Getting initial session...')
-      const sessionStart = Date.now()
-      const { data: { session } } = await withTimeout(getClient().auth.getSession(), 8000)
-      console.log('[useTeamAuth] ✅ getSession completed in', Date.now() - sessionStart, 'ms')
+      const { data: { session } } = await getSessionWithReset(getClient, 1)
       console.log('[useTeamAuth] 📄 Session result:', { hasSession: !!session, hasUser: !!session?.user })
 
       if (session?.user) {
@@ -544,16 +593,14 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
         // Get current session before signing out for debugging
         console.log('[useTeamAuth] 🔍 Getting current session before signOut...')
-        const sessionStartTime = Date.now()
-        const { data: { session: currentSession } } = await withTimeout(getClient().auth.getSession(), 5000)
-        console.log('[useTeamAuth] ✅ Pre-signOut getSession completed in', Date.now() - sessionStartTime, 'ms')
+        const { data: { session: currentSession } } = await getSessionWithReset(getClient, 1)
         console.log('[useTeamAuth] Current session before signOut:', currentSession ? 'exists' : 'null')
 
         const result = await getClient().auth.signOut()
         console.log('[useTeamAuth] Supabase signOut result:', result)
 
         // Verify session was actually cleared
-        const { data: { session: afterSession } } = await getClient().auth.getSession()
+        const { data: { session: afterSession } } = await getSessionWithReset(getClient, 1)
         console.log('[useTeamAuth] Session after signOut:', afterSession ? 'still exists' : 'null')
 
         if (afterSession) {
@@ -680,7 +727,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
         try {
           // Use direct Supabase client instead of useSession which might be hanging
-          const { data: { session }, error: sessionError } = await getClient().auth.getSession()
+          const { data: { session }, error: sessionError } = await getSessionWithReset(getClient, 1)
           if (sessionError) {
             console.warn('Session error:', sessionError)
           }
@@ -1032,7 +1079,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         throw new Error('No current team available')
       }
 
-      const { data: session } = await getClient().auth.getSession()
+      const { data: session } = await getSessionWithReset(getClient, 1)
       if (!session.session) {
         throw new Error('No active session - please log in')
       }
@@ -1295,7 +1342,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         }
 
         // Get current session for API authentication
-        const { data: { session } } = await getClient().auth.getSession()
+        const { data: { session } } = await getSessionWithReset(getClient, 1)
         if (!session) {
           throw new Error('No active session')
         }
