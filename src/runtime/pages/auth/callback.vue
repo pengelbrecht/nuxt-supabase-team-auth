@@ -98,6 +98,7 @@ import { ref, onMounted } from 'vue'
 import { $fetch } from 'ofetch'
 import { useSupabaseClient } from '../../composables/useSupabaseComposables'
 import { useTeamAuth } from '../../composables/useTeamAuth'
+import { useTeamAuthConfig } from '../../composables/useTeamAuthConfig'
 import { useRoute, useRouter, definePageMeta, defineOptions } from '#imports'
 
 const route = useRoute()
@@ -116,6 +117,9 @@ const { signUpWithTeam: _signUpWithTeam } = useTeamAuth()
 
 // Get the Supabase client
 const supabase = useSupabaseClient()
+
+// Get config for redirect routes
+const { redirectTo, loginPage } = useTeamAuthConfig()
 
 // Process the OAuth callback on page load
 onMounted(async () => {
@@ -348,11 +352,9 @@ const handleGoogleSignin = async (user: any) => {
 
     // For signin, we don't need to create anything
     // The user is already authenticated via OAuth
-    // Just redirect to dashboard
-    status.value = 'success'
-
-    // Small delay to show success state
-    await new Promise(resolve => setTimeout(resolve, 500))
+    // Redirect directly to configured redirect route for better UX
+    console.log('Redirecting existing user directly to:', redirectTo.value)
+    router.push(redirectTo.value)
   }
   catch (error: any) {
     console.error('Google signin error:', error)
@@ -455,11 +457,11 @@ const getSuccessMessage = () => {
 
 // Navigation methods
 const goToDashboard = () => {
-  router.push('/dashboard')
+  router.push(redirectTo.value)
 }
 
 const goToSignin = () => {
-  router.push('/signin')
+  router.push(loginPage.value)
 }
 
 // Set page meta

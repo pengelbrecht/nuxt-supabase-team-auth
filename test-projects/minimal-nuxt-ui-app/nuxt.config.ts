@@ -1,7 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  
+
+  // Use app/ directory structure
+  srcDir: 'app',
+
   // Explicitly enable SSR to test server-side authentication
   ssr: true,
 
@@ -10,6 +13,11 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     'nuxt-supabase-team-auth',
   ],
+
+  // Fix for @supabase/postgrest-js CommonJS/ESM import issues
+  build: {
+    transpile: ['@supabase/postgrest-js', '@supabase/supabase-js']
+  },
 
   css: ['~/assets/css/main.css'],
 
