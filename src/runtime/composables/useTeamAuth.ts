@@ -452,7 +452,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       if (!authListenerRegistered) {
         authListenerRegistered = true
 
-        getClient().auth.onAuthStateChange(async (event, session) => {
+        getClient().auth.onAuthStateChange((event, session) => {
           console.log('[useTeamAuth] Auth state change event:', event, 'Session exists:', !!session)
 
           // Deduplicate events
@@ -464,23 +464,27 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           lastProcessedEvent.value = eventKey
           console.log('[useTeamAuth] Processing auth event:', event)
 
-          switch (event) {
-            case 'SIGNED_IN':
-            case 'TOKEN_REFRESHED':
-            case 'USER_UPDATED':
-              if (session?.user) {
-                console.log('[useTeamAuth] Updating auth state for user:', session.user.email)
-                await updateCompleteAuthState(session.user)
-              }
-              break
+          // Defer async operations to prevent Navigator Lock deadlock
+          // See: https://supabase.com/docs/reference/javascript/auth-onauthstatechange
+          setTimeout(async () => {
+            switch (event) {
+              case 'SIGNED_IN':
+              case 'TOKEN_REFRESHED':
+              case 'USER_UPDATED':
+                if (session?.user) {
+                  console.log('[useTeamAuth] Updating auth state for user:', session.user.email)
+                  await updateCompleteAuthState(session.user)
+                }
+                break
 
-            case 'SIGNED_OUT':
-              console.log('[useTeamAuth] Processing SIGNED_OUT event, resetting auth state...')
-              resetAuthState()
-              lastProcessedEvent.value = '' // Reset on signout
-              console.log('[useTeamAuth] Auth state reset complete')
-              break
-          }
+              case 'SIGNED_OUT':
+                console.log('[useTeamAuth] Processing SIGNED_OUT event, resetting auth state...')
+                resetAuthState()
+                lastProcessedEvent.value = '' // Reset on signout
+                console.log('[useTeamAuth] Auth state reset complete')
+                break
+            }
+          }, 0)
         })
       }
 
