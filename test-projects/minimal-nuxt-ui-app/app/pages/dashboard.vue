@@ -72,9 +72,10 @@
 </template>
 
 <script setup>
-definePageMeta({
-  middleware: 'require-auth',
-})
+// Testing: Removed explicit middleware to test global auth middleware + protectedRoutes config
+// definePageMeta({
+//   middleware: 'require-auth',
+// })
 
 const { currentUser, currentTeam, currentRole, teamMembers } = useTeamAuth()
 const showTeamDialog = ref(false)

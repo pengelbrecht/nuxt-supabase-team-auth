@@ -8,7 +8,6 @@
       </div>
       <ClientOnly>
         <AuthSignIn
-          @success="handleSignIn"
           @error="handleError"
           @forgot-password="handleForgotPassword"
         />
@@ -25,9 +24,8 @@ definePageMeta({
 const router = useRouter()
 const toast = useToast()
 
-const handleSignIn = () => {
-  router.push('/dashboard')
-}
+// AuthSignIn component now handles redirects internally
+// No need to implement redirect logic here
 
 const handleError = (error) => {
   toast.add({
