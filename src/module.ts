@@ -296,6 +296,11 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       // Add our middleware directory to the middleware paths
       app.middleware.push(...[
         {
+          name: 'auth',
+          path: resolver.resolve('./runtime/middleware/auth.global'),
+          global: true,
+        },
+        {
           name: 'require-auth',
           path: resolver.resolve('./runtime/middleware/require-auth'),
           global: false,

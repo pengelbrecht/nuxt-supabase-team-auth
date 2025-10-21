@@ -181,6 +181,7 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import { useSupabaseClient } from '../composables/useSupabaseComposables'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
+import { useRoute, navigateTo, useRuntimeConfig, useRouter } from '#imports'
 
 interface AuthSignInProps {
   /** Title displayed in the header */
@@ -245,9 +246,12 @@ const authSchema = v.object({
 })
 
 // Composables - declared after form to avoid issues
-const { signIn, isLoading } = useTeamAuth()
+const { signIn, isLoading, currentUser } = useTeamAuth()
 const { isGoogleEnabled, hasAnySocialProvider } = useTeamAuthConfig()
 const supabase = useSupabaseClient()
+const route = useRoute()
+const router = useRouter()
+const config = useRuntimeConfig()
 
 // Computed properties for social auth
 const showGoogleAuth = computed(() => props.googleAuth && isGoogleEnabled.value)
@@ -271,6 +275,7 @@ const _isFormValid = computed(() => {
 // Sign in handlers
 const handleSignIn = async (event: FormSubmitEvent<any>) => {
   try {
+    // signIn() now waits for auth state to be ready
     await signIn(event.data.email, event.data.password)
 
     emit('success', {
@@ -282,6 +287,29 @@ const handleSignIn = async (event: FormSubmitEvent<any>) => {
     form.email = ''
     form.password = ''
     form.rememberMe = false
+
+    // Handle redirect - auth state is now guaranteed to be ready
+    const redirectTo = route.query.redirect as string
+    const teamAuthConfig = config.public.teamAuth || {}
+    const defaultRedirect = teamAuthConfig.redirectTo || '/dashboard'
+
+    let targetUrl = defaultRedirect
+
+    if (redirectTo) {
+      // Validate redirect URL for security (same-origin only)
+      try {
+        const url = new URL(redirectTo, window.location.origin)
+        if (url.origin === window.location.origin) {
+          targetUrl = redirectTo
+        }
+      }
+      catch {
+        // Invalid URL, use default
+      }
+    }
+
+    // Use navigateTo for proper Nuxt navigation
+    await navigateTo(targetUrl)
   }
   catch (error: any) {
     const errorMessage = error.message || 'Failed to sign in'

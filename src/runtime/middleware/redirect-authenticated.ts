@@ -1,5 +1,5 @@
 import { useTeamAuth } from '../composables/useTeamAuth'
-import { navigateTo, defineNuxtRouteMiddleware } from '#imports'
+import { navigateTo, defineNuxtRouteMiddleware, useRuntimeConfig } from '#imports'
 
 /**
  * Middleware to redirect authenticated users away from auth pages
@@ -55,8 +55,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
       return navigateTo('/signin?error=account_misconfigured')
     }
 
-    // Redirect to dashboard (user has team guaranteed)
-    return navigateTo('/dashboard')
+    // Get redirect destination from config
+    const config = useRuntimeConfig()
+    const teamAuthConfig = config.public.teamAuth || {}
+    const defaultRedirect = teamAuthConfig.redirectTo || '/dashboard'
+
+    // Redirect to configured destination (user has team guaranteed)
+    return navigateTo(defaultRedirect)
   }
 })
 

@@ -1,4 +1,5 @@
 import { useTeamAuth } from '../composables/useTeamAuth'
+import { useSupabaseUser } from '../composables/useSupabaseComposables'
 import { navigateTo, defineNuxtRouteMiddleware, useRuntimeConfig } from '#imports'
 
 /**
@@ -11,6 +12,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isSSR = import.meta.server
 
   const { currentUser, currentTeam, isLoading } = useTeamAuth()
+
+  // During SSR, use Supabase's SSR-aware user state from cookies
+  const supabaseUser = isSSR ? useSupabaseUser() : null
 
   // More efficient auth loading wait with early exit
   if (isLoading.value) {
@@ -87,14 +91,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
       return
     }
 
-    // For SSR: if auth is still loading and route is protected, allow access initially
-    // The client-side middleware will re-run with proper auth state after hydration
-    if (isSSR && isLoading.value && isProtectedRoute) {
-      return
-    }
-
     // Require authentication only for explicitly protected routes
-    if (!currentUser.value) {
+    // During SSR, check supabaseUser from cookies; on client, use currentUser from state
+    const userToCheck = isSSR ? supabaseUser?.value : currentUser.value
+
+    if (!userToCheck) {
       const redirectUrl = `${currentPath}${to.search || ''}`
       const loginPage = teamAuthConfig.loginPage || '/signin'
       return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
@@ -114,7 +115,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
 
     // All other routes require authentication in protected mode
-    if (!currentUser.value) {
+    // During SSR, check supabaseUser from cookies; on client, use currentUser from state
+    const userToCheck = isSSR ? supabaseUser?.value : currentUser.value
+
+    if (!userToCheck) {
       const redirectUrl = `${currentPath}${to.search || ''}`
       const loginPage = teamAuthConfig.loginPage || '/signin'
       return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)

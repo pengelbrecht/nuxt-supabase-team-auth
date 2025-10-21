@@ -113,11 +113,32 @@ let cachedClient: any = null
 let clientCorrupted = false
 let lastResetTime = 0
 
+// Deferred promise helper for signIn/signUp auth state sync
+interface Deferred<T = void> {
+  promise: Promise<T>
+  resolve: (value?: T) => void
+  reject: (reason?: any) => void
+}
+
+function createDeferred<T = void>(): Deferred<T> {
+  let resolve: (value?: T) => void
+  let reject: (reason?: any) => void
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res as (value?: T) => void
+    reject = rej
+  })
+  return { promise, resolve: resolve!, reject: reject! }
+}
+
+// Pending auth sync deferred - used by signIn/signUp to wait for auth state update
+let pendingAuthSync: Deferred | null = null
+
 // Reset cached client for testing
 export function resetTeamAuthState() {
   cachedClient = null
   clientCorrupted = false
   authListenerRegistered = false
+  pendingAuthSync = null
 }
 
 const IMPERSONATION_STORAGE_KEY = 'team_auth_impersonation'
@@ -474,6 +495,13 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
                 if (session?.user) {
                   console.log('[useTeamAuth] Updating auth state for user:', session.user.email)
                   await updateCompleteAuthState(session.user)
+
+                  // Resolve pending auth sync if signIn/signUp is waiting
+                  if (pendingAuthSync && event === 'SIGNED_IN') {
+                    console.log('[useTeamAuth] Resolving pending auth sync')
+                    pendingAuthSync.resolve()
+                    pendingAuthSync = null
+                  }
                 }
                 break
 
@@ -481,6 +509,13 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
                 console.log('[useTeamAuth] Processing SIGNED_OUT event, resetting auth state...')
                 resetAuthState()
                 lastProcessedEvent.value = '' // Reset on signout
+
+                // Reject any pending auth sync
+                if (pendingAuthSync) {
+                  pendingAuthSync.reject(new Error('Signed out'))
+                  pendingAuthSync = null
+                }
+
                 console.log('[useTeamAuth] Auth state reset complete')
                 break
             }
@@ -545,6 +580,9 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           throw { code: 'SIGNUP_FAILED', message: response.message || 'Signup failed' }
         }
 
+        // Create deferred for auth state sync
+        pendingAuthSync = createDeferred()
+
         // Sign in the user after successful creation
         const { error: signInError } = await getClient().auth.signInWithPassword({
           email,
@@ -552,13 +590,18 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         })
 
         if (signInError) {
+          // Clear deferred on error
+          pendingAuthSync = null
           throw { code: 'SIGNIN_AFTER_SIGNUP_FAILED', message: signInError.message }
         }
 
-        // State will be updated by the auth listener
+        // Wait for auth listener to update state
+        await pendingAuthSync.promise
       }
       catch (error: unknown) {
         console.error('Sign up with team failed:', getErrorForLogging(error))
+        // Clean up deferred on error
+        pendingAuthSync = null
         throw error
       }
       finally {
@@ -570,19 +613,27 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       try {
         authState.value = { ...authState.value, loading: true }
 
+        // Create deferred for auth state sync
+        pendingAuthSync = createDeferred()
+
         const { data: _data, error } = await getClient().auth.signInWithPassword({
           email,
           password,
         })
 
         if (error) {
+          // Clear deferred on error
+          pendingAuthSync = null
           throw { code: 'SIGNIN_FAILED', message: error.message }
         }
 
-        // State will be updated by the auth listener
+        // Wait for auth listener to update state
+        await pendingAuthSync.promise
       }
       catch (error: unknown) {
         console.error('Sign in failed:', error)
+        // Clean up deferred on error
+        pendingAuthSync = null
         throw error
       }
       finally {

@@ -247,7 +247,44 @@ SUPABASE_SERVICE_KEY=your-service-key        # For server operations
 
 The module automatically reads these variables and configures them for both client and server usage.
 
-### 5. Create Your Pages
+### 5. Understanding Authentication Redirects
+
+The module handles authentication redirects automatically using a smart redirect system:
+
+#### How Login Redirects Work
+
+1. **Unauthenticated user tries to access protected route** → Gets redirected to login with `?redirect=/original-path`
+2. **User signs in successfully** → Automatically redirected to original path (or configured default)
+3. **No manual redirect code needed** → The `AuthSignIn` component handles everything
+
+#### Redirect Priority
+
+The module uses this priority when determining where to redirect after login:
+
+1. **Query parameter** - `?redirect=/dashboard` (highest priority)
+2. **Module config** - `teamAuth.redirectTo` in `nuxt.config.ts` (fallback)
+3. **Default** - `/dashboard` (if not configured)
+
+#### Security Features
+
+- **Same-origin validation** - Only allows redirects to same domain
+- **URL sanitization** - Invalid URLs fall back to default redirect
+- **Automatic encoding** - Handles special characters in redirect URLs
+
+#### Example Flow
+
+```typescript
+// User visits protected route
+// → http://localhost:3000/settings
+
+// Middleware redirects to login
+// → http://localhost:3000/signin?redirect=%2Fsettings
+
+// After successful sign-in, automatically redirected to:
+// → http://localhost:3000/settings
+```
+
+### 6. Create Your Pages
 
 Create your authentication pages with proper error handling:
 
@@ -255,15 +292,15 @@ Create your authentication pages with proper error handling:
 <!-- pages/signin.vue -->
 <template>
   <div class="min-h-screen flex items-center justify-center">
-    <AuthSignIn 
-      @success="handleSignIn" 
-      @error="handleError" 
+    <AuthSignIn
+      @error="handleError"
+      @forgot-password="handleForgotPassword"
     />
   </div>
 </template>
 
 <script setup>
-// Redirect authenticated users away from sign-in
+// Redirect authenticated users away from sign-in page
 definePageMeta({
   middleware: 'redirect-authenticated'
 })
@@ -271,9 +308,9 @@ definePageMeta({
 const router = useRouter()
 const toast = useToast()
 
-const handleSignIn = () => {
-  router.push('/dashboard')
-}
+// Note: AuthSignIn component handles post-login redirects automatically
+// It reads the ?redirect= query parameter or uses the configured redirectTo route
+// No need to manually redirect on @success event
 
 const handleError = (error) => {
   toast.add({
@@ -281,6 +318,10 @@ const handleError = (error) => {
     description: error,
     color: 'red'
   })
+}
+
+const handleForgotPassword = () => {
+  router.push('/auth/forgot-password')
 }
 </script>
 ```
