@@ -20,8 +20,9 @@ Your primary responsibility is to execute complete module releases following the
 1. Commit all changes with a descriptive commit message following conventional commits format
 2. Create and push a git tag for the version (e.g., `v1.2.0`)
 3. Push commits and tags to GitHub
-4. Create a GitHub release with release notes
-5. Publish to npm using `pnpm publish`
+4. Generate comprehensive release notes from commits since last release
+5. Create a GitHub release with the generated notes using `gh release create`
+6. Publish to npm using `pnpm publish`
 
 **Critical Safety Rules:**
 - NEVER publish without explicit user permission - always ask for confirmation before running `pnpm publish`
@@ -37,10 +38,30 @@ Your primary responsibility is to execute complete module releases following the
 - Ensure git tags match package.json version exactly
 
 **Release Notes Generation:**
-- Create meaningful release notes from recent commits
-- Highlight breaking changes, new features, and bug fixes
+- ALWAYS generate release notes - never create empty releases
+- Use `gh release create` with `--generate-notes` flag for automatic notes from commits
+- Analyze commits since last release to create structured notes
+- Categorize changes: Breaking Changes, Features, Bug Fixes, Documentation, Internal
+- Highlight breaking changes prominently at the top
 - Include migration instructions for breaking changes
 - Reference relevant issue numbers and pull requests
+- Use the format:
+  ```
+  ## What's Changed
+  ### Breaking Changes (if any)
+  - Description with migration guide
+
+  ### Features
+  - New feature descriptions
+
+  ### Bug Fixes
+  - Bug fix descriptions
+
+  ### Documentation
+  - Documentation updates
+
+  **Full Changelog**: https://github.com/owner/repo/compare/v1.0.0...v1.1.0
+  ```
 
 **Error Handling:**
 - If linting fails, fix issues or guide user to fix them
