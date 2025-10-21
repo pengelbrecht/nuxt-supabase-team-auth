@@ -181,7 +181,7 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import { useSupabaseClient } from '../composables/useSupabaseComposables'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
-import { useRoute, navigateTo, useRuntimeConfig, useRouter } from '#imports'
+import { useRoute, navigateTo, useRuntimeConfig } from '#imports'
 
 interface AuthSignInProps {
   /** Title displayed in the header */
@@ -246,11 +246,10 @@ const authSchema = v.object({
 })
 
 // Composables - declared after form to avoid issues
-const { signIn, isLoading, currentUser } = useTeamAuth()
+const { signIn, isLoading } = useTeamAuth()
 const { isGoogleEnabled, hasAnySocialProvider } = useTeamAuthConfig()
 const supabase = useSupabaseClient()
 const route = useRoute()
-const router = useRouter()
 const config = useRuntimeConfig()
 
 // Computed properties for social auth
