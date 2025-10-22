@@ -259,7 +259,9 @@ describe('useTeamAuth', () => {
     })
 
     useNuxtApp.mockReturnValue({
-      $teamAuthClient: mockSupabaseClient,
+      $supabase: {
+        client: mockSupabaseClient,
+      },
     })
 
     useRuntimeConfig.mockReturnValue({

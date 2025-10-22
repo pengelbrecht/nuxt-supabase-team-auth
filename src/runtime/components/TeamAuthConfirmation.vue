@@ -104,6 +104,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useSupabaseClient } from '../composables/useSupabaseComposables'
 // import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
 import { useRoute, useRouter, useNuxtApp } from '#imports'
 
@@ -118,6 +119,7 @@ const props = withDefaults(defineProps<ConfirmationProps>(), {
 
 const route = useRoute()
 const router = useRouter()
+const supabase = useSupabaseClient()
 
 // State management
 const isLoading = ref(true)
@@ -195,15 +197,12 @@ const handleEmailConfirmation = async (params: any) => {
   loadingMessage.value = 'Confirming your email address...'
 
   try {
-    // Use Supabase auth to verify the token
-    const { $teamAuthClient } = useNuxtApp()
-
     if (!params.token) {
       throw new Error('Missing confirmation token')
     }
 
     // Verify OTP token for email confirmation
-    const { error: verifyError } = await $teamAuthClient.auth.verifyOtp({
+    const { error: verifyError } = await supabase.auth.verifyOtp({
       token_hash: params.token,
       type: 'email',
     })
@@ -230,9 +229,7 @@ const handleInviteAcceptance = async (params: any) => {
     }
 
     // Call accept-invite Edge Function
-    const { $teamAuthClient } = useNuxtApp()
-
-    const { data, error: inviteError } = await $teamAuthClient.functions.invoke('accept-invite', {
+    const { data, error: inviteError } = await supabase.functions.invoke('accept-invite', {
       body: {
         team_id: params.team_id,
         email: params.email,

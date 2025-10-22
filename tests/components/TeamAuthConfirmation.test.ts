@@ -31,15 +31,20 @@ vi.mock('vue-router', () => ({
   useRouter: () => mockRouter,
 }))
 
+// Mock Supabase client
+const mockSupabaseClient = {
+  auth: {
+    verifyOtp: vi.fn(),
+  },
+  functions: {
+    invoke: vi.fn(),
+  },
+}
+
 // Mock Nuxt app
 const mockNuxtApp = {
-  $teamAuthClient: {
-    auth: {
-      verifyOtp: vi.fn(),
-    },
-    functions: {
-      invoke: vi.fn(),
-    },
+  $supabase: {
+    client: mockSupabaseClient,
   },
 }
 
@@ -67,6 +72,10 @@ vi.mock('../../src/runtime/composables/useTeamAuthConfig', () => ({
     supabaseKey: { value: 'test-key' },
     config: { value: {} },
   }),
+}))
+
+vi.mock('../../src/runtime/composables/useSupabaseComposables', () => ({
+  useSupabaseClient: () => mockSupabaseClient,
 }))
 
 // Mock #imports for component
@@ -97,7 +106,7 @@ describe('TeamAuthConfirmation', () => {
         UButton: MockUButton,
       },
       provide: {
-        $teamAuthClient: mockNuxtApp.$teamAuthClient,
+        $supabase: mockNuxtApp.$supabase,
       },
       mocks: {
         useNuxtApp: () => mockNuxtApp,
@@ -113,8 +122,8 @@ describe('TeamAuthConfirmation', () => {
     mockRoute.params = {}
 
     // Reset mock functions
-    mockNuxtApp.$teamAuthClient.auth.verifyOtp.mockReset()
-    mockNuxtApp.$teamAuthClient.functions.invoke.mockReset()
+    mockSupabaseClient.auth.verifyOtp.mockReset()
+    mockSupabaseClient.functions.invoke.mockReset()
     mockRouter.push.mockReset()
 
     // Configure #imports mocks to return our test mocks
@@ -143,7 +152,7 @@ describe('TeamAuthConfirmation', () => {
     it('should successfully confirm email', async () => {
       mockRoute.query = { token: 'test-token', type: 'email' }
 
-      mockNuxtApp.$teamAuthClient.auth.verifyOtp.mockResolvedValue({
+      mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
         error: null,
       })
 
@@ -154,7 +163,7 @@ describe('TeamAuthConfirmation', () => {
       await nextTick()
       await nextTick()
 
-      expect(mockNuxtApp.$teamAuthClient.auth.verifyOtp).toHaveBeenCalledWith({
+      expect(mockSupabaseClient.auth.verifyOtp).toHaveBeenCalledWith({
         token_hash: 'test-token',
         type: 'email',
       })
@@ -166,7 +175,7 @@ describe('TeamAuthConfirmation', () => {
     it('should handle email confirmation error', async () => {
       mockRoute.query = { token: 'invalid-token', type: 'email' }
 
-      mockNuxtApp.$teamAuthClient.auth.verifyOtp.mockResolvedValue({
+      mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
         error: { message: 'Invalid token' },
       })
 
@@ -192,7 +201,7 @@ describe('TeamAuthConfirmation', () => {
         type: 'invite',
       }
 
-      mockNuxtApp.$teamAuthClient.functions.invoke.mockResolvedValue({
+      mockSupabaseClient.functions.invoke.mockResolvedValue({
         data: { success: true },
         error: null,
       })
@@ -204,7 +213,7 @@ describe('TeamAuthConfirmation', () => {
       await nextTick()
       await nextTick()
 
-      expect(mockNuxtApp.$teamAuthClient.functions.invoke).toHaveBeenCalledWith('accept-invite', {
+      expect(mockSupabaseClient.functions.invoke).toHaveBeenCalledWith('accept-invite', {
         body: {
           team_id: 'team-123',
           email: 'user@example.com',
@@ -222,7 +231,7 @@ describe('TeamAuthConfirmation', () => {
         type: 'invite',
       }
 
-      mockNuxtApp.$teamAuthClient.functions.invoke.mockResolvedValue({
+      mockSupabaseClient.functions.invoke.mockResolvedValue({
         data: null,
         error: { message: 'Invitation expired' },
       })
@@ -263,7 +272,7 @@ describe('TeamAuthConfirmation', () => {
       mockRoute.query = {}
       window.location.hash = '#token=hash-token&type=email'
 
-      mockNuxtApp.$teamAuthClient.auth.verifyOtp.mockResolvedValue({
+      mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
         error: null,
       })
 
@@ -274,7 +283,7 @@ describe('TeamAuthConfirmation', () => {
       await nextTick()
       await nextTick()
 
-      expect(mockNuxtApp.$teamAuthClient.auth.verifyOtp).toHaveBeenCalledWith({
+      expect(mockSupabaseClient.auth.verifyOtp).toHaveBeenCalledWith({
         token_hash: 'hash-token',
         type: 'email',
       })
@@ -284,7 +293,7 @@ describe('TeamAuthConfirmation', () => {
       mockRoute.query = { token: 'query-token', type: 'email' }
       window.location.hash = '#token=hash-token&type=signup'
 
-      mockNuxtApp.$teamAuthClient.auth.verifyOtp.mockResolvedValue({
+      mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
         error: null,
       })
 
@@ -295,7 +304,7 @@ describe('TeamAuthConfirmation', () => {
       await nextTick()
       await nextTick()
 
-      expect(mockNuxtApp.$teamAuthClient.auth.verifyOtp).toHaveBeenCalledWith({
+      expect(mockSupabaseClient.auth.verifyOtp).toHaveBeenCalledWith({
         token_hash: 'query-token',
         type: 'email',
       })
@@ -337,7 +346,7 @@ describe('TeamAuthConfirmation', () => {
     it('should retry confirmation on button click', async () => {
       mockRoute.query = { token: 'test-token', type: 'email' }
 
-      mockNuxtApp.$teamAuthClient.auth.verifyOtp
+      mockSupabaseClient.auth.verifyOtp
         .mockResolvedValueOnce({ error: { message: 'Network error' } })
         .mockResolvedValueOnce({ error: null })
 
@@ -372,7 +381,7 @@ describe('TeamAuthConfirmation', () => {
         redirect_to: '/dashboard',
       }
 
-      mockNuxtApp.$teamAuthClient.auth.verifyOtp.mockResolvedValue({
+      mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
         error: null,
       })
 
@@ -395,7 +404,7 @@ describe('TeamAuthConfirmation', () => {
     it('should use default redirect URL when none provided', async () => {
       mockRoute.query = { token: 'test-token', type: 'email' }
 
-      mockNuxtApp.$teamAuthClient.auth.verifyOtp.mockResolvedValue({
+      mockSupabaseClient.auth.verifyOtp.mockResolvedValue({
         error: null,
       })
 

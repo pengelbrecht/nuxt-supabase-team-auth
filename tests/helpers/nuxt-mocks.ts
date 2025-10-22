@@ -21,17 +21,19 @@ export function createMockNuxtContext(overrides: Record<string, unknown> = {}) {
       forward: vi.fn(),
     },
     app: {
-      $teamAuthClient: {
-        auth: {
-          getSession: vi.fn(),
-          onAuthStateChange: vi.fn(),
-          signOut: vi.fn(),
+      $supabase: {
+        client: {
+          auth: {
+            getSession: vi.fn(),
+            onAuthStateChange: vi.fn(),
+            signOut: vi.fn(),
+          },
+          from: vi.fn(() => ({
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn(),
+          })),
         },
-        from: vi.fn(() => ({
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          single: vi.fn(),
-        })),
       },
     },
     auth: {
@@ -92,25 +94,29 @@ export function createMockRouter() {
  */
 export function createMockNuxtApp(overrides: Record<string, unknown> = {}) {
   return {
-    $teamAuthClient: {
-      auth: {
-        getSession: vi.fn(),
-        onAuthStateChange: vi.fn(),
-        signOut: vi.fn(),
-        signInWithPassword: vi.fn(),
-        signUp: vi.fn(),
-      },
-      from: vi.fn(() => ({
-        select: vi.fn().mockReturnThis(),
-        insert: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        delete: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        neq: vi.fn().mockReturnThis(),
-        single: vi.fn(),
-      })),
-      functions: {
-        invoke: vi.fn(),
+    $supabase: {
+      client: {
+        auth: {
+          getSession: vi.fn(),
+          onAuthStateChange: vi.fn(),
+          signOut: vi.fn(),
+          signInWithPassword: vi.fn(),
+          signUp: vi.fn(),
+          signInWithOAuth: vi.fn(),
+          verifyOtp: vi.fn(),
+        },
+        from: vi.fn(() => ({
+          select: vi.fn().mockReturnThis(),
+          insert: vi.fn().mockReturnThis(),
+          update: vi.fn().mockReturnThis(),
+          delete: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          neq: vi.fn().mockReturnThis(),
+          single: vi.fn(),
+        })),
+        functions: {
+          invoke: vi.fn(),
+        },
       },
     },
     ...overrides,

@@ -294,8 +294,8 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
 import { usePasswordPolicy } from '../composables/usePasswordPolicy'
+import { useSupabaseClient } from '../composables/useSupabaseComposables'
 import type { User, Team } from '../types'
-import { useNuxtApp } from '#imports'
 
 interface AuthSignUpProps {
   /** Title displayed in the header */
@@ -372,6 +372,7 @@ const form = reactive<SignUpForm>({
 const { signUpWithTeam } = useTeamAuth()
 const { isGoogleEnabled, isGithubEnabled, hasAnySocialProvider } = useTeamAuthConfig()
 const { getPasswordSchema, createConfirmPasswordValidator, passwordHelpText } = usePasswordPolicy()
+const supabase = useSupabaseClient()
 
 // Dynamic validation schema using password policy
 const signUpSchema = computed(() => v.object({
@@ -441,14 +442,7 @@ const handleGoogleSignUp = async () => {
   try {
     isGoogleLoading.value = true
 
-    // Get Supabase client
-    const nuxtApp = useNuxtApp()
-
-    if (!nuxtApp?.$teamAuthClient?.auth?.signInWithOAuth) {
-      throw new Error('Supabase client not available for OAuth')
-    }
-
-    const { data, error } = await nuxtApp.$teamAuthClient.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback?mode=signup&team_name=${encodeURIComponent(form.teamName || 'My Team')}`,
@@ -474,14 +468,7 @@ const handleGithubSignUp = async () => {
   try {
     isGithubLoading.value = true
 
-    // Get Supabase client
-    const nuxtApp = useNuxtApp()
-
-    if (!nuxtApp?.$teamAuthClient?.auth?.signInWithOAuth) {
-      throw new Error('Supabase client not available for OAuth')
-    }
-
-    const { data, error } = await nuxtApp.$teamAuthClient.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
         redirectTo: `${window.location.origin}/auth/callback?mode=signup&team_name=${encodeURIComponent(form.teamName || 'My Team')}`,

@@ -65,29 +65,32 @@ vi.mock('#app', () => ({
   }),
   useState: vi.fn(),
   useNuxtApp: () => ({
-    $teamAuthClient: {
-      auth: {
-        getSession: vi.fn(),
-        signUp: vi.fn(),
-        signInWithPassword: vi.fn(),
-        signOut: vi.fn(),
-        onAuthStateChange: vi.fn(),
-        setSession: vi.fn(),
-        verifyOtp: vi.fn(),
-        updateUser: vi.fn(),
+    $supabase: {
+      client: {
+        auth: {
+          getSession: vi.fn(),
+          signUp: vi.fn(),
+          signInWithPassword: vi.fn(),
+          signOut: vi.fn(),
+          onAuthStateChange: vi.fn(),
+          setSession: vi.fn(),
+          verifyOtp: vi.fn(),
+          updateUser: vi.fn(),
+          signInWithOAuth: vi.fn(),
+        },
+        functions: {
+          invoke: vi.fn(),
+        },
+        from: vi.fn(() => ({
+          select: vi.fn().mockReturnThis(),
+          insert: vi.fn().mockReturnThis(),
+          update: vi.fn().mockReturnThis(),
+          delete: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          neq: vi.fn().mockReturnThis(),
+          single: vi.fn(),
+        })),
       },
-      functions: {
-        invoke: vi.fn(),
-      },
-      from: vi.fn(() => ({
-        select: vi.fn().mockReturnThis(),
-        insert: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        delete: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        neq: vi.fn().mockReturnThis(),
-        single: vi.fn(),
-      })),
     },
   }),
 }))
@@ -115,29 +118,32 @@ vi.mock('#imports', () => ({
   }),
   useState: vi.fn(),
   useNuxtApp: () => ({
-    $teamAuthClient: {
-      auth: {
-        getSession: vi.fn(),
-        signUp: vi.fn(),
-        signInWithPassword: vi.fn(),
-        signOut: vi.fn(),
-        onAuthStateChange: vi.fn(),
-        setSession: vi.fn(),
-        verifyOtp: vi.fn(),
-        updateUser: vi.fn(),
+    $supabase: {
+      client: {
+        auth: {
+          getSession: vi.fn(),
+          signUp: vi.fn(),
+          signInWithPassword: vi.fn(),
+          signOut: vi.fn(),
+          onAuthStateChange: vi.fn(),
+          setSession: vi.fn(),
+          verifyOtp: vi.fn(),
+          updateUser: vi.fn(),
+          signInWithOAuth: vi.fn(),
+        },
+        functions: {
+          invoke: vi.fn(),
+        },
+        from: vi.fn(() => ({
+          select: vi.fn().mockReturnThis(),
+          insert: vi.fn().mockReturnThis(),
+          update: vi.fn().mockReturnThis(),
+          delete: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          neq: vi.fn().mockReturnThis(),
+          single: vi.fn(),
+        })),
       },
-      functions: {
-        invoke: vi.fn(),
-      },
-      from: vi.fn(() => ({
-        select: vi.fn().mockReturnThis(),
-        insert: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        delete: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        neq: vi.fn().mockReturnThis(),
-        single: vi.fn(),
-      })),
     },
   }),
   useToast: () => ({
@@ -158,29 +164,32 @@ vi.mock('vue-router', () => ({
 
 // Global test configuration
 config.global.mocks = {
-  $teamAuthClient: {
-    auth: {
-      getSession: vi.fn(),
-      signUp: vi.fn(),
-      signInWithPassword: vi.fn(),
-      signOut: vi.fn(),
-      onAuthStateChange: vi.fn(),
-      setSession: vi.fn(),
-      verifyOtp: vi.fn(),
-      updateUser: vi.fn(),
+  $supabase: {
+    client: {
+      auth: {
+        getSession: vi.fn(),
+        signUp: vi.fn(),
+        signInWithPassword: vi.fn(),
+        signOut: vi.fn(),
+        onAuthStateChange: vi.fn(),
+        setSession: vi.fn(),
+        verifyOtp: vi.fn(),
+        updateUser: vi.fn(),
+        signInWithOAuth: vi.fn(),
+      },
+      functions: {
+        invoke: vi.fn(),
+      },
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        insert: vi.fn().mockReturnThis(),
+        update: vi.fn().mockReturnThis(),
+        delete: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        neq: vi.fn().mockReturnThis(),
+        single: vi.fn(),
+      })),
     },
-    functions: {
-      invoke: vi.fn(),
-    },
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      delete: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      neq: vi.fn().mockReturnThis(),
-      single: vi.fn(),
-    })),
   },
 }
 
