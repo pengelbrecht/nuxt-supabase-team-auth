@@ -106,7 +106,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useSupabaseClient } from '../composables/useSupabaseComposables'
 // import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
-import { useRoute, useRouter, useNuxtApp } from '#imports'
+import { useRoute, useRouter } from '#imports'
 
 interface ConfirmationProps {
   /** Custom redirect URL after successful confirmation */
