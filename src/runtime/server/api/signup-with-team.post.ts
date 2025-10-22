@@ -1,4 +1,4 @@
-import { defineEventHandler, readBody, createError } from 'h3'
+import { defineEventHandler, readBody, createError, getHeader } from 'h3'
 import { $fetch } from 'ofetch'
 import { useRuntimeConfig } from '#imports'
 
@@ -17,14 +17,20 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Get Authorization header from client (for OAuth signup)
+  const authHeader = getHeader(event, 'Authorization')
+
   // Transform body to match Edge Function expectations
+  // Support both camelCase (from forms) and snake_case (from OAuth callback)
   const transformedBody = {
     email: body.email,
     password: body.password,
-    team_name: body.teamName, // Convert camelCase to snake_case
+    team_name: body.team_name || body.teamName, // Support both formats
+    oauth_provider: body.oauth_provider, // Pass through for OAuth signup
+    user_metadata: body.user_metadata, // Pass through Google profile data
   }
 
-  // Forward to Supabase Edge Function with service role key
+  // Forward to Supabase Edge Function
   const edgeFunctionUrl = `${supabaseUrl}/functions/v1/create-team-and-owner`
 
   try {
@@ -32,7 +38,8 @@ export default defineEventHandler(async (event) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${serviceKey}`,
+        // Use client auth header for OAuth (has user session), service key for password signup
+        'Authorization': authHeader || `Bearer ${serviceKey}`,
       },
       body: transformedBody,
     })

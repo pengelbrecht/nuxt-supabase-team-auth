@@ -52,7 +52,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
     // This should never happen, but guard against data corruption
     if (!currentTeam.value) {
       console.error('[Team Auth] Authenticated user missing team - data integrity issue. User ID:', currentUser.value.id)
-      return navigateTo('/signin?error=account_misconfigured')
+      const config = useRuntimeConfig()
+      const loginPage = config.public.teamAuth?.loginPage || '/signin'
+      return navigateTo(`${loginPage}?error=account_misconfigured`)
     }
 
     // Get redirect destination from config

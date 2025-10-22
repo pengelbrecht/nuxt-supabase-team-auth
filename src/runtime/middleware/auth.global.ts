@@ -132,6 +132,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // This should never happen in single-team model, but guard against data corruption
   if (currentUser.value && !currentTeam.value) {
     console.error('[Team Auth] REDIRECT POINT 3: User exists without team - data integrity issue. User ID:', currentUser.value.id)
-    return navigateTo('/signin?error=account_misconfigured')
+    return navigateTo(`${teamAuthConfig.loginPage || '/signin'}?error=account_misconfigured`)
   }
 })

@@ -62,6 +62,18 @@
       <div class="flex-1 border-t border-gray-300 dark:border-gray-600" />
     </div>
 
+    <!-- Error Alert from URL parameter -->
+    <UAlert
+      v-if="urlErrorMessage"
+      color="red"
+      variant="subtle"
+      :title="urlErrorTitle"
+      :description="urlErrorMessage"
+      :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'ghost' }"
+      class="mb-6"
+      @close="clearUrlError"
+    />
+
     <UForm
       v-if="isFormReady"
       :schema="authSchema"
@@ -181,7 +193,7 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import { useSupabaseClient } from '../composables/useSupabaseComposables'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
-import { useRoute, navigateTo, useRuntimeConfig } from '#imports'
+import { useRoute, useRouter, navigateTo, useRuntimeConfig } from '#imports'
 
 interface AuthSignInProps {
   /** Title displayed in the header */
@@ -250,6 +262,7 @@ const { signIn, isLoading } = useTeamAuth()
 const { isGoogleEnabled, hasAnySocialProvider } = useTeamAuthConfig()
 const supabase = useSupabaseClient()
 const route = useRoute()
+const router = useRouter()
 const config = useRuntimeConfig()
 
 // Computed properties for social auth
@@ -259,6 +272,35 @@ const showSocialSection = computed(() => props.showSocialLogin && hasAnySocialPr
 // UI state
 const isGoogleLoading = ref(false)
 const showPassword = ref(false)
+
+// URL error handling (from middleware redirects)
+const urlErrorMessage = ref('')
+const urlErrorTitle = ref('')
+
+// Check for error parameter in URL on mount
+onMounted(() => {
+  const errorParam = route.query.error as string
+  if (errorParam) {
+    switch (errorParam) {
+      case 'account_misconfigured':
+        urlErrorTitle.value = 'Account Configuration Error'
+        urlErrorMessage.value = 'Your account appears to be missing required data. Please contact support for assistance.'
+        break
+      default:
+        urlErrorTitle.value = 'Authentication Error'
+        urlErrorMessage.value = 'An error occurred during authentication. Please try again.'
+    }
+  }
+})
+
+const clearUrlError = () => {
+  urlErrorMessage.value = ''
+  urlErrorTitle.value = ''
+  // Clean up URL parameter
+  const query = { ...route.query }
+  delete query.error
+  router.replace({ query })
+}
 
 // Form validation
 const _isFormValid = computed(() => {
