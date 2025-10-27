@@ -182,12 +182,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download package artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v6
         with:
           name: package-tarball
 
       - name: Download changelog artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v6
         with:
           name: changelog
 
