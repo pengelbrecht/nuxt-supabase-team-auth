@@ -71,7 +71,7 @@
     "@nuxtjs/supabase": "1.5.3",
     "commander": "^14.0.0",
     "defu": "^6.1.4",
-    "jose": "^5.9.6",
+    "jose": "^6.1.2",
     "pathe": "^1.1.2",
     "valibot": "^1.1.0"
   },
