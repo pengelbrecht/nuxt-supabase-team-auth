@@ -2,7 +2,7 @@
   "id": "prn",
   "title": "Update dropdown and select components",
   "description": "Check and update dropdown/select components for UI 4 compatibility.\n\nComponents using UDropdownMenu:\n- UserButton.vue\n- TeamForm.vue\n- TeamMembersDialog.vue\n\nComponents using USelect:\n- TeamForm.vue\n- TeamMembersDialog.vue\n\nCheck for API changes in options, events, slots.\n\nTest: All dropdowns and selects work correctly",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "type": "task",
   "owner": "lars@gunnersen.net",
@@ -14,5 +14,7 @@
   "acceptance_criteria": "All dropdown/select components working with UI 4",
   "created_by": "peter@engelbrecht.dk",
   "created_at": "2026-01-26T09:19:58.427731Z",
-  "updated_at": "2026-01-26T09:19:58.427731Z"
+  "updated_at": "2026-01-26T14:51:17.90601Z",
+  "closed_at": "2026-01-26T14:51:17.90601Z",
+  "closed_reason": "Not needed - dropdown/select components work correctly"
 }

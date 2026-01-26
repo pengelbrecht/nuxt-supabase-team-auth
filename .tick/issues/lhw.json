@@ -2,7 +2,7 @@
   "id": "lhw",
   "title": "Audit all Nuxt UI component usage",
   "description": "Create comprehensive list of all Nuxt UI components used and their props.\n\nComponents to audit:\n- UCard, UButton, UIcon, UInput, UFormField\n- UForm, UAlert, UAvatar, UBadge, UCheckbox\n- USelect, UDropdownMenu, UTabs, UModal\n\nOutput: Spreadsheet/table of all components, props used, and v3→v4 changes needed.",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "type": "task",
   "owner": "lars@gunnersen.net",
@@ -10,5 +10,7 @@
   "acceptance_criteria": "Complete audit document with all component usages mapped",
   "created_by": "peter@engelbrecht.dk",
   "created_at": "2026-01-26T09:19:08.799103Z",
-  "updated_at": "2026-01-26T09:19:08.799103Z"
+  "updated_at": "2026-01-26T14:03:50.910738Z",
+  "closed_at": "2026-01-26T14:03:50.910738Z",
+  "closed_reason": "Audit completed - see .tick/research/nuxt-ui-component-audit.md"
 }

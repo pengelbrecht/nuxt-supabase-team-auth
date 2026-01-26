@@ -47,6 +47,16 @@ const mockSupabaseClient = {
 vi.mock('#imports', () => ({
   useRoute: () => mockRoute,
   useRouter: () => mockRouter,
+  definePageMeta: vi.fn(),
+}))
+
+// Mock useTeamAuthConfig composable
+vi.mock('../../src/runtime/composables/useTeamAuthConfig', () => ({
+  useTeamAuthConfig: () => ({
+    redirectTo: { value: '/dashboard' },
+    loginPage: { value: '/signin' },
+    config: { value: {} },
+  }),
 }))
 
 vi.mock('#app', () => ({

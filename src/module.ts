@@ -66,7 +66,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
     name: 'nuxt-supabase-team-auth',
     configKey: 'teamAuth',
     compatibility: {
-      nuxt: '^3.0.0',
+      nuxt: '>=3.0.0',
     },
   },
   defaults: {
@@ -153,7 +153,6 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
     const supabaseConfig = {
       url: supabaseUrl,
       key: supabaseKey,
-      useSsrCookies: true,
       clientOptions: {
         auth: {
           flowType: 'implicit',
@@ -213,18 +212,10 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
     })
 
     // Install @nuxtjs/supabase with our configuration
+    // Note: SSR cookies are always enabled in @nuxtjs/supabase v2.0+
     const supabaseModuleOptions: any = {
       url: supabaseUrl,
       key: supabaseKey,
-      // Hybrid approach: implicit flow for invitations + SSR cookies for persistence
-      // This solves page reload issues while maintaining invitation functionality
-      //
-      // Key benefits:
-      // - Page reload maintains authentication (no redirect to login)
-      // - Server-side rendering has access to user sessions
-      // - Invitation system continues to work with inviteUserByEmail
-      // - All existing functionality preserved
-      useSsrCookies: true,
       clientOptions: {
         auth: {
           flowType: 'implicit', // Required for inviteUserByEmail compatibility

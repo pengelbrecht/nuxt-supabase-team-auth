@@ -2,7 +2,7 @@
   "id": "192",
   "title": "Research @nuxtjs/supabase 2.0 breaking changes",
   "description": "Investigate breaking changes between @nuxtjs/supabase 1.5.3 and 2.0.3.\n\nTasks:\n- Review changelog and migration guide\n- Document API changes in composables (useSupabaseClient, useSupabaseUser, etc.)\n- Check if auth callback handling changed\n- Note any config format changes in nuxt.config\n\nOutput: Create research note in .tick/ with findings.",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "type": "task",
   "owner": "lars@gunnersen.net",
@@ -10,5 +10,7 @@
   "acceptance_criteria": "Research document created with all breaking changes documented",
   "created_by": "peter@engelbrecht.dk",
   "created_at": "2026-01-26T09:19:06.084765Z",
-  "updated_at": "2026-01-26T09:19:06.084765Z"
+  "updated_at": "2026-01-26T14:03:50.865258Z",
+  "closed_at": "2026-01-26T14:03:50.865258Z",
+  "closed_reason": "Research completed - see .tick/research/supabase-v2-changes.md"
 }

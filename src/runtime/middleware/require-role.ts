@@ -65,7 +65,8 @@ export function createRequireRoleMiddleware(
     // This should never happen, but guard against data corruption
     if (!currentRole.value) {
       console.error('[Team Auth] Authenticated user missing role - data integrity issue. User ID:', currentUser.value.id)
-      const loginPage = config.public.teamAuth?.loginPage || '/signin'
+      const runtimeConfig = useRuntimeConfig()
+      const loginPage = runtimeConfig.public.teamAuth?.loginPage || '/signin'
       return navigateTo(`${loginPage}?error=account_misconfigured`)
     }
 
