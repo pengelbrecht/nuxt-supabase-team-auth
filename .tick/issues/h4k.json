@@ -1,7 +1,7 @@
 {
   "id": "h4k",
-  "title": "Update E2E tests for Nuxt 4",
-  "description": "Update Playwright E2E tests to work with Nuxt 4.\n\nSteps:\n1. Update any selectors that changed\n2. Fix timing issues from UI changes\n3. Update auth flow tests if callbacks changed\n4. Verify all user flows still work\n\nTest: pnpm run test:e2e passes",
+  "title": "Migrate E2E tests from Playwright to agent-browser",
+  "description": "Replace Playwright E2E tests with agent-browser skill for Nuxt 4.\n\nSteps:\n1. Document existing test flows from tests/e2e/*.spec.ts\n2. Create equivalent test runs using agent-browser skill\n3. Verify all user flows work with agent-browser:\n   - Authentication (sign in, sign up, logout)\n   - Team management\n   - Profile management\n   - Password reset\n   - Navigation\n4. Remove legacy Playwright tests after migration\n\nAgent-browser advantages over Playwright:\n- AI-powered element selection (no brittle selectors)\n- Natural language test descriptions\n- Automatic adaptation to UI changes\n- Built into Claude Code workflow\n\nTest: All flows verified using /agent-browser skill",
   "status": "open",
   "priority": 2,
   "type": "task",
@@ -14,8 +14,8 @@
     "hqf"
   ],
   "parent": "qlj",
-  "acceptance_criteria": "All E2E tests passing",
+  "acceptance_criteria": "All E2E flows verified with agent-browser, Playwright removed",
   "created_by": "peter@engelbrecht.dk",
   "created_at": "2026-01-26T09:20:17.285262Z",
-  "updated_at": "2026-01-26T09:20:17.285262Z"
+  "updated_at": "2026-01-26T10:45:00.000000Z"
 }

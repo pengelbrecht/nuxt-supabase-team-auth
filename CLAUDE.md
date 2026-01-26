@@ -56,6 +56,19 @@
 - **Don't use `db push` to run local migrations as a remote might be linked and have them applied unintentionally. Instead use `supabase db reset`**
 - **Always use Supabase CLI not npx supabase**
 
+## E2E Testing with Agent Browser
+- **Use agent-browser skill** for all e2e testing instead of Playwright
+- Invoke with `/agent-browser` or use the `agent-browser` skill when testing UI flows
+- Agent-browser automates browser interactions for web testing, form filling, screenshots, and data extraction
+- Test flows: sign up, sign in, logout, profile management, team management, password reset
+- Legacy Playwright tests exist in `tests/e2e/` but should be migrated to agent-browser
+- Agent-browser advantages:
+  - More natural language test descriptions
+  - AI-powered element selection (no brittle selectors)
+  - Automatic waiting and retry logic
+  - Screenshots for verification
+  - Can adapt to UI changes without updating test code
+
 ## Release Process (CRITICAL)
 - **NEVER release/publish before testing locally in the test project**
 - **NEVER publish without explicit user permission**

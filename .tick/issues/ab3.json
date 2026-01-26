@@ -1,0 +1,17 @@
+{
+  "id": "ab3",
+  "title": "Remove Playwright dependencies and config",
+  "description": "Clean up Playwright after migrating to agent-browser.\n\nFiles to remove:\n- playwright.config.ts\n- tests/e2e/*.spec.ts (all Playwright test files)\n- tests/e2e/helpers/cleanup.ts\n\nDependencies to remove from package.json:\n- @playwright/test\n- playwright\n\nScripts to remove from package.json:\n- test:e2e (or update to reference agent-browser workflow)\n\nSteps:\n1. Verify all E2E flows work with agent-browser first\n2. Remove Playwright config and test files\n3. pnpm remove @playwright/test playwright\n4. Update package.json scripts\n5. pnpm install to update lockfile\n\nTest: pnpm install succeeds, no Playwright references remain",
+  "status": "open",
+  "priority": 3,
+  "type": "task",
+  "owner": "peter@engelbrecht.dk",
+  "blocked_by": [
+    "h4k"
+  ],
+  "parent": "qlj",
+  "acceptance_criteria": "Playwright fully removed from project",
+  "created_by": "peter@engelbrecht.dk",
+  "created_at": "2026-01-26T10:45:00.000000Z",
+  "updated_at": "2026-01-26T10:45:00.000000Z"
+}
