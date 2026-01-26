@@ -5,7 +5,7 @@
   "status": "open",
   "priority": 2,
   "type": "task",
-  "owner": "peter@engelbrecht.dk",
+  "owner": "lars@gunnersen.net",
   "parent": "qlj",
   "acceptance_criteria": "Module works correctly in test consumer app (verified via agent-browser)",
   "requires": "review",

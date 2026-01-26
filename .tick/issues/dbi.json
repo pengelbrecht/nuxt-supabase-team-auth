@@ -5,7 +5,7 @@
   "status": "open",
   "priority": 2,
   "type": "task",
-  "owner": "peter@engelbrecht.dk",
+  "owner": "lars@gunnersen.net",
   "parent": "yj4",
   "acceptance_criteria": "All dev dependencies upgraded and tests pass",
   "created_by": "peter@engelbrecht.dk",
