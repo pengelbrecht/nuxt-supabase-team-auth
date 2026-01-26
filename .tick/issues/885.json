@@ -1,0 +1,20 @@
+{
+  "id": "885",
+  "title": "Update unit tests for Nuxt 4",
+  "description": "Update vitest unit tests to work with Nuxt 4.\n\nSteps:\n1. Update test utilities imports\n2. Fix any mocking that changed\n3. Update snapshot tests if needed\n4. Ensure all existing tests pass\n\nTest: pnpm run test passes",
+  "status": "open",
+  "priority": 2,
+  "type": "task",
+  "owner": "peter@engelbrecht.dk",
+  "blocked_by": [
+    "upd",
+    "zdh",
+    "0al",
+    "dbi"
+  ],
+  "parent": "qlj",
+  "acceptance_criteria": "All unit tests passing",
+  "created_by": "peter@engelbrecht.dk",
+  "created_at": "2026-01-26T09:20:14.658196Z",
+  "updated_at": "2026-01-26T09:20:14.658196Z"
+}

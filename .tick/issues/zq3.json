@@ -1,0 +1,21 @@
+{
+  "id": "zq3",
+  "title": "Bump version to 1.0.0",
+  "description": "Prepare the v1.0.0 release.\n\nSteps:\n1. Update version in package.json to 1.0.0\n2. Final pnpm run lint\n3. Final pnpm run test\n4. Final pnpm run build\n5. Create git tag v1.0.0\n\nDO NOT PUBLISH - wait for explicit user approval",
+  "status": "open",
+  "priority": 2,
+  "type": "task",
+  "owner": "peter@engelbrecht.dk",
+  "blocked_by": [
+    "kdf",
+    "vvf",
+    "hzv",
+    "iek"
+  ],
+  "parent": "rdr",
+  "acceptance_criteria": "Version bumped and all checks pass",
+  "requires": "approval",
+  "created_by": "peter@engelbrecht.dk",
+  "created_at": "2026-01-26T09:20:42.161197Z",
+  "updated_at": "2026-01-26T09:20:59.664193Z"
+}

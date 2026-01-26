@@ -1,0 +1,14 @@
+{
+  "id": "dbi",
+  "title": "Upgrade remaining dev dependencies",
+  "description": "Upgrade other outdated dev dependencies for Nuxt 4 compatibility.\n\nPackages to upgrade:\n- @nuxt/devtools: 1.7.0 → 3.x\n- @nuxt/schema: 3.x → 4.x\n- @nuxt/test-utils: 3.x → latest\n- nuxt (dev): 3.x → 4.x\n- vitest: 2.x → latest compatible\n- Other outdated packages from pnpm outdated\n\nTest: pnpm run build \u0026\u0026 pnpm run test succeeds",
+  "status": "open",
+  "priority": 2,
+  "type": "task",
+  "owner": "peter@engelbrecht.dk",
+  "parent": "yj4",
+  "acceptance_criteria": "All dev dependencies upgraded and tests pass",
+  "created_by": "peter@engelbrecht.dk",
+  "created_at": "2026-01-26T09:19:33.8773Z",
+  "updated_at": "2026-01-26T09:19:33.8773Z"
+}

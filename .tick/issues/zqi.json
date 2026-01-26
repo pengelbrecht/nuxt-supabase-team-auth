@@ -1,0 +1,14 @@
+{
+  "id": "zqi",
+  "title": "Research Nuxt 4 module authoring changes",
+  "description": "Investigate what module authors need to change for Nuxt 4 compatibility.\n\nTasks:\n- Review @nuxt/kit 4.x API changes\n- Check if module.ts needs updates\n- Review runtime directory conventions\n- Check composable auto-import changes\n- Verify server route compatibility\n\nOutput: Create research note with required module.ts changes.",
+  "status": "open",
+  "priority": 2,
+  "type": "task",
+  "owner": "peter@engelbrecht.dk",
+  "parent": "fcx",
+  "acceptance_criteria": "Research document with all module authoring changes identified",
+  "created_by": "peter@engelbrecht.dk",
+  "created_at": "2026-01-26T09:19:07.79613Z",
+  "updated_at": "2026-01-26T09:19:07.79613Z"
+}

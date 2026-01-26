@@ -1,0 +1,13 @@
+{
+  "id": "fcx",
+  "title": "Research \u0026 Analysis",
+  "description": "Deep research into all breaking changes and compatibility requirements before starting implementation.",
+  "status": "open",
+  "priority": 2,
+  "type": "epic",
+  "owner": "peter@engelbrecht.dk",
+  "parent": "puo",
+  "created_by": "peter@engelbrecht.dk",
+  "created_at": "2026-01-26T09:18:30.962188Z",
+  "updated_at": "2026-01-26T09:18:30.962188Z"
+}

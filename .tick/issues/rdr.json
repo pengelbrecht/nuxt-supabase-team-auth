@@ -1,0 +1,13 @@
+{
+  "id": "rdr",
+  "title": "Release \u0026 Documentation",
+  "description": "Prepare and execute the release strategy for dual version support.",
+  "status": "open",
+  "priority": 2,
+  "type": "epic",
+  "owner": "peter@engelbrecht.dk",
+  "parent": "puo",
+  "created_by": "peter@engelbrecht.dk",
+  "created_at": "2026-01-26T09:18:36.265109Z",
+  "updated_at": "2026-01-26T09:18:36.265109Z"
+}

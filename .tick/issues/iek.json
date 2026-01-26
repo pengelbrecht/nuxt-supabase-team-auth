@@ -1,0 +1,16 @@
+{
+  "id": "iek",
+  "title": "Test in minimal-nuxt-ui-app",
+  "description": "Test the upgraded module in the test project before publishing.\n\nSteps:\n1. Update test-projects/minimal-nuxt-ui-app to Nuxt 4 + UI 4\n2. Link local module: pnpm link ../..\n3. Start the app and test all flows:\n   - Sign up with team\n   - Sign in\n   - Profile management\n   - Team management\n   - Password reset\n   - OAuth flows (if configured)\n\nTest: All flows work in consumer app",
+  "status": "open",
+  "priority": 2,
+  "type": "task",
+  "owner": "peter@engelbrecht.dk",
+  "parent": "qlj",
+  "acceptance_criteria": "Module works correctly in test consumer app",
+  "requires": "review",
+  "awaiting": "work",
+  "created_by": "peter@engelbrecht.dk",
+  "created_at": "2026-01-26T09:20:19.141811Z",
+  "updated_at": "2026-01-26T09:20:19.141811Z"
+}

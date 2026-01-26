@@ -1,0 +1,14 @@
+{
+  "id": "yh3",
+  "title": "Research Nuxt UI 4 breaking changes in detail",
+  "description": "Deep dive into Nuxt UI v3 to v4 migration guide.\n\nFocus areas:\n- v-model modifier changes (nullify → nullable)\n- Form component behavior changes\n- Any prop renames or removals\n- CSS/styling changes\n- Slot API changes\n\nOutput: Detailed migration checklist.",
+  "status": "open",
+  "priority": 2,
+  "type": "task",
+  "owner": "peter@engelbrecht.dk",
+  "parent": "fcx",
+  "acceptance_criteria": "Migration checklist with all breaking changes documented",
+  "created_by": "peter@engelbrecht.dk",
+  "created_at": "2026-01-26T09:19:09.913543Z",
+  "updated_at": "2026-01-26T09:19:09.913543Z"
+}

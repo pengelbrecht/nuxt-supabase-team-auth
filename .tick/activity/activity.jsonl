@@ -1,0 +1,36 @@
+{"ts":"2026-01-26T09:18:21.527167Z","tick":"puo","action":"create","actor":"peter@engelbrecht.dk","data":{"priority":2,"title":"Nuxt 4 + Nuxt UI 4 Upgrade","type":"epic"}}
+{"ts":"2026-01-26T09:18:30.962748Z","tick":"fcx","action":"create","actor":"peter@engelbrecht.dk","epic":"puo","data":{"priority":2,"title":"Research \u0026 Analysis","type":"epic"}}
+{"ts":"2026-01-26T09:18:31.958687Z","tick":"yj4","action":"create","actor":"peter@engelbrecht.dk","epic":"puo","data":{"priority":2,"title":"Dependency Upgrades","type":"epic"}}
+{"ts":"2026-01-26T09:18:33.653956Z","tick":"k5e","action":"create","actor":"peter@engelbrecht.dk","epic":"puo","data":{"priority":2,"title":"Component Compatibility","type":"epic"}}
+{"ts":"2026-01-26T09:18:35.035579Z","tick":"qlj","action":"create","actor":"peter@engelbrecht.dk","epic":"puo","data":{"priority":2,"title":"Testing \u0026 Validation","type":"epic"}}
+{"ts":"2026-01-26T09:18:36.265712Z","tick":"rdr","action":"create","actor":"peter@engelbrecht.dk","epic":"puo","data":{"priority":2,"title":"Release \u0026 Documentation","type":"epic"}}
+{"ts":"2026-01-26T09:19:06.085396Z","tick":"192","action":"create","actor":"peter@engelbrecht.dk","epic":"fcx","data":{"priority":2,"title":"Research @nuxtjs/supabase 2.0 breaking changes","type":"task"}}
+{"ts":"2026-01-26T09:19:07.796645Z","tick":"zqi","action":"create","actor":"peter@engelbrecht.dk","epic":"fcx","data":{"priority":2,"title":"Research Nuxt 4 module authoring changes","type":"task"}}
+{"ts":"2026-01-26T09:19:08.799594Z","tick":"lhw","action":"create","actor":"peter@engelbrecht.dk","epic":"fcx","data":{"priority":2,"title":"Audit all Nuxt UI component usage","type":"task"}}
+{"ts":"2026-01-26T09:19:09.914055Z","tick":"yh3","action":"create","actor":"peter@engelbrecht.dk","epic":"fcx","data":{"priority":2,"title":"Research Nuxt UI 4 breaking changes in detail","type":"task"}}
+{"ts":"2026-01-26T09:19:27.590677Z","tick":"mlm","action":"create","actor":"peter@engelbrecht.dk","epic":"yj4","data":{"priority":2,"title":"Create v0.x maintenance branch","type":"task"}}
+{"ts":"2026-01-26T09:19:28.755696Z","tick":"upd","action":"create","actor":"peter@engelbrecht.dk","epic":"yj4","data":{"priority":2,"title":"Upgrade @nuxt/kit to v4","type":"task"}}
+{"ts":"2026-01-26T09:19:30.940235Z","tick":"zdh","action":"create","actor":"peter@engelbrecht.dk","epic":"yj4","data":{"priority":2,"title":"Upgrade @nuxtjs/supabase to v2","type":"task"}}
+{"ts":"2026-01-26T09:19:32.707416Z","tick":"0al","action":"create","actor":"peter@engelbrecht.dk","epic":"yj4","data":{"priority":2,"title":"Upgrade peer dependency to Nuxt UI 4","type":"task"}}
+{"ts":"2026-01-26T09:19:33.877793Z","tick":"dbi","action":"create","actor":"peter@engelbrecht.dk","epic":"yj4","data":{"priority":2,"title":"Upgrade remaining dev dependencies","type":"task"}}
+{"ts":"2026-01-26T09:19:52.691409Z","tick":"mcg","action":"create","actor":"peter@engelbrecht.dk","epic":"k5e","data":{"priority":2,"title":"Update v-model modifiers in form components","type":"task"}}
+{"ts":"2026-01-26T09:19:54.21559Z","tick":"zf1","action":"create","actor":"peter@engelbrecht.dk","epic":"k5e","data":{"priority":2,"title":"Update UForm components for schema changes","type":"task"}}
+{"ts":"2026-01-26T09:19:55.788471Z","tick":"0eg","action":"create","actor":"peter@engelbrecht.dk","epic":"k5e","data":{"priority":2,"title":"Update DialogBox/Modal components","type":"task"}}
+{"ts":"2026-01-26T09:19:58.42828Z","tick":"prn","action":"create","actor":"peter@engelbrecht.dk","epic":"k5e","data":{"priority":2,"title":"Update dropdown and select components","type":"task"}}
+{"ts":"2026-01-26T09:19:59.725963Z","tick":"hqf","action":"create","actor":"peter@engelbrecht.dk","epic":"k5e","data":{"priority":2,"title":"Fix any remaining component incompatibilities","type":"task"}}
+{"ts":"2026-01-26T09:20:14.658907Z","tick":"885","action":"create","actor":"peter@engelbrecht.dk","epic":"qlj","data":{"priority":2,"title":"Update unit tests for Nuxt 4","type":"task"}}
+{"ts":"2026-01-26T09:20:17.285777Z","tick":"h4k","action":"create","actor":"peter@engelbrecht.dk","epic":"qlj","data":{"priority":2,"title":"Update E2E tests for Nuxt 4","type":"task"}}
+{"ts":"2026-01-26T09:20:19.142367Z","tick":"iek","action":"create","actor":"peter@engelbrecht.dk","epic":"qlj","data":{"priority":2,"title":"Test in minimal-nuxt-ui-app","type":"task"}}
+{"ts":"2026-01-26T09:20:20.218505Z","tick":"oxe","action":"create","actor":"peter@engelbrecht.dk","epic":"qlj","data":{"priority":2,"title":"Test SSR compatibility","type":"task"}}
+{"ts":"2026-01-26T09:20:38.248814Z","tick":"kdf","action":"create","actor":"peter@engelbrecht.dk","epic":"rdr","data":{"priority":2,"title":"Update README for v1.0","type":"task"}}
+{"ts":"2026-01-26T09:20:39.937874Z","tick":"vvf","action":"create","actor":"peter@engelbrecht.dk","epic":"rdr","data":{"priority":2,"title":"Create MIGRATION.md guide","type":"task"}}
+{"ts":"2026-01-26T09:20:41.002453Z","tick":"hzv","action":"create","actor":"peter@engelbrecht.dk","epic":"rdr","data":{"priority":2,"title":"Update CHANGELOG for v1.0","type":"task"}}
+{"ts":"2026-01-26T09:20:42.161707Z","tick":"zq3","action":"create","actor":"peter@engelbrecht.dk","epic":"rdr","data":{"priority":2,"title":"Bump version to 1.0.0","type":"task"}}
+{"ts":"2026-01-26T09:20:43.812451Z","tick":"tt4","action":"create","actor":"peter@engelbrecht.dk","epic":"rdr","data":{"priority":2,"title":"Publish v1.0.0 to npm","type":"task"}}
+{"ts":"2026-01-26T09:20:46.117638Z","tick":"pks","action":"create","actor":"peter@engelbrecht.dk","epic":"rdr","data":{"priority":2,"title":"Create GitHub release","type":"task"}}
+{"ts":"2026-01-26T09:20:53.135547Z","tick":"tt4","action":"block","actor":"peter@engelbrecht.dk","epic":"rdr","data":{"blockers":["zq3"],"title":"Publish v1.0.0 to npm"}}
+{"ts":"2026-01-26T09:20:54.622644Z","tick":"pks","action":"block","actor":"peter@engelbrecht.dk","epic":"rdr","data":{"blockers":["tt4"],"title":"Create GitHub release"}}
+{"ts":"2026-01-26T09:20:59.539903Z","tick":"zq3","action":"block","actor":"peter@engelbrecht.dk","epic":"rdr","data":{"blockers":["kdf"],"title":"Bump version to 1.0.0"}}
+{"ts":"2026-01-26T09:20:59.581394Z","tick":"zq3","action":"block","actor":"peter@engelbrecht.dk","epic":"rdr","data":{"blockers":["kdf","vvf"],"title":"Bump version to 1.0.0"}}
+{"ts":"2026-01-26T09:20:59.623861Z","tick":"zq3","action":"block","actor":"peter@engelbrecht.dk","epic":"rdr","data":{"blockers":["kdf","vvf","hzv"],"title":"Bump version to 1.0.0"}}
+{"ts":"2026-01-26T09:20:59.664651Z","tick":"zq3","action":"block","actor":"peter@engelbrecht.dk","epic":"rdr","data":{"blockers":["kdf","vvf","hzv","iek"],"title":"Bump version to 1.0.0"}}

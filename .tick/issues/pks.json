@@ -1,0 +1,18 @@
+{
+  "id": "pks",
+  "title": "Create GitHub release",
+  "description": "Create GitHub release for v1.0.0.\n\nSteps:\n1. Create release from v1.0.0 tag\n2. Copy relevant CHANGELOG entries\n3. Highlight breaking changes\n4. Link to migration guide\n\nTest: Release visible on GitHub",
+  "status": "open",
+  "priority": 2,
+  "type": "task",
+  "owner": "peter@engelbrecht.dk",
+  "blocked_by": [
+    "tt4"
+  ],
+  "parent": "rdr",
+  "acceptance_criteria": "GitHub release created with release notes",
+  "requires": "approval",
+  "created_by": "peter@engelbrecht.dk",
+  "created_at": "2026-01-26T09:20:46.117174Z",
+  "updated_at": "2026-01-26T09:20:54.621975Z"
+}

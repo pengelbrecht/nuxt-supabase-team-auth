@@ -1,0 +1,12 @@
+{
+  "id": "puo",
+  "title": "Nuxt 4 + Nuxt UI 4 Upgrade",
+  "description": "Upgrade nuxt-supabase-team-auth module to support Nuxt 4 and Nuxt UI 4, while maintaining backward compatibility for consumers on Nuxt 3 + UI 3.\n\n## Context\n- Current: Nuxt 3.13.0+, Nuxt UI 3.0.0+\n- Target: Nuxt 4.x, Nuxt UI 4.x\n- Nuxt 3 EOL: July 31, 2026\n- Nuxt UI 4 requires Nuxt 4\n\n## Strategy\nDual major version approach:\n- v0.x branch: Nuxt 3 + UI 3 (maintenance)\n- v1.x branch: Nuxt 4 + UI 4 (active development)\n\n## Key Dependencies\n- @nuxt/kit: 3.17.6 → 4.3.0\n- @nuxtjs/supabase: 1.5.3 → 2.0.3\n- @nuxt/devtools: 1.7.0 → 3.1.1",
+  "status": "open",
+  "priority": 2,
+  "type": "epic",
+  "owner": "peter@engelbrecht.dk",
+  "created_by": "peter@engelbrecht.dk",
+  "created_at": "2026-01-26T09:18:21.526236Z",
+  "updated_at": "2026-01-26T09:18:21.526236Z"
+}

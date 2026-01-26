@@ -1,0 +1,13 @@
+{
+  "id": "yj4",
+  "title": "Dependency Upgrades",
+  "description": "Upgrade all dependencies to Nuxt 4 compatible versions.",
+  "status": "open",
+  "priority": 2,
+  "type": "epic",
+  "owner": "peter@engelbrecht.dk",
+  "parent": "puo",
+  "created_by": "peter@engelbrecht.dk",
+  "created_at": "2026-01-26T09:18:31.958082Z",
+  "updated_at": "2026-01-26T09:18:31.958082Z"
+}
