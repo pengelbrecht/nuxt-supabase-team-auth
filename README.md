@@ -26,11 +26,11 @@ Drop-in Nuxt 3 module for team-based authentication with Supabase.
 
 This module requires the following peer dependencies:
 
-- **Nuxt 3** (`^3.0.0`)
-- **@nuxt/ui** (`^3.1.0`) - UI component framework
+- **Nuxt 4** (`^4.0.0`)
+- **@nuxt/ui** (`^4.0.0`) - UI component framework
 - **@nuxt/icon** (`^1.0.0`) - Icon framework (required by Nuxt UI)
 
-The module automatically installs and configures **@nuxtjs/supabase** (`^1.5.0`) if not already present.
+The module automatically installs and configures **@nuxtjs/supabase** (`^2.0.0`) if not already present.
 
 ## Quick Setup
 
