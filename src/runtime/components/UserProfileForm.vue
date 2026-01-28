@@ -244,7 +244,7 @@ const loadProfileData = async () => {
     toast.add({
       title: 'Load Failed',
       description: error.message || 'Failed to load profile data',
-      color: 'red',
+      color: 'error',
     })
     emit('error', error.message)
   }
@@ -283,7 +283,7 @@ const handleSubmit = async () => {
         description: isEditingSelf.value
           ? 'Your profile has been updated successfully.'
           : `${targetUserName.value}'s profile has been updated.`,
-        color: 'green',
+        color: 'success',
       })
     }
 
@@ -297,7 +297,7 @@ const handleSubmit = async () => {
       toast.add({
         title: 'Update Failed',
         description: error.message || 'Failed to update profile. Please try again.',
-        color: 'red',
+        color: 'error',
       })
     }
 
@@ -320,7 +320,7 @@ const handlePasswordUpdate = async () => {
       toast.add({
         title: 'Password Mismatch',
         description: 'Passwords do not match',
-        color: 'red',
+        color: 'error',
       })
       return
     }
@@ -331,7 +331,7 @@ const handlePasswordUpdate = async () => {
       toast.add({
         title: 'Invalid Password',
         description: passwordValidation.errors.join('. '),
-        color: 'red',
+        color: 'error',
       })
       return
     }
@@ -346,7 +346,7 @@ const handlePasswordUpdate = async () => {
     toast.add({
       title: 'Password Updated',
       description: 'Your password has been changed successfully.',
-      color: 'green',
+      color: 'success',
     })
   }
   catch (error: any) {
@@ -354,7 +354,7 @@ const handlePasswordUpdate = async () => {
     toast.add({
       title: 'Update Failed',
       description: error.message || 'Failed to update password. Please try again.',
-      color: 'red',
+      color: 'error',
     })
   }
   finally {

@@ -1,4 +1,5 @@
 // Types - we'll use types from @nuxtjs/supabase composables
+import type { Ref, ComputedRef } from 'vue'
 import type { DbProfile, DbTeam, DbTeamMember, DbImpersonationSession } from './database.types'
 
 // Removed unused SupabaseClient type
@@ -42,10 +43,43 @@ export type TeamMember = DbTeamMember
 
 export type ImpersonationSession = DbImpersonationSession
 
+// Team member with profile data (used when querying team members with joined profile data)
+export interface TeamMemberWithProfile {
+  // Base team_member fields
+  id?: string // Sometimes included from join
+  user_id: string
+  team_id: string
+  role: string
+  joined_at: string
+  // Joined profile data (can be named 'profile' or 'profiles' depending on query)
+  profile?: Profile | null
+  profiles?: Profile | null
+  // Optional user reference
+  user?: {
+    id: string
+    email: string
+  }
+}
+
+// Impersonated user info
+export interface ImpersonatedUser {
+  id: string
+  email: string
+  full_name?: string
+  role: string
+  team?: {
+    id: string
+    name: string
+  }
+}
+
 export interface TeamAuthState {
   currentUser: Ref<User | null>
   currentTeam: Ref<Team | null>
   currentRole: Ref<string | null>
+  currentProfile: ComputedRef<Profile | null>
+  teamMembers: ComputedRef<TeamMemberWithProfile[]>
+  impersonatedUser: ComputedRef<ImpersonatedUser | null>
   isLoading: Ref<boolean>
   isImpersonating: Ref<boolean>
   impersonationExpiresAt: Ref<Date | null>
@@ -91,6 +125,7 @@ export interface TeamAuthMethods {
   triggerSessionRecovery: () => void
   getActiveTabs: () => ActiveTab[]
   isTabPrimary: boolean
+  refreshAuthState: () => Promise<void>
 }
 
 export type TeamAuth = TeamAuthState & TeamAuthMethods

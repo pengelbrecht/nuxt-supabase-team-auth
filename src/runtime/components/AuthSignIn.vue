@@ -65,11 +65,11 @@
     <!-- Error Alert from URL parameter -->
     <UAlert
       v-if="urlErrorMessage"
-      color="red"
+      color="error"
       variant="subtle"
       :title="urlErrorTitle"
       :description="urlErrorMessage"
-      :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'ghost' }"
+      :close-button="{ icon: 'i-lucide-x', color: 'neutral', variant: 'ghost' }"
       class="mb-6"
       @close="clearUrlError"
     />
@@ -120,7 +120,7 @@
                 type="button"
                 variant="ghost"
                 size="sm"
-                color="gray"
+                color="neutral"
                 tabindex="-1"
                 :icon="showPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
                 :aria-label="showPassword ? 'Hide password' : 'Show password'"

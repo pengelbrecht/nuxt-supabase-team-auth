@@ -1,7 +1,24 @@
 import { defineNuxtModule, createResolver, addImports, addComponentsDir, installModule } from '@nuxt/kit'
-import type { NuxtModule } from '@nuxt/schema'
+import type { NuxtModule, Nuxt, NuxtOptions } from '@nuxt/schema'
 import { defu } from 'defu'
 import type { PasswordPolicy } from './runtime/types/password-policy'
+
+// Extended types for module augmentation
+interface ExtendedNuxtOptions extends NuxtOptions {
+  supabase?: Record<string, unknown>
+  nitro?: {
+    routeRules?: Record<string, { ssr?: boolean }>
+  }
+}
+
+interface ExtendedNuxt extends Omit<Nuxt, 'options'> {
+  options: ExtendedNuxtOptions & {
+    runtimeConfig: {
+      public: Record<string, unknown>
+      [key: string]: unknown
+    }
+  }
+}
 
 export interface ModuleOptions {
   /**
@@ -83,7 +100,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       // Future providers will be added here when implemented
     },
   },
-  async setup(options, nuxt) {
+  async setup(options, nuxt: ExtendedNuxt) {
     const resolver = createResolver(import.meta.url)
 
     // Automatically install Nuxt UI for components and composables
@@ -114,9 +131,10 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       supabaseUrl,
       supabaseKey,
       supabaseServiceKey: serviceKey,
-    })
+      public: {},
+    }) as typeof nuxt.options.runtimeConfig
 
-    nuxt.options.runtimeConfig.public = defu(nuxt.options.runtimeConfig.public, {
+    nuxt.options.runtimeConfig.public = defu(nuxt.options.runtimeConfig.public || {}, {
       supabaseUrl,
       supabaseKey,
     })
@@ -148,21 +166,12 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       ]
     }
 
-    // Only set redirect options for protected mode
-    // In public mode, let our middleware handle everything
-    const supabaseConfig = {
-      url: supabaseUrl,
-      key: supabaseKey,
-      clientOptions: {
-        auth: {
-          flowType: 'implicit',
-          detectSessionInUrl: true,
-        },
-      },
-    }
-
     // Configure redirect options for Supabase middleware
-    let redirectOptions
+    let redirectOptions: {
+      login: string | false
+      callback: string
+      exclude: string[]
+    }
 
     if (options.defaultProtection === 'public') {
       // For public mode, disable Supabase redirects entirely - our middleware handles everything
@@ -181,7 +190,19 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       }
     }
 
-    supabaseConfig.redirectOptions = redirectOptions
+    // Only set redirect options for protected mode
+    // In public mode, let our middleware handle everything
+    const supabaseConfig: Record<string, unknown> = {
+      url: supabaseUrl,
+      key: supabaseKey,
+      redirectOptions,
+      clientOptions: {
+        auth: {
+          flowType: 'implicit',
+          detectSessionInUrl: true,
+        },
+      },
+    }
 
     const runtimeConfig = {
       url: supabaseUrl,
@@ -329,7 +350,8 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
     nuxt.options.nitro.routeRules['/auth/confirm'] = { ssr: false }
 
     // Add server API routes
-    nuxt.hook('nitro:config', (nitroConfig) => {
+    // @ts-expect-error nitro:config hook exists at runtime but not in types
+    nuxt.hook('nitro:config', (nitroConfig: { handlers: Array<{ route: string, method: string, handler: string }> }) => {
       nitroConfig.handlers = nitroConfig.handlers || []
 
       // Register all server API endpoints

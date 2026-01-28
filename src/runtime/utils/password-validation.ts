@@ -93,21 +93,22 @@ export function generatePasswordHelpText(policy: PasswordPolicy = {}): string {
 export function createPasswordSchema(policy: PasswordPolicy = {}) {
   const mergedPolicy = { ...DEFAULT_PASSWORD_POLICY, ...policy }
 
-  const pipes: any[] = [
+  // Build array of validators
+  const validators: Parameters<typeof v.pipe>[number][] = [
     v.string(),
     v.minLength(mergedPolicy.minLength, `Password must be at least ${mergedPolicy.minLength} characters`),
   ]
 
   if (mergedPolicy.requireUppercase) {
-    pipes.push(v.regex(/[A-Z]/, 'Password must contain at least one uppercase letter'))
+    validators.push(v.regex(/[A-Z]/, 'Password must contain at least one uppercase letter'))
   }
 
   if (mergedPolicy.requireLowercase) {
-    pipes.push(v.regex(/[a-z]/, 'Password must contain at least one lowercase letter'))
+    validators.push(v.regex(/[a-z]/, 'Password must contain at least one lowercase letter'))
   }
 
   if (mergedPolicy.requireNumbers) {
-    pipes.push(v.regex(/\d/, 'Password must contain at least one number'))
+    validators.push(v.regex(/\d/, 'Password must contain at least one number'))
   }
 
   if (mergedPolicy.requireSpecialChars) {
@@ -118,18 +119,19 @@ export function createPasswordSchema(policy: PasswordPolicy = {}) {
       .replace(/\^/g, '\\^') // Escape caret
       .replace(/-/g, '\\-') // Escape hyphen
     const specialCharsRegex = new RegExp(`[${escapedChars}]`)
-    pipes.push(v.regex(specialCharsRegex, 'Password must contain at least one special character'))
+    validators.push(v.regex(specialCharsRegex, 'Password must contain at least one special character'))
   }
 
   if (policy.customValidator) {
-    pipes.push(v.custom((value: string) => {
-      const result = policy.customValidator!(value)
-      return result === true
-    }, (value: string) => {
-      const result = policy.customValidator!(value)
-      return typeof result === 'string' ? result : 'Password does not meet custom requirements'
-    }))
+    validators.push(
+      v.check((value: string) => {
+        const result = policy.customValidator!(value)
+        return result === true
+      }, 'Password does not meet custom requirements'),
+    )
   }
 
-  return v.pipe(...pipes)
+  // Use type assertion since we're building the schema dynamically
+  // @ts-expect-error - Dynamic pipe building requires flexible typing
+  return v.pipe(...validators)
 }

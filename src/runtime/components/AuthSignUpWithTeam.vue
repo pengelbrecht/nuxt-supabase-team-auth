@@ -151,7 +151,7 @@
                 type="button"
                 variant="ghost"
                 size="sm"
-                color="gray"
+                color="neutral"
                 tabindex="-1"
                 :icon="showPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
                 :aria-label="showPassword ? 'Hide password' : 'Show password'"
@@ -182,7 +182,7 @@
                 type="button"
                 variant="ghost"
                 size="sm"
-                color="gray"
+                color="neutral"
                 tabindex="-1"
                 :icon="showConfirmPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
                 :aria-label="showConfirmPassword ? 'Hide password' : 'Show password'"
@@ -246,11 +246,11 @@
         <!-- Error Alert -->
         <UAlert
           v-if="errorMessage"
-          color="red"
+          color="error"
           variant="subtle"
           :title="getErrorTitle(errorMessage)"
           :description="getErrorDescription(errorMessage)"
-          :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'ghost', tabindex: '-1' }"
+          :close-button="{ icon: 'i-lucide-x', color: 'neutral', variant: 'ghost', tabindex: '-1' }"
           @close="errorMessage = ''"
         />
       </div>

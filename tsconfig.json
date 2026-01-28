@@ -15,9 +15,11 @@
     "paths": {
       "@/*": ["src/*"],
       "~/*": ["./*"],
-      "#app": ["src/runtime/types/index.d.ts"]
+      "#app": ["src/runtime/types/shims.d.ts"],
+      "#imports": ["src/runtime/types/shims.d.ts"],
+      "#supabase/server": ["src/runtime/types/shims.d.ts"]
     },
-    "types": ["node"]
+    "types": ["node", "@supabase/supabase-js"]
   },
   "include": [
     "src/**/*"

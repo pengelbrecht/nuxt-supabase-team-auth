@@ -1,4 +1,6 @@
 import { useNuxtApp, useState } from '#app'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '../types/database.types'
 
 /**
  * Wrapper composables for @nuxtjs/supabase that work in published modules
@@ -12,7 +14,7 @@ import { useNuxtApp, useState } from '#app'
  * Get the Supabase client instance
  * Equivalent to @nuxtjs/supabase's useSupabaseClient()
  */
-export const useSupabaseClient = () => {
+export const useSupabaseClient = (): SupabaseClient<Database> => {
   const nuxtApp = useNuxtApp()
 
   if (!nuxtApp.$supabase) {
@@ -27,7 +29,7 @@ export const useSupabaseClient = () => {
     )
   }
 
-  return nuxtApp.$supabase.client
+  return nuxtApp.$supabase.client as SupabaseClient<Database>
 }
 
 /**

@@ -33,7 +33,7 @@
 
           <!-- Close button -->
           <UButton
-            color="gray"
+            color="neutral"
             variant="ghost"
             size="md"
             icon="i-heroicons-x-mark-20-solid"

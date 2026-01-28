@@ -9,7 +9,7 @@
       class="mb-6"
     >
       <UAlert
-        color="red"
+        color="error"
         title="Error"
         :description="message.text"
         @close="message = null"
@@ -33,7 +33,7 @@
       class="mb-6"
     >
       <UAlert
-        color="red"
+        color="error"
         title="Error"
         :description="message.text"
         @close="message = null"
@@ -58,7 +58,7 @@
               type="button"
               :loading="isProfileLoading"
               :disabled="!hasChanges && !isProfileSaved"
-              :color="isProfileSaved ? 'green' : 'primary'"
+              :color="isProfileSaved ? 'success' : 'primary'"
               :icon="isProfileSaved ? 'i-lucide-check' : undefined"
               size="md"
               class="min-w-[120px]"

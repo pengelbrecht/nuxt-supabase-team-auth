@@ -69,7 +69,7 @@
             {{ error }}
           </p>
           <UButton
-            color="red"
+            color="error"
             size="lg"
             class="w-full"
             @click="retryConfirmation"

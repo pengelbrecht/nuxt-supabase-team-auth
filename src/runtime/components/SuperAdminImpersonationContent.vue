@@ -263,7 +263,7 @@ const loadAllUsers = async () => {
     toast.add({
       title: 'Failed to Load Users',
       description: error.message || 'Failed to load users. Please try again.',
-      color: 'red',
+      color: 'error',
     })
     allUsers.value = []
   }
@@ -344,7 +344,7 @@ const performSearch = async () => {
     toast.add({
       title: 'Search Failed',
       description: error.message || 'Failed to search users. Please try again.',
-      color: 'red',
+      color: 'error',
     })
     searchResults.value = []
   }

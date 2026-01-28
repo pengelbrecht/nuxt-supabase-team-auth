@@ -267,7 +267,7 @@ const handleSave = async () => {
     toast.add({
       title: 'Company Settings Updated',
       description: 'Company information has been saved successfully.',
-      color: 'green',
+      color: 'success',
     })
     emit('saved', form)
     isOpen.value = false
@@ -277,7 +277,7 @@ const handleSave = async () => {
     toast.add({
       title: 'Update Failed',
       description: error instanceof Error ? error.message : 'Failed to update company settings. Please try again.',
-      color: 'red',
+      color: 'error',
     })
     emit('error', error instanceof Error ? error.message : 'Update failed')
   }

@@ -95,7 +95,7 @@ const loadUserProfile = async () => {
     toast.add({
       title: 'Load Failed',
       description: error.message || 'Failed to load user information',
-      color: 'red',
+      color: 'error',
     })
     emit('error', error.message)
   }

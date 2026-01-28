@@ -378,3 +378,10 @@ export const Constants = {
     },
   },
 } as const
+
+// Convenience type exports for use in the module
+export type DbProfile = Database['public']['Tables']['profiles']['Row']
+export type DbTeam = Database['public']['Tables']['teams']['Row']
+export type DbTeamMember = Database['public']['Tables']['team_members']['Row']
+export type DbImpersonationSession = Database['public']['Tables']['impersonation_sessions']['Row']
+export type TeamRole = Database['public']['Enums']['team_role']

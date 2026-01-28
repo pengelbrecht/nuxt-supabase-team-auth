@@ -356,7 +356,7 @@
     :message="`Are you sure you want to delete ${memberToDelete?.profile?.full_name || memberToDelete?.profile?.email || 'this member'}? This will permanently delete their account and all associated data. This action cannot be undone.`"
     cancel-text="Cancel"
     confirm-text="Delete Member"
-    confirm-color="red"
+    confirm-color="error"
     :loading="isDeletingMember"
     @confirm="confirmDeleteMember"
     @cancel="cancelDeleteMember"
@@ -702,7 +702,7 @@ const handleSubmit = async () => {
     toast.add({
       title: 'Team Updated',
       description: 'Team settings have been saved successfully.',
-      color: 'green',
+      color: 'success',
     })
     emit('saved', form)
   }
@@ -711,7 +711,7 @@ const handleSubmit = async () => {
     toast.add({
       title: 'Update Failed',
       description: error.message || 'Failed to update team. Please try again.',
-      color: 'red',
+      color: 'error',
     })
     emit('error', error.message)
   }
@@ -734,7 +734,7 @@ const handleInviteMember = async () => {
       toast.add({
         title: 'User Already a Member',
         description: `${inviteEmail.value} is already a member of this team.`,
-        color: 'red',
+        color: 'error',
       })
       return
     }
@@ -744,7 +744,7 @@ const handleInviteMember = async () => {
     toast.add({
       title: 'Invitation Sent',
       description: `Invitation sent to ${inviteEmail.value}`,
-      color: 'green',
+      color: 'success',
     })
 
     inviteEmail.value = ''
@@ -759,7 +759,7 @@ const handleInviteMember = async () => {
     toast.add({
       title: 'Invitation Failed',
       description: error.message || 'Failed to send invitation. Please try again.',
-      color: 'red',
+      color: 'error',
     })
   }
   finally {
@@ -785,7 +785,7 @@ const handleRoleChange = async (member: any, newRole: string) => {
     toast.add({
       title: 'Permission Denied',
       description: 'You do not have permission to change this member\'s role.',
-      color: 'red',
+      color: 'error',
     })
     return
   }
@@ -795,7 +795,7 @@ const handleRoleChange = async (member: any, newRole: string) => {
     toast.add({
       title: 'Invalid Action',
       description: 'You cannot change your own role.',
-      color: 'red',
+      color: 'error',
     })
     return
   }
@@ -808,7 +808,7 @@ const handleRoleChange = async (member: any, newRole: string) => {
     toast.add({
       title: 'Role Updated',
       description: `${member.profile?.full_name || member.profile?.email} is now ${formatRole(newRole).toLowerCase()}`,
-      color: 'green',
+      color: 'success',
     })
   }
   catch (error: any) {
@@ -816,7 +816,7 @@ const handleRoleChange = async (member: any, newRole: string) => {
     toast.add({
       title: 'Update Failed',
       description: error.message || 'Failed to update member role. Please try again.',
-      color: 'red',
+      color: 'error',
     })
   }
 }
@@ -842,7 +842,7 @@ const handleUserSaved = (_profile: any) => {
   toast.add({
     title: 'Member Updated',
     description: `${memberName}'s profile has been updated successfully.`,
-    color: 'green',
+    color: 'success',
   })
 
   // The modal will close automatically
@@ -867,7 +867,7 @@ const confirmDeleteMember = async () => {
     toast.add({
       title: 'Member Removed',
       description: `${memberToDelete.value.profile?.full_name || memberToDelete.value.profile?.email} has been removed from the team.`,
-      color: 'green',
+      color: 'success',
     })
   }
   catch (error: any) {
@@ -875,7 +875,7 @@ const confirmDeleteMember = async () => {
     toast.add({
       title: 'Remove Failed',
       description: error.message || 'Failed to remove member. Please try again.',
-      color: 'red',
+      color: 'error',
     })
   }
   finally {

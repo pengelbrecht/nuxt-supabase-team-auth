@@ -1462,7 +1462,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         toast.add({
           title: 'Impersonation Failed',
           description: error.data?.message || error.message || 'Failed to start impersonation',
-          color: 'red',
+          color: 'error',
           icon: 'i-lucide-alert-circle',
         })
 
@@ -1495,7 +1495,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           toast.add({
             title: 'Impersonation Cleared',
             description: 'Stale impersonation state has been cleared',
-            color: 'green',
+            color: 'success',
             icon: 'i-lucide-user-x',
           })
 
@@ -1562,7 +1562,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         toast.add({
           title: 'Impersonation Ended',
           description: 'Returned to your original session',
-          color: 'green',
+          color: 'success',
           icon: 'i-lucide-user-x',
         })
       }
@@ -1575,7 +1575,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         toast.add({
           title: 'Error Stopping Impersonation',
           description: 'Session has been cleared. Please sign in again.',
-          color: 'red',
+          color: 'error',
           icon: 'i-lucide-alert-circle',
         })
 
