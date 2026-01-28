@@ -2,7 +2,7 @@
   "id": "hqf",
   "title": "Fix any remaining component incompatibilities",
   "description": "Address any other component issues found during testing.\n\nComponents to verify:\n- UCard (used extensively)\n- UButton (used extensively)\n- UIcon\n- UAvatar\n- UBadge (RoleBadge.vue)\n- UTabs (TeamForm.vue)\n- UAlert\n- UCheckbox\n\nThis is a catch-all for issues not covered by specific tasks.\n\nTest: All components render correctly in playground",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "type": "task",
   "owner": "lars@gunnersen.net",
@@ -14,5 +14,7 @@
   "acceptance_criteria": "All components working without console errors",
   "created_by": "peter@engelbrecht.dk",
   "created_at": "2026-01-26T09:19:59.72543Z",
-  "updated_at": "2026-01-26T09:19:59.72543Z"
+  "updated_at": "2026-01-26T14:51:17.926635Z",
+  "closed_at": "2026-01-26T14:51:17.926635Z",
+  "closed_reason": "Not needed - no component incompatibilities found"
 }

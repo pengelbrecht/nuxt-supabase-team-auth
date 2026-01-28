@@ -2,7 +2,7 @@
   "id": "zf1",
   "title": "Update UForm components for schema changes",
   "description": "Adapt to Nuxt UI 4 form behavior changes.\n\nKey changes:\n- Schema transformations no longer mutate form state directly\n- Update form submission handlers accordingly\n- Check nested form behavior if used\n\nFiles to update:\n- AuthSignIn.vue, AuthSignUpWithTeam.vue\n- ProfileForm.vue, TeamForm.vue\n- ResetPasswordForm.vue, ForgotPasswordForm.vue\n- CompanySettingsDialog.vue\n\nTest: All forms submit and validate correctly",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "type": "task",
   "owner": "lars@gunnersen.net",
@@ -14,5 +14,7 @@
   "acceptance_criteria": "All forms working with new UForm behavior",
   "created_by": "peter@engelbrecht.dk",
   "created_at": "2026-01-26T09:19:54.215035Z",
-  "updated_at": "2026-01-26T09:19:54.215035Z"
+  "updated_at": "2026-01-26T14:51:17.864815Z",
+  "closed_at": "2026-01-26T14:51:17.864815Z",
+  "closed_reason": "Not needed - UForm works with current Valibot schemas"
 }

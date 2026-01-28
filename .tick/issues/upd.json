@@ -2,7 +2,7 @@
   "id": "upd",
   "title": "Upgrade @nuxt/kit to v4",
   "description": "Upgrade @nuxt/kit from ^3.13.0 to ^4.0.0.\n\nSteps:\n1. Update package.json dependency\n2. Run pnpm install\n3. Fix any TypeScript errors\n4. Update any deprecated API usage identified in research\n\nTest: pnpm run build succeeds",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "type": "task",
   "owner": "lars@gunnersen.net",
@@ -13,5 +13,7 @@
   "acceptance_criteria": "Module builds successfully with @nuxt/kit 4.x",
   "created_by": "peter@engelbrecht.dk",
   "created_at": "2026-01-26T09:19:28.755181Z",
-  "updated_at": "2026-01-26T09:19:28.755181Z"
+  "updated_at": "2026-01-26T14:12:01.062202Z",
+  "closed_at": "2026-01-26T14:12:01.062202Z",
+  "closed_reason": "Upgraded @nuxt/kit to ^4.0.0 and updated module compatibility to \u003e=3.0.0"
 }

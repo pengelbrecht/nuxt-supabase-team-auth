@@ -2,7 +2,7 @@
   "id": "0eg",
   "title": "Update DialogBox/Modal components",
   "description": "Check and update modal/dialog components for UI 4 compatibility.\n\nComponents:\n- DialogBox.vue (uses UModal)\n- ConfirmDialog.vue\n- ActionDialog.vue\n- CompanySettingsDialog.vue\n- TeamMembersDialog.vue\n\nCheck for:\n- Slot API changes\n- Prop changes\n- Event handler changes\n\nTest: All dialogs open/close correctly",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "type": "task",
   "owner": "lars@gunnersen.net",
@@ -14,5 +14,7 @@
   "acceptance_criteria": "All modal/dialog components working with UI 4",
   "created_by": "peter@engelbrecht.dk",
   "created_at": "2026-01-26T09:19:55.787938Z",
-  "updated_at": "2026-01-26T09:19:55.787938Z"
+  "updated_at": "2026-01-26T14:51:17.88551Z",
+  "closed_at": "2026-01-26T14:51:17.88551Z",
+  "closed_reason": "Not needed - DialogBox/Modal components work correctly"
 }

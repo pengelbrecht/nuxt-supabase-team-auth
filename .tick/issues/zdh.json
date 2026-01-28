@@ -2,7 +2,7 @@
   "id": "zdh",
   "title": "Upgrade @nuxtjs/supabase to v2",
   "description": "Upgrade @nuxtjs/supabase from 1.5.3 to ^2.0.0.\n\nSteps:\n1. Update package.json dependency\n2. Run pnpm install\n3. Apply breaking changes identified in research task\n4. Update any composable usage\n5. Fix auth callback handling if changed\n\nTest: Auth flow works in playground",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "type": "task",
   "owner": "lars@gunnersen.net",
@@ -13,5 +13,7 @@
   "acceptance_criteria": "Supabase auth working with v2 in playground",
   "created_by": "peter@engelbrecht.dk",
   "created_at": "2026-01-26T09:19:30.93912Z",
-  "updated_at": "2026-01-26T09:19:30.93912Z"
+  "updated_at": "2026-01-26T14:09:13.296749Z",
+  "closed_at": "2026-01-26T14:09:13.296749Z",
+  "closed_reason": "Upgraded @nuxtjs/supabase to ^2.0.0 and removed deprecated useSsrCookies option"
 }

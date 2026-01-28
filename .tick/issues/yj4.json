@@ -2,12 +2,14 @@
   "id": "yj4",
   "title": "Dependency Upgrades",
   "description": "Upgrade all dependencies to Nuxt 4 compatible versions.",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "type": "epic",
   "owner": "lars@gunnersen.net",
   "parent": "puo",
   "created_by": "peter@engelbrecht.dk",
   "created_at": "2026-01-26T09:18:31.958082Z",
-  "updated_at": "2026-01-26T09:18:31.958082Z"
+  "updated_at": "2026-01-26T14:54:58.652962Z",
+  "closed_at": "2026-01-26T14:54:58.652962Z",
+  "closed_reason": "Dependency upgrades complete - @nuxt/kit 4.0, @nuxtjs/supabase 2.0, @nuxt/ui 4.0 peer"
 }

@@ -2,7 +2,7 @@
   "id": "mlm",
   "title": "Create v0.x maintenance branch",
   "description": "Create a branch for Nuxt 3 maintenance releases before upgrading main to Nuxt 4.\n\nSteps:\n1. Create branch 'v0.x' from main\n2. Update branch protection rules (if any)\n3. Document branch strategy in README\n\nThis preserves Nuxt 3 compatibility for consumers who can't upgrade yet.",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "type": "task",
   "owner": "lars@gunnersen.net",
@@ -16,5 +16,7 @@
   "acceptance_criteria": "v0.x branch created and pushed to origin",
   "created_by": "peter@engelbrecht.dk",
   "created_at": "2026-01-26T09:19:27.590163Z",
-  "updated_at": "2026-01-26T09:19:27.590163Z"
+  "updated_at": "2026-01-26T13:28:55.968493Z",
+  "closed_at": "2026-01-26T13:28:55.968493Z",
+  "closed_reason": "Created v0.x branch from main and pushed to origin"
 }
