@@ -2,12 +2,28 @@ import { defineEventHandler, readBody, createError, getHeader } from 'h3'
 import { $fetch } from 'ofetch'
 import { useRuntimeConfig } from '#imports'
 
+interface SignupBody {
+  email?: string
+  password?: string
+  team_name?: string
+  teamName?: string
+  oauth_provider?: string
+  user_metadata?: Record<string, unknown>
+}
+
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
+  const body = await readBody<SignupBody>(event)
+
+  if (!body) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Missing request body',
+    })
+  }
 
   // Get runtime config for Supabase
   const config = useRuntimeConfig()
-  const supabaseUrl = config.public.supabase.url
+  const supabaseUrl = config.public.supabase?.url
   const serviceKey = config.supabaseServiceKey
 
   if (!serviceKey) {
@@ -44,7 +60,7 @@ export default defineEventHandler(async (event) => {
       body: transformedBody,
     })
 
-    return response
+    return response as Record<string, unknown>
   }
   catch (error: any) {
     console.error('Signup with team proxy error:', error)

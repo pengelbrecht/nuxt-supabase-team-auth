@@ -1,5 +1,6 @@
 import { useTeamAuth } from '../composables/useTeamAuth'
 import { navigateTo, defineNuxtRouteMiddleware, useRuntimeConfig } from '#imports'
+import type { RouteLocationNormalized } from 'vue-router'
 
 type TeamRole = 'owner' | 'admin' | 'member' | 'super_admin'
 
@@ -29,7 +30,7 @@ export function createRequireRoleMiddleware(
     strict?: boolean // If true, requires exact role match
   } = {},
 ) {
-  return defineNuxtRouteMiddleware(async (to) => {
+  return defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
     const { currentUser, currentRole, isLoading } = useTeamAuth()
 
     // More efficient auth loading wait with early exit
@@ -55,7 +56,7 @@ export function createRequireRoleMiddleware(
 
     // Ensure user is authenticated
     if (!currentUser.value) {
-      const redirectUrl = `${to.path}${to.search ? `?${new URLSearchParams(to.query).toString()}` : ''}`
+      const redirectUrl = to.fullPath
       const config = useRuntimeConfig()
       const loginPage = config.public.teamAuth?.loginPage || '/signin'
       return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
@@ -109,7 +110,7 @@ export const requireSuperAdminOnly = createRequireRoleMiddleware('super_admin', 
 /**
  * Default export for dynamic role checking
  */
-export default defineNuxtRouteMiddleware(async (to, _from) => {
+export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
   // This middleware can be used with route meta to specify required role
   const requiredRole = to.meta.requireRole as TeamRole
 
@@ -119,5 +120,5 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
   }
 
   const middleware = createRequireRoleMiddleware(requiredRole)
-  return middleware(to, _from)
+  return middleware(to)
 })

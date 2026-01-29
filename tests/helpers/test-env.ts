@@ -7,10 +7,12 @@
 
 import { createClient } from '@supabase/supabase-js'
 
+// Note: Newer Supabase CLI versions use ES256 algorithm instead of HS256
+// These fallback keys are for local development with `supabase start`
 export const TEST_ENV = {
   supabaseUrl: process.env.SUPABASE_URL || 'http://127.0.0.1:54321',
-  supabaseAnonKey: process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0',
-  supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU',
+  supabaseAnonKey: process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJFUzI1NiIsImtpZCI6ImI4MTI2OWYxLTIxZDgtNGYyZS1iNzE5LWMyMjQwYTg0MGQ5MCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjIwODUwNDU1NDR9.IgbK8_tiIcq6xSYGH7-Bq8EJ23tCAw_VT4eFedhXUQjwUMGNXw2PkIQiMFCyDjIcKbX5JSsASUaLVgeHKQCFrA',
+  supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJFUzI1NiIsImtpZCI6ImI4MTI2OWYxLTIxZDgtNGYyZS1iNzE5LWMyMjQwYTg0MGQ5MCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MjA4NTA0NTU0NH0.0hGv9dY2H5BzmIqYVsrn45yP-4k5mCThMTnOD5RqxcSymfFEWVysaEKrfqIyqfs-UpTZTmP5UJik7x6J1sfVSw',
   databaseUrl: process.env.DATABASE_URL || 'postgresql://postgres:postgres@127.0.0.1:54322/postgres',
 } as const
 

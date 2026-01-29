@@ -4,8 +4,8 @@ import { serverSupabaseClient } from '#supabase/server'
 export default defineEventHandler(async (event) => {
   try {
     const supabase = await serverSupabaseClient(event)
-    const body = await readBody(event)
-    const { accessToken, refreshToken } = body
+    const body = await readBody<{ accessToken?: string, refreshToken?: string }>(event)
+    const { accessToken, refreshToken } = body || {}
 
     if (!accessToken || !refreshToken) {
       throw createError({

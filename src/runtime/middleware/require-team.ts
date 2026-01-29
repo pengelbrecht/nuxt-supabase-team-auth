@@ -1,11 +1,12 @@
 import { useTeamAuth } from '../composables/useTeamAuth'
 import { navigateTo, defineNuxtRouteMiddleware, useRuntimeConfig } from '#imports'
+import type { RouteLocationNormalized } from 'vue-router'
 
 /**
  * Middleware to require team membership
  * In single-team model, this simply ensures user is authenticated and has their team loaded
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
   const { currentUser, currentTeam, currentRole, isLoading } = useTeamAuth()
 
   // More efficient auth loading wait with early exit
@@ -31,7 +32,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // Ensure user is authenticated
   if (!currentUser.value) {
-    const redirectUrl = `${to.path}${to.search ? `?${new URLSearchParams(to.query).toString()}` : ''}`
+    const redirectUrl = to.fullPath
     const config = useRuntimeConfig()
     const loginPage = config.public.teamAuth?.loginPage || '/signin'
     return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)

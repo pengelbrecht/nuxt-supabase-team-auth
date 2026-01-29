@@ -17,6 +17,14 @@ interface TeamSessionState {
   tabId: string
 }
 
+type SessionSyncEventType
+  = | 'team_changed'
+    | 'role_changed'
+    | 'impersonation_started'
+    | 'impersonation_stopped'
+    | 'session_conflict'
+    | 'session_recovery'
+
 interface SessionSyncEvents {
   TEAM_CHANGED: 'team_changed'
   ROLE_CHANGED: 'role_changed'
@@ -33,6 +41,11 @@ const SESSION_SYNC_EVENTS: SessionSyncEvents = {
   IMPERSONATION_STOPPED: 'impersonation_stopped',
   SESSION_CONFLICT: 'session_conflict',
   SESSION_RECOVERY: 'session_recovery',
+}
+
+interface ActiveTab {
+  tabId: string
+  timestamp: number
 }
 
 const STORAGE_KEYS = {
@@ -72,7 +85,7 @@ export function useSessionSync() {
   }
 
   // Store session state for cross-tab sync
-  function broadcastSessionState(state: TeamSessionState, eventType: keyof SessionSyncEvents) {
+  function broadcastSessionState(state: TeamSessionState, eventType: SessionSyncEventType) {
     try {
       if (typeof window === 'undefined') return
 
@@ -103,7 +116,7 @@ export function useSessionSync() {
     currentRole: Ref<string | null>,
     isImpersonating: Ref<boolean>,
     impersonationExpiresAt: Ref<Date | null>,
-    onStateUpdate: (state: TeamSessionState, eventType: keyof SessionSyncEvents) => void,
+    onStateUpdate: (state: TeamSessionState, eventType: SessionSyncEventType) => void,
   ) {
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key !== STORAGE_KEYS.TEAM_SESSION_STATE || !event.newValue) {
@@ -283,7 +296,7 @@ export function useSessionSync() {
     try {
       if (typeof window === 'undefined') return
 
-      const activeTabs = getActiveTabs().filter(tab => tab.tabId !== tabId.value)
+      const activeTabs = getActiveTabs().filter((tab: ActiveTab) => tab.tabId !== tabId.value)
       localStorage.setItem(STORAGE_KEYS.ACTIVE_TABS, JSON.stringify(activeTabs))
     }
     catch (error) {
@@ -319,7 +332,7 @@ export function useSessionSync() {
     if (activeTabs.length === 0) return true
 
     // Sort by timestamp and check if we're the oldest
-    activeTabs.sort((a, b) => a.timestamp - b.timestamp)
+    activeTabs.sort((a: ActiveTab, b: ActiveTab) => a.timestamp - b.timestamp)
     return activeTabs[0].tabId === tabId.value
   }
 
@@ -367,7 +380,7 @@ export function useSessionSync() {
     currentRole: Ref<string | null>,
     isImpersonating: Ref<boolean>,
     impersonationExpiresAt: Ref<Date | null>,
-    onStateUpdate: (state: TeamSessionState, eventType: keyof SessionSyncEvents) => void = () => {},
+    onStateUpdate: (state: TeamSessionState, eventType: SessionSyncEventType) => void = () => {},
   ) {
     // Skip initialization during SSR
     if (typeof window === 'undefined') {

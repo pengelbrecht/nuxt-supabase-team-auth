@@ -39,7 +39,8 @@ export default defineEventHandler(async (event) => {
     }
 
     // Get the impersonation session ID from the request
-    const { sessionId } = await readBody(event)
+    const body = await readBody<{ sessionId?: string }>(event)
+    const { sessionId } = body || {}
 
     if (!sessionId) {
       throw createError({

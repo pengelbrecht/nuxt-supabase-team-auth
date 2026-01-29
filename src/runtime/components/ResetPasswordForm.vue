@@ -99,6 +99,7 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import { $fetch } from 'ofetch'
 import { useSupabaseClient } from '../composables/useSupabaseComposables'
 import { usePasswordPolicy } from '../composables/usePasswordPolicy'
+import { useRuntimeConfig } from '#imports'
 
 interface ResetPasswordForm {
   password: string
@@ -110,8 +111,9 @@ const emit = defineEmits<{
   error: [error: string]
 }>()
 
-// Get Supabase client
+// Get Supabase client and config
 const supabase = useSupabaseClient()
+const runtimeConfig = useRuntimeConfig()
 
 // Form state
 const form = reactive<ResetPasswordForm>({
@@ -150,20 +152,26 @@ const handlePasswordReset = async (event: FormSubmitEvent<any>) => {
 
     // Update user's password using direct API approach (same as PasswordSetupForm)
     try {
-      await $fetch(`${supabase.supabaseUrl}/auth/v1/user`, {
+      const supabaseUrl = runtimeConfig.public.supabase?.url
+      const supabaseKey = runtimeConfig.public.supabase?.key
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Supabase configuration not available')
+      }
+      await $fetch(`${supabaseUrl}/auth/v1/user`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${currentSession.access_token}`,
           'Content-Type': 'application/json',
-          'apikey': supabase.supabaseKey,
+          'apikey': supabaseKey,
         },
         body: {
           password: event.data.password,
         },
       })
     }
-    catch (apiError) {
-      throw new Error(`Failed to reset password: ${apiError.message || 'Unknown error'}`)
+    catch (apiError: unknown) {
+      const err = apiError as Error
+      throw new Error(`Failed to reset password: ${err.message || 'Unknown error'}`)
     }
 
     // Success!

@@ -1,11 +1,12 @@
 import { useTeamAuth } from '../composables/useTeamAuth'
-import { navigateTo } from '#app'
+import { navigateTo, defineNuxtRouteMiddleware } from '#imports'
+import type { RouteLocationNormalized } from 'vue-router'
 
 /**
  * Middleware to handle impersonation restrictions
  * Blocks certain routes during impersonation and validates impersonation permissions
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
   const { currentUser, currentRole, isImpersonating, isLoading } = useTeamAuth()
 
   // Wait for auth state to load
@@ -70,7 +71,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 /**
  * Middleware specifically for impersonation start routes
  */
-export const requireSuperAdminForImpersonation = defineNuxtRouteMiddleware(async (to) => {
+export const requireSuperAdminForImpersonation = defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
   const { currentUser, currentRole, isLoading } = useTeamAuth()
 
   // Wait for auth state to load
@@ -84,7 +85,7 @@ export const requireSuperAdminForImpersonation = defineNuxtRouteMiddleware(async
 
   // Ensure user is authenticated
   if (!currentUser.value) {
-    const redirectUrl = `${to.path}${to.search ? `?${new URLSearchParams(to.query).toString()}` : ''}`
+    const redirectUrl = to.fullPath
     return navigateTo(`/login?redirect=${encodeURIComponent(redirectUrl)}`)
   }
 
@@ -97,7 +98,7 @@ export const requireSuperAdminForImpersonation = defineNuxtRouteMiddleware(async
 /**
  * Middleware to block access during impersonation
  */
-export const blockDuringImpersonation = defineNuxtRouteMiddleware(async (_to) => {
+export const blockDuringImpersonation = defineNuxtRouteMiddleware(async (_to: RouteLocationNormalized) => {
   const { isImpersonating, isLoading } = useTeamAuth()
 
   // Wait for auth state to load
@@ -131,7 +132,7 @@ export function createImpersonationRestriction(options: {
   errorMessage?: string
   checkSuperAdmin?: boolean
 } = {}) {
-  return defineNuxtRouteMiddleware(async (to) => {
+  return defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
     const { currentUser, currentRole, isImpersonating, isLoading } = useTeamAuth()
 
     // Wait for auth state to load

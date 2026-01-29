@@ -349,7 +349,7 @@ const props = withDefaults(defineProps<AuthSignUpProps>(), {
 })
 
 const emit = defineEmits<{
-  'success': [data: { user: User, team: Team }]
+  'success': [data: { user: Partial<User>, team: Partial<Team>, marketingConsent?: boolean }]
   'error': [error: string]
   'switch-to-signin': []
   'view-terms': []
@@ -429,7 +429,8 @@ const handleSignUp = async (event: FormSubmitEvent<any>) => {
   }
   catch (error: unknown) {
     console.error('Signup error:', error)
-    errorMessage.value = error.message || 'Failed to create account'
+    const err = error as Error
+    errorMessage.value = err.message || 'Failed to create account'
     emit('error', errorMessage.value)
   }
   finally {
@@ -456,8 +457,9 @@ const handleGoogleSignUp = async () => {
     emit('social-success', 'google', data)
   }
   catch (error: unknown) {
-    const errorMessage = error.message || 'Failed to sign up with Google'
-    emit('social-error', 'google', errorMessage)
+    const err = error as Error
+    const errorMsg = err.message || 'Failed to sign up with Google'
+    emit('social-error', 'google', errorMsg)
   }
   finally {
     isGoogleLoading.value = false
@@ -482,8 +484,9 @@ const handleGithubSignUp = async () => {
     emit('social-success', 'github', data)
   }
   catch (error: unknown) {
-    const errorMessage = error.message || 'Failed to sign up with GitHub'
-    emit('social-error', 'github', errorMessage)
+    const err = error as Error
+    const errorMsg = err.message || 'Failed to sign up with GitHub'
+    emit('social-error', 'github', errorMsg)
   }
   finally {
     isGithubLoading.value = false

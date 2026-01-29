@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody<DeleteUserRequest>(event)
-  const { userId } = body
+  const userId = body?.userId
 
   if (!userId) {
     throw createError({

@@ -356,7 +356,7 @@
     :message="`Are you sure you want to delete ${memberToDelete?.profile?.full_name || memberToDelete?.profile?.email || 'this member'}? This will permanently delete their account and all associated data. This action cannot be undone.`"
     cancel-text="Cancel"
     confirm-text="Delete Member"
-    confirm-color="error"
+    confirm-color="red"
     :loading="isDeletingMember"
     @confirm="confirmDeleteMember"
     @cancel="cancelDeleteMember"
@@ -376,23 +376,12 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import * as v from 'valibot'
 import { useTeamAuth } from '../composables/useTeamAuth'
-import type { Profile } from '../types'
+import type { TeamMemberWithProfile, Team } from '../types'
 import SettingsTabContainer from './SettingsTabContainer.vue'
 import ConfirmDialog from './ConfirmDialog.vue'
 import EditUserModal from './EditUserModal.vue'
 import RoleBadge from './RoleBadge.vue'
 import { useToast } from '#imports'
-
-// Team member with profile data
-interface TeamMemberWithProfile {
-  user_id: string
-  role: string
-  joined_at: string
-  profile?: Profile
-  id?: string // Computed from user_id
-  full_name?: string
-  email?: string
-}
 
 // Form validation schema - expanded for company info
 const teamSchema = v.object({
@@ -417,7 +406,7 @@ const _props = withDefaults(defineProps<Props>(), {})
 
 // Emits
 const emit = defineEmits<{
-  saved: [team: Team]
+  saved: [team: Partial<Team>]
   error: [error: string]
 }>()
 
@@ -665,11 +654,13 @@ const getMemberActions = (member: any) => {
 
 // Initialize form with current team data
 const initializeForm = () => {
-  if (currentTeam.value) {
+  const team = currentTeam.value
+  if (team) {
     // Copy all team data to form
     Object.keys(form).forEach((key) => {
       const formKey = key as keyof typeof form
-      form[formKey] = currentTeam.value[formKey] || ''
+      const teamValue = (team as Record<string, unknown>)[formKey]
+      form[formKey] = typeof teamValue === 'string' ? teamValue : ''
     })
     originalForm.value = { ...form }
   }

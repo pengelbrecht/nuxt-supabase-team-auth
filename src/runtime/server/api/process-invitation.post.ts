@@ -6,8 +6,8 @@ export default defineEventHandler(async (event) => {
   try {
     console.log('=== PROCESS INVITATION API ===')
 
-    const body = await readBody(event)
-    const { access_token, refresh_token } = body
+    const body = await readBody<{ access_token?: string, refresh_token?: string }>(event)
+    const { access_token, refresh_token } = body || {}
 
     if (!access_token || !refresh_token) {
       throw createError({
@@ -60,6 +60,13 @@ export default defineEventHandler(async (event) => {
         email_verified: true,
       },
     )
+
+    if (!sessionUser) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'Failed to create session for invitation',
+      })
+    }
 
     // Get team info if not in metadata
     let finalTeamName = teamName

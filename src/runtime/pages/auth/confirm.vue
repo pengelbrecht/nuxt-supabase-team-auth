@@ -184,7 +184,11 @@ onMounted(async () => {
         // Step 4: Extract user info from JWT token for invitation processing
         let userInfo
         try {
-          const tokenPayload = JSON.parse(atob(accessToken.split('.')[1]))
+          const tokenParts = accessToken.split('.')
+          if (!tokenParts[1]) {
+            throw new Error('Invalid token structure')
+          }
+          const tokenPayload = JSON.parse(atob(tokenParts[1]))
           userInfo = {
             id: tokenPayload.sub,
             email: tokenPayload.email,
@@ -310,7 +314,7 @@ const handleInviteConfirmation = async () => {
       throw new Error('No session available after invitation processing')
     }
 
-    const currentSession = session.value
+    const currentSession = session.value as { user: { created_at: string, email_confirmed_at?: string } }
     currentSessionRef.value = currentSession
 
     // All team info should already be set by server processing

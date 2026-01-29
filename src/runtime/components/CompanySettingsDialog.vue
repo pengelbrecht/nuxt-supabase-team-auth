@@ -247,9 +247,10 @@ const hasChanges = computed(() => {
 const initializeForm = () => {
   if (currentTeam.value) {
     // Copy all team data to form
+    const team = currentTeam.value
     Object.keys(form).forEach((key) => {
       const formKey = key as keyof typeof form
-      form[formKey] = currentTeam.value[formKey] || ''
+      form[formKey] = (team[formKey as keyof typeof team] as string) || ''
     })
     originalForm.value = { ...form }
   }

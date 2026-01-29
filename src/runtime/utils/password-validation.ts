@@ -90,25 +90,26 @@ export function generatePasswordHelpText(policy: PasswordPolicy = {}): string {
 /**
  * Creates a Valibot schema for password validation based on the policy
  */
-export function createPasswordSchema(policy: PasswordPolicy = {}) {
+export function createPasswordSchema(policy: PasswordPolicy = {}): v.GenericSchema<string, string> {
   const mergedPolicy = { ...DEFAULT_PASSWORD_POLICY, ...policy }
 
-  // Build array of validators
-  const validators: Parameters<typeof v.pipe>[number][] = [
+  // Build base schema with minLength
+  // Use type assertion to allow reassignment with different pipe configurations
+  let schema: v.BaseSchema<string, string, v.BaseIssue<unknown>> = v.pipe(
     v.string(),
     v.minLength(mergedPolicy.minLength, `Password must be at least ${mergedPolicy.minLength} characters`),
-  ]
+  )
 
   if (mergedPolicy.requireUppercase) {
-    validators.push(v.regex(/[A-Z]/, 'Password must contain at least one uppercase letter'))
+    schema = v.pipe(schema, v.regex(/[A-Z]/, 'Password must contain at least one uppercase letter')) as typeof schema
   }
 
   if (mergedPolicy.requireLowercase) {
-    validators.push(v.regex(/[a-z]/, 'Password must contain at least one lowercase letter'))
+    schema = v.pipe(schema, v.regex(/[a-z]/, 'Password must contain at least one lowercase letter')) as typeof schema
   }
 
   if (mergedPolicy.requireNumbers) {
-    validators.push(v.regex(/\d/, 'Password must contain at least one number'))
+    schema = v.pipe(schema, v.regex(/\d/, 'Password must contain at least one number')) as typeof schema
   }
 
   if (mergedPolicy.requireSpecialChars) {
@@ -119,19 +120,18 @@ export function createPasswordSchema(policy: PasswordPolicy = {}) {
       .replace(/\^/g, '\\^') // Escape caret
       .replace(/-/g, '\\-') // Escape hyphen
     const specialCharsRegex = new RegExp(`[${escapedChars}]`)
-    validators.push(v.regex(specialCharsRegex, 'Password must contain at least one special character'))
+    schema = v.pipe(schema, v.regex(specialCharsRegex, 'Password must contain at least one special character')) as typeof schema
   }
 
   if (policy.customValidator) {
-    validators.push(
+    schema = v.pipe(
+      schema,
       v.check((value: string) => {
         const result = policy.customValidator!(value)
         return result === true
       }, 'Password does not meet custom requirements'),
-    )
+    ) as typeof schema
   }
 
-  // Use type assertion since we're building the schema dynamically
-  // @ts-expect-error - Dynamic pipe building requires flexible typing
-  return v.pipe(...validators)
+  return schema
 }

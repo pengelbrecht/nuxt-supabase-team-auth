@@ -48,16 +48,16 @@ export interface TeamMemberWithProfile {
   // Base team_member fields
   id?: string // Sometimes included from join
   user_id: string
-  team_id: string
+  team_id?: string
   role: string
-  joined_at: string
+  joined_at?: string
   // Joined profile data (can be named 'profile' or 'profiles' depending on query)
-  profile?: Profile | null
-  profiles?: Profile | null
+  profile?: Profile | null | undefined
+  profiles?: Profile | null | undefined
   // Optional user reference
   user?: {
-    id: string
-    email: string
+    id?: string
+    email?: string | null
   }
 }
 
@@ -96,6 +96,15 @@ export interface ActiveTab {
   url: string
 }
 
+export interface PendingInvitation {
+  id: string
+  email: string
+  role?: string
+  invited_by?: string
+  invited_at?: string
+  user_metadata?: Record<string, unknown>
+}
+
 export interface TeamAuthMethods {
   signUpWithTeam: (email: string, password: string, teamName: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
@@ -107,18 +116,19 @@ export interface TeamAuthMethods {
   demote: (userId: string) => Promise<void>
   transferOwnership: (userId: string) => Promise<void>
   getProfile: () => Promise<Profile | null>
-  updateProfile: (updates: Partial<Profile>) => Promise<void>
+  updateProfile: (updates: Partial<Profile> & { password?: string }) => Promise<void>
   renameTeam: (name: string) => Promise<void>
   updateTeam: (updates: Partial<Team>) => Promise<void>
   deleteTeam: () => Promise<void>
   startImpersonation: (targetUserId: string, reason: string) => Promise<void>
   stopImpersonation: () => Promise<void>
   getAvatarFallback: (overrides?: { fullName?: string | null, email?: string | null }) => string
-  getTeamMembers: () => Promise<void>
+  getTeamMembers: () => Promise<TeamMemberWithProfile[]>
   updateMemberRole: (userId: string, role: string) => Promise<void>
   removeMember: (userId: string) => Promise<void>
   getTeamMemberProfile: (userId: string) => Promise<Profile | null>
   updateTeamMemberProfile: (userId: string, updates: Partial<Profile>) => Promise<void>
+  getPendingInvitations: () => Promise<PendingInvitation[]>
 
   // Session management utilities
   sessionHealth: () => SessionHealthResult
@@ -126,6 +136,14 @@ export interface TeamAuthMethods {
   getActiveTabs: () => ActiveTab[]
   isTabPrimary: boolean
   refreshAuthState: () => Promise<void>
+
+  // Impersonation UI helpers
+  originalUser: ComputedRef<User | null>
+  justStartedImpersonation: ComputedRef<boolean>
+  clearSuccessFlag: () => void
+
+  // Testing utilities
+  $initializationPromise: Promise<void>
 }
 
 export type TeamAuth = TeamAuthState & TeamAuthMethods

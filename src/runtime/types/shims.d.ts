@@ -15,6 +15,19 @@ declare module '#imports' {
         loginPage?: string
         debug?: boolean
         socialProviders?: Record<string, { enabled: boolean }>
+        passwordPolicy?: {
+          minLength?: number
+          requireUppercase?: boolean
+          requireLowercase?: boolean
+          requireNumbers?: boolean
+          requireSpecialChars?: boolean
+          specialChars?: string
+          helpText?: string
+          customValidator?: (password: string) => boolean | string
+        }
+        defaultProtection?: boolean
+        protectedRoutes?: string[]
+        publicRoutes?: string[]
       }
       supabase?: {
         url: string
@@ -32,6 +45,7 @@ declare module '#imports' {
     }
   }
   export const definePageMeta: (meta: Record<string, unknown>) => void
+  export const defineOptions: (options: Record<string, unknown>) => void
   export const createError: (options: { statusCode: number, message: string }) => Error
   export const useRoute: () => RouteLocationNormalizedLoaded
   export const useRouter: () => Router
@@ -67,11 +81,17 @@ declare module '#supabase/client' {
 declare module '#app' {
   import type { SupabaseClient } from '@supabase/supabase-js'
   import type { Ref } from 'vue'
+  import type { RouteLocationNormalized } from 'vue-router'
 
   export const useNuxtApp: () => {
     $supabase?: {
       client: SupabaseClient
     }
+    $config?: {
+      public: Record<string, unknown>
+    }
   }
   export const useState: <T>(key: string, init?: () => T) => Ref<T>
+  export const navigateTo: (path: string, options?: { replace?: boolean, external?: boolean }) => Promise<void> | void
+  export const defineNuxtRouteMiddleware: (middleware: (to: RouteLocationNormalized, from?: RouteLocationNormalized) => undefined | Promise<undefined> | string | { path: string }) => (to: RouteLocationNormalized, from?: RouteLocationNormalized) => undefined | Promise<undefined> | string | { path: string }
 }

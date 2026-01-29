@@ -233,7 +233,7 @@
     :message="`Are you sure you want to delete ${memberToDelete?.profile?.full_name || memberToDelete?.profile?.email || 'this member'}? This will permanently delete their account and all associated data. This action cannot be undone.`"
     cancel-text="Cancel"
     confirm-text="Delete Member"
-    confirm-color="error"
+    confirm-color="red"
     :loading="isDeletingMember"
     @confirm="confirmDeleteMember"
     @cancel="cancelDeleteMember"
@@ -252,23 +252,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
-import type { Profile } from '../types'
+import type { Profile, TeamMemberWithProfile, PendingInvitation } from '../types'
 import ConfirmDialog from './ConfirmDialog.vue'
 import EditUserModal from './EditUserModal.vue'
 import FormDialog from './FormDialog.vue'
 import RoleBadge from './RoleBadge.vue'
 import { useToast } from '#imports'
-
-// Team member with profile data
-interface TeamMemberWithProfile {
-  user_id: string
-  role: string
-  joined_at: string
-  profile?: Profile
-  id?: string // Computed from user_id
-  full_name?: string
-  email?: string
-}
 
 // Props
 interface Props {
@@ -307,16 +296,16 @@ const inviteEmail = ref('')
 const inviteRole = ref('member')
 
 // Back to manual fetch with reactive data - avoiding useLazyFetch SSR issues
-const pendingInvitations = ref([])
+const pendingInvitations = ref<PendingInvitation[]>([])
 const pendingInvitationsLoading = ref(false)
-const pendingInvitationsError = ref(null)
+const pendingInvitationsError = ref<Error | null>(null)
 
 const refreshPendingInvitations = async () => {
   // Only fetch if we have authentication and team
   if (!currentTeam.value?.id || !currentUser.value) return
 
   // Only fetch if user has permission to view invitations
-  if (!['owner', 'admin', 'super_admin'].includes(currentRole.value)) return
+  if (!currentRole.value || !['owner', 'admin', 'super_admin'].includes(currentRole.value)) return
 
   try {
     pendingInvitationsLoading.value = true
@@ -325,9 +314,9 @@ const refreshPendingInvitations = async () => {
     const invitations = await getPendingInvitations()
     pendingInvitations.value = invitations || []
   }
-  catch (error: any) {
+  catch (error: unknown) {
     console.error('Failed to fetch pending invitations:', error)
-    pendingInvitationsError.value = error
+    pendingInvitationsError.value = error instanceof Error ? error : new Error('Unknown error')
     pendingInvitations.value = []
   }
   finally {
@@ -767,7 +756,8 @@ const handleRevokeInvitation = async (invitation: any) => {
 }
 
 // Format invitation date
-const formatInviteDate = (dateString: string) => {
+const formatInviteDate = (dateString: string | undefined) => {
+  if (!dateString) return 'Recently'
   const date = new Date(dateString)
   const now = new Date()
   const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))

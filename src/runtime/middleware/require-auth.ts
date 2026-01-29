@@ -1,11 +1,12 @@
 import { useTeamAuth } from '../composables/useTeamAuth'
 import { navigateTo, defineNuxtRouteMiddleware, useRuntimeConfig } from '#imports'
+import type { RouteLocationNormalized } from 'vue-router'
 
 /**
  * Middleware to require user authentication
  * Redirects to login if user is not authenticated
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
   const { currentUser, isLoading } = useTeamAuth()
 
   // More efficient auth loading wait with early exit
@@ -33,7 +34,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (!currentUser.value) {
     const config = useRuntimeConfig()
     const loginPage = config.public.teamAuth?.loginPage || '/signin'
-    const redirectUrl = `${to.path}${to.search ? `?${new URLSearchParams(to.query).toString()}` : ''}`
+    const redirectUrl = to.fullPath
     return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
   }
 })

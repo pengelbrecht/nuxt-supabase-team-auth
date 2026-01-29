@@ -10,6 +10,7 @@ import { createRequireRoleMiddleware } from '../../src/runtime/middleware/requir
 // Test interfaces
 interface MockRoute {
   path: string
+  fullPath: string
   query?: Record<string, string>
   params?: Record<string, string>
 }
@@ -53,6 +54,7 @@ describe('Middleware Integration Tests', () => {
     // Default mock route
     mockRoute = {
       path: '/dashboard',
+      fullPath: '/dashboard',
       query: {},
       params: {},
       search: '',
@@ -88,6 +90,7 @@ describe('Middleware Integration Tests', () => {
   describe('Global Auth Middleware', () => {
     it('should allow access to public routes without authentication', async () => {
       mockRoute.path = '/'
+      mockRoute.fullPath = '/'
 
       const _result = await authGlobal(mockRoute)
 
@@ -97,6 +100,7 @@ describe('Middleware Integration Tests', () => {
 
     it('should allow access to login page without authentication', async () => {
       mockRoute.path = '/signin'
+      mockRoute.fullPath = '/signin'
 
       const _result = await authGlobal(mockRoute)
 
@@ -107,6 +111,7 @@ describe('Middleware Integration Tests', () => {
     it('should allow access to non-protected routes when defaultProtection is public', async () => {
       // Test a route that's NOT in protectedRoutes array - should be allowed
       mockRoute.path = '/privacy'
+      mockRoute.fullPath = '/privacy'
 
       const _result = await authGlobal(mockRoute)
 
@@ -116,6 +121,7 @@ describe('Middleware Integration Tests', () => {
 
     it('should redirect unauthenticated users from protected routes', async () => {
       mockRoute.path = '/dashboard'
+      mockRoute.fullPath = '/dashboard'
 
       const _result = await authGlobal(mockRoute)
 
@@ -124,6 +130,7 @@ describe('Middleware Integration Tests', () => {
 
     it('should allow authenticated users to access protected routes', async () => {
       mockRoute.path = '/dashboard'
+      mockRoute.fullPath = '/dashboard'
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: { id: 'user-123', email: 'test@example.com' } },
         currentTeam: { value: { id: 'team-456', name: 'Test Team' } },
@@ -140,6 +147,7 @@ describe('Middleware Integration Tests', () => {
 
     it('should redirect users without team to account misconfigured', async () => {
       mockRoute.path = '/dashboard'
+      mockRoute.fullPath = '/dashboard'
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: { id: 'user-123' } },
         currentTeam: { value: null },
@@ -178,6 +186,7 @@ describe('Middleware Integration Tests', () => {
 
     it('should redirect unauthenticated users to login', async () => {
       mockRoute.path = '/dashboard'
+      mockRoute.fullPath = '/dashboard'
       vi.mocked(useTeamAuth).mockReturnValue({
         currentUser: { value: null },
         isLoading: { value: false },
@@ -190,6 +199,7 @@ describe('Middleware Integration Tests', () => {
 
     it('should preserve query parameters in redirect', async () => {
       mockRoute.path = '/dashboard'
+      mockRoute.fullPath = '/dashboard?tab=settings&filter=active'
       mockRoute.query = { tab: 'settings', filter: 'active' }
       mockRoute.search = '?tab=settings&filter=active'
 
@@ -402,6 +412,7 @@ describe('Middleware Integration Tests', () => {
 
       // Route not in any array should be public
       mockRoute.path = '/some-random-route'
+      mockRoute.fullPath = '/some-random-route'
       const result = await authGlobal(mockRoute)
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()
@@ -409,6 +420,7 @@ describe('Middleware Integration Tests', () => {
       // Protected route should require auth
       vi.clearAllMocks()
       mockRoute.path = '/dashboard'
+      mockRoute.fullPath = '/dashboard'
       await authGlobal(mockRoute)
       expect(mockNavigateTo).toHaveBeenCalledWith('/signin?redirect=%2Fdashboard')
     })
@@ -419,12 +431,14 @@ describe('Middleware Integration Tests', () => {
 
       // Route not in publicRoutes should require auth
       mockRoute.path = '/some-random-route'
+      mockRoute.fullPath = '/some-random-route'
       await authGlobal(mockRoute)
       expect(mockNavigateTo).toHaveBeenCalledWith('/signin?redirect=%2Fsome-random-route')
 
       // Public route should be allowed
       vi.clearAllMocks()
       mockRoute.path = '/about'
+      mockRoute.fullPath = '/about'
       const result = await authGlobal(mockRoute)
       expect(result).toBeUndefined()
       expect(mockNavigateTo).not.toHaveBeenCalled()

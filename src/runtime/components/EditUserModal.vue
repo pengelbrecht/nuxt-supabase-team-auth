@@ -38,6 +38,7 @@ import { ref, computed, watch } from 'vue'
 import { useTeamAuth } from '../composables/useTeamAuth'
 import type { Profile } from '../types'
 import { useToast } from '#imports'
+import UserProfileForm from './UserProfileForm.vue'
 
 // Props
 interface Props {

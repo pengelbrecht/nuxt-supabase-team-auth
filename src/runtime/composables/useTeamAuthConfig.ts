@@ -1,15 +1,23 @@
 import { computed } from 'vue'
 import type { SocialProvidersConfig } from '../types'
-import { useNuxtApp } from '#app'
+import { useRuntimeConfig } from '#imports'
+
+interface TeamAuthConfig {
+  redirectTo?: string
+  loginPage?: string
+  supabaseUrl?: string
+  supabaseKey?: string
+  socialProviders?: SocialProvidersConfig
+}
 
 /**
  * Team Auth configuration composable
  * Provides access to module configuration values
  */
 export function useTeamAuthConfig() {
-  const { $config } = useNuxtApp()
+  const runtimeConfig = useRuntimeConfig()
 
-  const config = computed(() => $config.public.teamAuth || {})
+  const config = computed<TeamAuthConfig>(() => (runtimeConfig.public.teamAuth as TeamAuthConfig) || {})
 
   const redirectTo = computed(() => config.value.redirectTo || '/dashboard')
   const loginPage = computed(() => config.value.loginPage || '/signin')

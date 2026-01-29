@@ -3,14 +3,21 @@
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "bundler",
+    // Strict mode settings
     "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    // Module settings
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "jsx": "preserve",
+    // Declaration settings
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
+    // Path resolution
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],

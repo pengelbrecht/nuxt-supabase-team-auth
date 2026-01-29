@@ -4,6 +4,11 @@
  * Centralized exports for all authentication and authorization middleware
  */
 
+// Import functions needed for local use in createMiddleware factory
+import { createRequireRoleMiddleware } from './require-role'
+import { createRedirectAuthenticated } from './redirect-authenticated'
+import { createImpersonationRestriction } from './impersonation'
+
 // Core middleware exports
 export { default as authGlobal } from './auth.global'
 export { default as requireAuth } from './require-auth'
@@ -24,20 +29,15 @@ export {
 } from './require-role'
 
 // Team-specific middleware
-export {
-  createTeamAccessMiddleware,
-  requireTeamMembership,
-  requireAnyTeam,
-  requireValidatedTeam,
-} from './require-team'
+// Note: In single-team model, use the default requireTeam middleware
+// Legacy multi-team exports (createTeamAccessMiddleware, etc.) have been removed
 
 // Redirect middleware variants
 export {
   createRedirectAuthenticated,
   redirectToDashboard,
-  redirectToTeams,
-  redirectBasedOnTeam,
 } from './redirect-authenticated'
+// Note: In single-team model, redirectToTeams and redirectBasedOnTeam have been removed
 
 // Impersonation middleware
 export {
@@ -164,14 +164,11 @@ export interface MiddlewareOptions {
  */
 export const createMiddleware = {
   requireRole: (role: string, options?: MiddlewareOptions) =>
-    createRequireRoleMiddleware(role as any, options),
+    createRequireRoleMiddleware(role as 'owner' | 'admin' | 'member' | 'super_admin', options),
 
-  teamAccess: (options?: MiddlewareOptions) =>
-    createTeamAccessMiddleware(options),
+  redirectAuth: (redirectTo: string | ((user: unknown, team: unknown) => string), condition?: (user: unknown, team: unknown, route: unknown) => boolean) =>
+    createRedirectAuthenticated(redirectTo, condition as Parameters<typeof createRedirectAuthenticated>[1]),
 
-  redirectAuth: (redirectTo: string | (() => string), condition?: () => boolean) =>
-    createRedirectAuthenticated(redirectTo as any, condition),
-
-  impersonationRestriction: (options?: MiddlewareOptions) =>
+  impersonationRestriction: (options?: Pick<MiddlewareOptions, 'blockedPaths' | 'allowedPaths' | 'redirectTo' | 'errorMessage' | 'checkSuperAdmin'>) =>
     createImpersonationRestriction(options),
 }

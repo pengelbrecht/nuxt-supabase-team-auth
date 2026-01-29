@@ -4,10 +4,11 @@ import type { User, Profile, Team, TeamMember, TeamAuth } from '../types'
 import { useSessionSync } from './useSessionSync'
 import { useSession } from './useSession'
 import { useSupabaseClient } from './useSupabaseComposables'
-import { useToast, useState } from '#imports'
+import { useToast, useState, useRuntimeConfig } from '#imports'
+import type { AuthChangeEvent, Session as SupabaseSession } from '@supabase/supabase-js'
 // Types - we'll get the actual client and user from @nuxtjs/supabase composables
-type SupabaseClient = any
-type SupabaseUser = any
+type SupabaseClient = ReturnType<typeof useSupabaseClient>
+type SupabaseUser = SupabaseSession['user'] | null
 
 interface _TeamAuthError {
   code: string
@@ -18,6 +19,12 @@ interface ImpersonationStorageData {
   targetUser: User
   expiresAt: string
   sessionId: string
+}
+
+interface AuthStateImpersonation {
+  impersonatedUser: User | null
+  impersonationExpiresAt: Date | null
+  impersonationSessionId: string | null
 }
 
 // Helper function to safely extract error for logging
@@ -82,7 +89,8 @@ async function createAuthHeaders(supabaseClient?: any): Promise<Record<string, s
   try {
     if (supabaseClient) {
       // Use the provided client directly for auth with timeout protection
-      const { data: { session }, error } = await withTimeout(supabaseClient.auth.getSession(), 5000)
+      const result = await withTimeout(supabaseClient.auth.getSession(), 5000) as { data: { session: SupabaseSession | null }, error: Error | null }
+      const { data: { session }, error } = result
       if (!error && session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`
       }
@@ -175,14 +183,15 @@ const loadImpersonationFromStorage = () => {
 }
 
 // Save impersonation data to localStorage
-const saveImpersonationToStorage = (data: ImpersonationStorageData) => {
+const saveImpersonationToStorage = (data: AuthStateImpersonation) => {
   if (!import.meta.client) return
 
   try {
-    const storageData = {
+    if (!data.impersonatedUser || !data.impersonationSessionId) return
+    const storageData: ImpersonationStorageData = {
       sessionId: data.impersonationSessionId,
       targetUser: data.impersonatedUser,
-      expiresAt: data.impersonationExpiresAt?.toISOString(),
+      expiresAt: data.impersonationExpiresAt?.toISOString() || '',
     }
     localStorage.setItem(IMPERSONATION_STORAGE_KEY, JSON.stringify(storageData))
   }
@@ -229,7 +238,11 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     // Save to localStorage if impersonation state changed
     if ('impersonating' in updates || 'impersonatedUser' in updates || 'impersonationSessionId' in updates) {
       if (authState.value.impersonating) {
-        saveImpersonationToStorage(authState.value)
+        saveImpersonationToStorage({
+          impersonatedUser: authState.value.impersonatedUser,
+          impersonationExpiresAt: authState.value.impersonationExpiresAt,
+          impersonationSessionId: authState.value.impersonationSessionId,
+        })
       }
       else {
         // Clear localStorage when impersonation ends
@@ -288,7 +301,9 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   }
 
   // Update complete auth state atomically using updateAuthState helper
-  const updateCompleteAuthState = async (user: SupabaseUser) => {
+  const updateCompleteAuthState = async (user: NonNullable<SupabaseUser>) => {
+    if (!user) return // Type guard for safety
+
     try {
       // For impersonation scenarios, immediately update with user data
       // and use data from impersonation response to avoid hanging queries
@@ -304,7 +319,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
             id: impersonatedData.id,
             full_name: impersonatedData.full_name,
             email: impersonatedData.email,
-          } as User,
+          } as unknown as Profile,
           team: impersonatedData.team
             ? {
                 id: impersonatedData.team.id,
@@ -379,8 +394,8 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
                 company_state: teamResult.data.teams.company_state,
                 company_postal_code: teamResult.data.teams.company_postal_code,
                 company_country: teamResult.data.teams.company_country,
-                company_vat_number: teamResult.data.teams.company_vat_number,
-              }
+                vat_number: teamResult.data.teams.company_vat_number,
+              } as Team
             : null,
           role: teamResult.data?.role || null,
           loading: false,
@@ -473,7 +488,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       if (!authListenerRegistered) {
         authListenerRegistered = true
 
-        getClient().auth.onAuthStateChange((event, session) => {
+        getClient().auth.onAuthStateChange((event: AuthChangeEvent, session: SupabaseSession | null) => {
           console.log('[useTeamAuth] Auth state change event:', event, 'Session exists:', !!session)
 
           // Deduplicate events
@@ -547,7 +562,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     })
   }
 
-  return {
+  const teamAuth = {
     // State
     currentUser,
     currentProfile,
@@ -917,22 +932,22 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         authState.value = { ...authState.value, loading: true }
 
         // Get pending invitations from Supabase auth system
-        const pendingInvitations = await this.getPendingInvitations()
+        const pendingInvitations = await teamAuth.getPendingInvitations()
 
         // Find the specific invitation by user ID
-        const invitation = pendingInvitations.find(inv => inv.id === userId)
+        const invitation = pendingInvitations.find((inv: { id: string, email: string, user_metadata?: Record<string, unknown> }) => inv.id === userId)
 
         if (!invitation) {
           throw { code: 'INVITE_NOT_FOUND', message: 'Invitation not found' }
         }
 
         // Revoke the old invitation
-        await this.revokeInvite(userId)
+        await teamAuth.revokeInvite(userId)
 
         // Create a new invitation using the invite member method
         // Extract role from user metadata or default to 'member'
         const role = invitation.user_metadata?.team_role || 'member'
-        await this.inviteMember(invitation.email, role)
+        await teamAuth.inviteMember(invitation.email, role)
       }
       catch (error: unknown) {
         console.error('Resend invite failed:', error)
@@ -947,14 +962,14 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       if (!currentRole.value || currentRole.value !== 'owner') {
         throw new Error('Only team owners can promote members')
       }
-      await this.updateMemberRole(userId, 'admin')
+      await teamAuth.updateMemberRole(userId, 'admin')
     },
 
     demote: async (userId: string): Promise<void> => {
       if (!currentRole.value || !['admin', 'owner'].includes(currentRole.value)) {
         throw new Error('You do not have permission to demote members')
       }
-      await this.updateMemberRole(userId, 'member')
+      await teamAuth.updateMemberRole(userId, 'member')
     },
 
     transferOwnership: async (userId: string): Promise<void> => {
@@ -991,7 +1006,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         }
 
         // Refresh team members to show updated roles
-        await this.getTeamMembers()
+        await teamAuth.getTeamMembers()
       }
       catch (error: unknown) {
         console.error('Transfer ownership failed:', error)
@@ -1092,7 +1107,9 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
         // Use the comprehensive delete-team Edge Function
         const headers = await createAuthHeaders()
-        const response = await fetch(`${process.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-team`, {
+        const runtimeConfig = useRuntimeConfig()
+        const supabaseUrl = runtimeConfig.public.supabase?.url || ''
+        const response = await fetch(`${supabaseUrl}/functions/v1/delete-team`, {
           method: 'POST',
           headers,
           body: JSON.stringify({
@@ -1157,7 +1174,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         throw new Error(`Failed to load team members: ${error.message}`)
       }
 
-      const mappedMembers = (members || []).map(member => ({
+      const mappedMembers = (members || []).map((member: { user_id: string, role: string, joined_at: string, profiles: { email: string | null, full_name: string | null, avatar_url: string | null } }) => ({
         id: member.user_id,
         user_id: member.user_id,
         role: member.role,
@@ -1172,7 +1189,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       return mappedMembers
     },
 
-    updateMemberRole: async (userId: string, newRole: string) => {
+    updateMemberRole: async (userId: string, newRole: 'owner' | 'admin' | 'member' | 'super_admin') => {
       if (!currentTeam.value) {
         throw new Error('No current team available')
       }
@@ -1309,13 +1326,13 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         authState.value = { ...authState.value, loading: true }
 
         // Only allow certain fields to be updated by admins
-        const allowedFields = ['full_name', 'phone', 'company_role']
-        const filteredUpdates = Object.keys(updates)
-          .filter(key => allowedFields.includes(key))
-          .reduce((obj, key) => {
-            obj[key] = updates[key]
-            return obj
-          }, {} as Partial<Profile>)
+        const allowedFields = ['full_name', 'phone', 'company_role'] as const
+        const filteredUpdates: Record<string, unknown> = {}
+        for (const key of allowedFields) {
+          if (key in updates) {
+            filteredUpdates[key] = (updates as Record<string, unknown>)[key]
+          }
+        }
 
         if (Object.keys(filteredUpdates).length === 0) {
           throw new Error('No valid fields to update')
@@ -1333,9 +1350,10 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         // Update the member in the team members list if they exist
         const updatedMembers = authState.value.teamMembers.map((member) => {
           if (member.user_id === userId) {
+            // Merge filtered updates into the member record
             return {
               ...member,
-              profile: { ...member.profile, ...filteredUpdates },
+              ...(filteredUpdates as Partial<typeof member>),
             }
           }
           return member
@@ -1378,8 +1396,8 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           .slice(0, 2)
       }
 
-      if (email) {
-        return email[0].toUpperCase()
+      if (email && email.length > 0) {
+        return email[0]!.toUpperCase()
       }
 
       return 'U'
@@ -1459,9 +1477,10 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
         // Show error toast
         const toast = useToast()
+        const err = error as Error & { data?: { message?: string } }
         toast.add({
           title: 'Impersonation Failed',
-          description: error.data?.message || error.message || 'Failed to start impersonation',
+          description: err.data?.message || err.message || 'Failed to start impersonation',
           color: 'error',
           icon: 'i-lucide-alert-circle',
         })
@@ -1595,7 +1614,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
     // Force refresh auth state
     refreshAuthState: async () => {
       if (currentUser.value) {
-        await updateCompleteAuthState(currentUser.value as SupabaseUser)
+        await updateCompleteAuthState(currentUser.value as unknown as NonNullable<SupabaseUser>)
       }
     },
 
@@ -1604,4 +1623,6 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       authState.value = { ...authState.value, justStartedImpersonation: false }
     },
   }
+
+  return teamAuth as TeamAuth
 }

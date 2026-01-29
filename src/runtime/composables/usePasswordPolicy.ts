@@ -34,7 +34,7 @@ export function usePasswordPolicy() {
   const createConfirmPasswordValidator = (getPasswordValue: () => string) => {
     return v.pipe(
       v.string(),
-      v.custom((value: string) => value === getPasswordValue(), 'Passwords do not match'),
+      v.check((value: string) => value === getPasswordValue(), 'Passwords do not match'),
     )
   }
 

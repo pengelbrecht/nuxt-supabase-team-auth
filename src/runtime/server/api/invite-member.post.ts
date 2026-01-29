@@ -4,10 +4,10 @@ import { useRuntimeConfig } from '#imports'
 
 export default defineEventHandler(async (event) => {
   console.log('=== INVITE MEMBER API CALLED ===')
-  console.log('Method:', event.node.req.method)
-  console.log('URL:', event.node.req.url)
+  console.log('Method:', event.node?.req.method)
+  console.log('URL:', event.node?.req.url)
 
-  const body = await readBody(event)
+  const body = await readBody<Record<string, unknown>>(event)
   console.log('Request body received:', body)
 
   const authHeader = getHeader(event, 'authorization')
@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
     })
 
     console.log('Edge function response:', response)
-    return response
+    return response as Record<string, unknown>
   }
   catch (error: any) {
     console.error('Invite member proxy error:', error)

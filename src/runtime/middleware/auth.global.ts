@@ -1,12 +1,13 @@
 import { useTeamAuth } from '../composables/useTeamAuth'
 import { useSupabaseUser } from '../composables/useSupabaseComposables'
 import { navigateTo, defineNuxtRouteMiddleware, useRuntimeConfig } from '#imports'
+import type { RouteLocationNormalized } from 'vue-router'
 
 /**
  * Global authentication middleware
  * Runs on every route change to ensure proper authentication state
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
   // During SSR, ensure authentication state is properly handled
   // On server-side, we might not have complete auth state yet
   const isSSR = import.meta.server
@@ -96,7 +97,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const userToCheck = isSSR ? supabaseUser?.value : currentUser.value
 
     if (!userToCheck) {
-      const redirectUrl = `${currentPath}${to.search || ''}`
+      const redirectUrl = to.fullPath
       const loginPage = teamAuthConfig.loginPage || '/signin'
       return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
     }
@@ -119,7 +120,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const userToCheck = isSSR ? supabaseUser?.value : currentUser.value
 
     if (!userToCheck) {
-      const redirectUrl = `${currentPath}${to.search || ''}`
+      const redirectUrl = to.fullPath
       const loginPage = teamAuthConfig.loginPage || '/signin'
       return navigateTo(`${loginPage}?redirect=${encodeURIComponent(redirectUrl)}`)
     }

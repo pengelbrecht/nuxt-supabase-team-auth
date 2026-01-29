@@ -3,7 +3,7 @@ import { $fetch } from 'ofetch'
 import { useRuntimeConfig } from '#imports'
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
+  const body = await readBody<Record<string, unknown>>(event)
   const authHeader = getHeader(event, 'authorization')
 
   if (!authHeader) {
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
       body,
     })
 
-    return response
+    return response as Record<string, unknown>
   }
   catch (error: any) {
     console.error('Accept invite proxy error:', error)

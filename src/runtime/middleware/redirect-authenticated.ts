@@ -1,11 +1,12 @@
 import { useTeamAuth } from '../composables/useTeamAuth'
 import { navigateTo, defineNuxtRouteMiddleware, useRuntimeConfig } from '#imports'
+import type { RouteLocationNormalized } from 'vue-router'
 
 /**
  * Middleware to redirect authenticated users away from auth pages
  * Useful for login/signup pages that authenticated users shouldn't see
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
   const { currentUser, currentTeam, isLoading } = useTeamAuth()
 
   // More efficient auth loading wait with early exit
@@ -73,10 +74,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
  * @param condition Optional condition function to determine if redirect should happen
  */
 export function createRedirectAuthenticated(
-  redirectTo: string | ((user: any, team: any) => string),
-  condition?: (user: any, team: any, route: any) => boolean,
+  redirectTo: string | ((user: unknown, team: unknown) => string),
+  condition?: (user: unknown, team: unknown, route: RouteLocationNormalized) => boolean,
 ) {
-  return defineNuxtRouteMiddleware(async (to) => {
+  return defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
     const { currentUser, currentTeam, isLoading } = useTeamAuth()
 
     // More efficient auth loading wait with early exit

@@ -74,7 +74,8 @@ export default defineEventHandler(async (event) => {
     }
 
     // Get request body
-    const { targetUserId, reason } = await readBody(event)
+    const body = await readBody<{ targetUserId?: string, reason?: string }>(event)
+    const { targetUserId, reason } = body || {}
 
     if (!targetUserId) {
       throw createError({

@@ -195,6 +195,7 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import { useSupabaseClient } from '../composables/useSupabaseComposables'
 import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
 import { usePasswordPolicy } from '../composables/usePasswordPolicy'
+import { useRuntimeConfig } from '#imports'
 
 interface PasswordSetupFormProps {
   /** User's email address */
@@ -234,8 +235,9 @@ const emit = defineEmits<{
   'social-link': [provider: string]
 }>()
 
-// Get Supabase client
+// Get Supabase client and config
 const supabase = useSupabaseClient()
+const runtimeConfig = useRuntimeConfig()
 
 // Form state
 const form = reactive<PasswordSetupForm>({
@@ -285,7 +287,7 @@ const handlePasswordSetup = async (event: FormSubmitEvent<any>) => {
 
     if (!accessToken) {
       const hashParams = new URLSearchParams(window.location.hash.substring(1))
-      accessToken = hashParams.get('access_token')
+      accessToken = hashParams.get('access_token') || undefined
     }
 
     if (!accessToken) {
@@ -294,20 +296,26 @@ const handlePasswordSetup = async (event: FormSubmitEvent<any>) => {
 
     // Update user's password using direct API approach
     try {
-      await $fetch(`${supabase.supabaseUrl}/auth/v1/user`, {
+      const supabaseUrl = runtimeConfig.public.supabase?.url
+      const supabaseKey = runtimeConfig.public.supabase?.key
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Supabase configuration not available')
+      }
+      await $fetch(`${supabaseUrl}/auth/v1/user`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
-          'apikey': supabase.supabaseKey,
+          'apikey': supabaseKey,
         },
         body: {
           password: event.data.password,
         },
       })
     }
-    catch (apiError) {
-      throw new Error(`Failed to set password: ${apiError.message || 'Unknown error'}`)
+    catch (apiError: unknown) {
+      const err = apiError as Error
+      throw new Error(`Failed to set password: ${err.message || 'Unknown error'}`)
     }
 
     // Update profile if full name was provided
