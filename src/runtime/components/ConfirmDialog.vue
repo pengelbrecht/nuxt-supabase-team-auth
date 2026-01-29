@@ -50,7 +50,7 @@ interface Props {
   /** Confirm button text */
   confirmText?: string
   /** Confirm button color */
-  confirmColor?: 'red' | 'green' | 'blue' | 'yellow' | 'gray'
+  confirmColor?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info' | 'neutral'
   /** Loading state */
   loading?: boolean
   /** Custom UI config */
@@ -62,7 +62,7 @@ const props = withDefaults(defineProps<Props>(), {
   message: 'Are you sure you want to proceed?',
   cancelText: 'Cancel',
   confirmText: 'Confirm',
-  confirmColor: 'red',
+  confirmColor: 'error',
   loading: false,
   ui: () => ({}),
 })

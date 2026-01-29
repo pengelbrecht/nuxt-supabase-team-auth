@@ -356,7 +356,7 @@
     :message="`Are you sure you want to delete ${memberToDelete?.profile?.full_name || memberToDelete?.profile?.email || 'this member'}? This will permanently delete their account and all associated data. This action cannot be undone.`"
     cancel-text="Cancel"
     confirm-text="Delete Member"
-    confirm-color="red"
+    confirm-color="error"
     :loading="isDeletingMember"
     @confirm="confirmDeleteMember"
     @cancel="cancelDeleteMember"
