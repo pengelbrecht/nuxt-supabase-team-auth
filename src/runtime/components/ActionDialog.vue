@@ -48,7 +48,7 @@ interface Props {
   subtitle?: string
   actionText?: string
   cancelText?: string
-  actionColor?: string
+  actionColor?: 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
   loading?: boolean
   isValid?: boolean
   bodyClass?: string

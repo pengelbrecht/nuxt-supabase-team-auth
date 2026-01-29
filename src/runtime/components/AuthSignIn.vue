@@ -113,7 +113,6 @@
             :disabled="isLoading"
             icon="i-heroicons-lock-closed"
             size="lg"
-            :ui="{ trailing: { padding: { sm: 'pe-2' } } }"
           >
             <template #trailing>
               <UButton

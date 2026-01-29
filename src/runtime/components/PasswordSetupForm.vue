@@ -51,7 +51,6 @@
           icon="i-heroicons-lock-closed"
           size="lg"
           tabindex="1"
-          :ui="{ trailing: { padding: { sm: 'pe-2' } } }"
         >
           <template #trailing>
             <UButton
@@ -83,7 +82,6 @@
           icon="i-heroicons-lock-closed"
           size="lg"
           tabindex="2"
-          :ui="{ trailing: { padding: { sm: 'pe-2' } } }"
         >
           <template #trailing>
             <UButton

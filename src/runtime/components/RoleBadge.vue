@@ -37,8 +37,8 @@ const formattedRole = computed(() => {
 })
 
 const badgeColor = computed(() => {
-  // Pending invitations get orange color
-  if (props.pending) return 'orange'
+  // Pending invitations get warning color (orange/amber)
+  if (props.pending) return 'warning'
 
   if (!props.role) return 'neutral'
 

@@ -302,7 +302,7 @@ const addCustomItemsWithSeparators = (items: any[], customItems: CustomMenuItem[
     // Add separator only if specifically requested for this item
     const originalCustomItem = customItems.find(ci => ci.label === item.label)
     if (originalCustomItem?.addSeparator) {
-      items.push({ type: 'separator' })
+      items.push({ type: 'separator' as const })
     }
   })
 
@@ -320,20 +320,20 @@ const dropdownItems = computed(() => {
     ]
   }
 
-  const items = []
+  const items: Array<{ label?: string, icon?: string, type?: 'label' | 'separator' | 'link' | 'checkbox', disabled?: boolean, onSelect?: () => void }> = []
 
   // Only show user info header if name is NOT already shown next to button
   if (!props.showName) {
     items.push({
       label: currentProfile.value?.full_name || currentUser.value.user_metadata?.name || currentUser.value.email || 'User',
       icon: 'i-lucide-user-circle',
-      type: 'label',
+      type: 'label' as const,
       disabled: true,
     })
 
     // Separator
     items.push({
-      type: 'separator',
+      type: 'separator' as const,
     })
   }
 
@@ -378,7 +378,7 @@ const dropdownItems = computed(() => {
   // Impersonation section (super admin only)
   if (isSuperAdmin.value) {
     items.push({
-      type: 'separator',
+      type: 'separator' as const,
     })
 
     if (isImpersonating.value) {
@@ -406,7 +406,7 @@ const dropdownItems = computed(() => {
     // Only add separator if we haven't already added one from impersonation section
     if (!isSuperAdmin.value) {
       items.push({
-        type: 'separator',
+        type: 'separator' as const,
       })
     }
     addCustomItemsWithSeparators(items, props.customItems)
@@ -414,7 +414,7 @@ const dropdownItems = computed(() => {
   else {
     // Add separator before sign out if no custom items added here
     items.push({
-      type: 'separator',
+      type: 'separator' as const,
     })
   }
 

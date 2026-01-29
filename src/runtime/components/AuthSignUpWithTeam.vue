@@ -144,7 +144,6 @@
             :disabled="isLoading"
             icon="i-heroicons-lock-closed"
             size="lg"
-            :ui="{ trailing: { padding: { sm: 'pe-2' } } }"
           >
             <template #trailing>
               <UButton
@@ -175,7 +174,6 @@
             :disabled="isLoading"
             icon="i-heroicons-lock-closed"
             size="lg"
-            :ui="{ trailing: { padding: { sm: 'pe-2' } } }"
           >
             <template #trailing>
               <UButton
@@ -384,7 +382,7 @@ const signUpSchema = computed(() => v.object({
   email: v.pipe(v.string(), v.email('Please enter a valid email address')),
   password: getPasswordSchema(),
   confirmPassword: createConfirmPasswordValidator(() => form.password),
-  acceptTerms: v.literal(true, 'You must accept the terms and conditions'),
+  acceptTerms: v.pipe(v.boolean(), v.check((val: boolean) => val === true, 'You must accept the terms and conditions')),
   marketingConsent: v.optional(v.boolean()),
 }))
 

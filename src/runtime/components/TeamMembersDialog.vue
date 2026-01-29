@@ -51,7 +51,7 @@
           <div class="flex items-center gap-3 min-w-0">
             <UAvatar
               size="md"
-              :ui="{ background: 'bg-orange-100 dark:bg-orange-900' }"
+              class="bg-orange-100 dark:bg-orange-900"
             >
               <UIcon
                 name="i-lucide-mail"

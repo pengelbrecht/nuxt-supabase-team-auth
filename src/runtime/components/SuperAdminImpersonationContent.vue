@@ -186,7 +186,7 @@ const searchResults = ref<any[]>([])
 const isSearching = ref(false)
 const isLoadingUsers = ref(false)
 const impersonatingUserId = ref<string | null>(null)
-const reasonError = ref<string | null>(null)
+const reasonError = ref<string | undefined>(undefined)
 
 // Get Supabase client
 const supabase = useSupabaseClient()
@@ -363,7 +363,7 @@ const validateReason = () => {
     reasonError.value = 'Reason must be at least 10 characters long'
   }
   else {
-    reasonError.value = null
+    reasonError.value = undefined
   }
 }
 

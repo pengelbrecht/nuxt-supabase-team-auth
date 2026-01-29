@@ -1,24 +1,7 @@
 import { defineNuxtModule, createResolver, addImports, addComponentsDir, installModule } from '@nuxt/kit'
-import type { NuxtModule, Nuxt, NuxtOptions } from '@nuxt/schema'
+import type { NuxtModule } from '@nuxt/schema'
 import { defu } from 'defu'
 import type { PasswordPolicy } from './runtime/types/password-policy'
-
-// Extended types for module augmentation
-interface ExtendedNuxtOptions extends NuxtOptions {
-  supabase?: Record<string, unknown>
-  nitro?: {
-    routeRules?: Record<string, { ssr?: boolean }>
-  }
-}
-
-interface ExtendedNuxt extends Omit<Nuxt, 'options'> {
-  options: ExtendedNuxtOptions & {
-    runtimeConfig: {
-      public: Record<string, unknown>
-      [key: string]: unknown
-    }
-  }
-}
 
 export interface ModuleOptions {
   /**
@@ -100,7 +83,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       // Future providers will be added here when implemented
     },
   },
-  async setup(options, nuxt: ExtendedNuxt) {
+  async setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
 
     // Automatically install Nuxt UI for components and composables
@@ -215,11 +198,12 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
     }
 
     // Set both nuxt.options.supabase and runtime config for @nuxtjs/supabase
-    nuxt.options.supabase = defu(nuxt.options.supabase || {}, supabaseConfig)
+    // Use type assertion since we're merging config, not replacing
+    ;(nuxt.options as any).supabase = defu((nuxt.options as any).supabase || {}, supabaseConfig)
 
     // Set up runtime config structure that @nuxtjs/supabase expects
-    nuxt.options.runtimeConfig.public.supabase = defu(
-      nuxt.options.runtimeConfig.public.supabase || {},
+    ;(nuxt.options.runtimeConfig.public as any).supabase = defu(
+      (nuxt.options.runtimeConfig.public as any).supabase || {},
       runtimeConfig,
     )
 
@@ -227,7 +211,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 
     // Also ensure the configuration is applied before @nuxtjs/supabase initializes
     nuxt.hook('modules:before', () => {
-      nuxt.options.supabase = defu(nuxt.options.supabase || {}, supabaseConfig)
+      ;(nuxt.options as any).supabase = defu((nuxt.options as any).supabase || {}, supabaseConfig)
 
       // Development logging removed - module is stable
     })
@@ -345,9 +329,9 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
     nuxt.options.css.push(resolver.resolve('./runtime/assets/css/components.css'))
 
     // Force auth/confirm page to be client-side only to fix SSR cookie + implicit flow conflict
-    nuxt.options.nitro = nuxt.options.nitro || {}
-    nuxt.options.nitro.routeRules = nuxt.options.nitro.routeRules || {}
-    nuxt.options.nitro.routeRules['/auth/confirm'] = { ssr: false }
+    ;(nuxt.options as any).nitro = (nuxt.options as any).nitro || {}
+    ;(nuxt.options as any).nitro.routeRules = (nuxt.options as any).nitro.routeRules || {}
+    ;(nuxt.options as any).nitro.routeRules['/auth/confirm'] = { ssr: false }
 
     // Add server API routes
     // @ts-expect-error nitro:config hook exists at runtime but not in types
