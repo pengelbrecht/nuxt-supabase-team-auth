@@ -1,6 +1,6 @@
 {
   "name": "nuxt-supabase-team-auth",
-  "version": "0.7.6",
+  "version": "0.7.7",
   "description": "Drop-in Nuxt module for team-based authentication with Supabase",
   "type": "module",
   "exports": {
@@ -62,7 +62,7 @@
     "version:info": "node scripts/version-info.js"
   },
   "lint-staged": {
-    "*.{ts,vue,js,mjs}": "eslint --fix"
+    "*.{ts,vue,js,mjs}": "eslint --fix --ignore-pattern 'test-projects/**'"
   },
   "pnpm": {
     "overrides": {
@@ -72,7 +72,7 @@
   },
   "dependencies": {
     "@nuxt/kit": "^4.0.0",
-    "@nuxtjs/supabase": "^2.0.0",
+    "@nuxtjs/supabase": "^2.0.7",
     "commander": "^14.0.0",
     "defu": "^6.1.4",
     "jose": "^5.9.6",

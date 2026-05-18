@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.7] - 2026-05-18
+
+### 🐛 Bug Fixes
+
+- **Fix hard-nav redirect for authenticated users (gh#52)** — The global auth middleware (`auth.global.ts`) could redirect a signed-in user to `/login` on a hard navigation into a protected route. The wait loop in the middleware broke out as soon as `currentUser.value !== undefined`, but `currentUser` starts as `null` during hydration on a hard nav — so the check fired on the first tick before the session restore had completed. The loop now polls `isLoading` only, letting the 2-second safety timeout do its job. Most commonly observed when landing on a deep protected URL from an email link, bookmark, or pasted URL.
+
+### 🔧 Technical Changes
+
+- Bump `@nuxtjs/supabase` floor from `^2.0.0` to `^2.0.7` so consumers automatically pick up upstream PR #594, which restores session + user claims before middlewares run in SPA mode.
+
+### ⚠️ Known Limitations (upstream)
+
+A few related races still exist in `@nuxtjs/supabase` itself and are outside this module's control:
+
+- **[nuxt-modules/supabase#611](https://github.com/nuxt-modules/supabase/issues/611)** — `useSupabaseUser()` can still return `null` in middlewares on refresh when `ssr: false` *and* `useSsrCookies: true` (the default). Affects pure-SPA setups that also use server-side auth APIs.
+- **[nuxt-modules/supabase#605](https://github.com/nuxt-modules/supabase/issues/605)** — The same combo silently breaks SPA refresh and isn't documented upstream.
+- **[nuxt-modules/supabase#606](https://github.com/nuxt-modules/supabase/issues/606)** — `page:start await getClaims()` can hang every navigation when the JWKS fetch stalls.
+
+If you hit one of these, watch those upstream issues for a fix rather than filing here.
+
 ## [0.5.4] - 2025-09-15
 
 ### 🐛 Bug Fixes
