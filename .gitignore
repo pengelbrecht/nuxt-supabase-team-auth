@@ -122,3 +122,8 @@ dev/
 # Added by Task Master AI
 dev-debug.log
 .vscode
+# Local env files (never commit)
+.env.local.backup
+.env*.local
+.env.local*
+!.env.example
