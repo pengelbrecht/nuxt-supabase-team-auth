@@ -23,7 +23,11 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => 
 
   const { currentUser, currentTeam, currentRole, isLoading } = useTeamAuth()
 
-  // More efficient auth loading wait with early exit
+  // Wait for the initial auth resolution (success or confirmed-no-session).
+  // Poll `isLoading` only: `currentUser` (and team/role) start as `null`
+  // during hydration on a hard nav, so breaking out on `!== undefined`
+  // fired on the first tick and judged a signed-in user as signed out.
+  // Same fix as auth.global in gh#52.
   if (isLoading.value) {
     let attempts = 0
     const maxAttempts = 20 // 2 seconds max (20 * 100ms)
@@ -31,11 +35,6 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => 
     while (isLoading.value && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 100))
       attempts++
-
-      // Early exit if we have enough data for team decisions
-      if (currentUser.value !== undefined && currentTeam.value !== undefined) {
-        break
-      }
     }
 
     // If still loading after timeout, proceed anyway to avoid hanging

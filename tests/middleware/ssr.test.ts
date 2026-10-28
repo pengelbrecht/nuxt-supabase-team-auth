@@ -225,7 +225,7 @@ describe('Route middleware during SSR', () => {
   })
 })
 
-describe('Route middleware on the client (unchanged)', () => {
+describe('Route middleware on the client', () => {
   let navigateTo: ReturnType<typeof vi.fn>
 
   beforeEach(async () => {
@@ -310,6 +310,53 @@ describe('Route middleware on the client (unchanged)', () => {
     // Resolves without advancing timers
     await expect(authGlobal(route('/'))).resolves.toBeUndefined()
     await expect(authGlobal(route('/about'))).resolves.toBeUndefined()
+    expect(navigateTo).not.toHaveBeenCalled()
+  })
+
+  // Hard navigation: the client state starts as loading with `currentUser`
+  // null. The named middleware must wait for the session restore instead of
+  // treating `null` as "signed out" on the first tick (same as gh#52). This
+  // matters more now that auth.global no longer waits on public routes.
+  const hydratingState = () => serverTeamAuthState()
+  const finishLoading = (state: ReturnType<typeof serverTeamAuthState>) => {
+    state.currentUser.value = signedIn as any
+    state.currentTeam.value = { id: 'team-1' } as any
+    state.currentRole.value = 'owner' as any
+    state.isLoading.value = false
+  }
+
+  it('redirect-authenticated waits for the session restore on a hard nav, then redirects', async () => {
+    const state = hydratingState()
+    vi.mocked(useTeamAuth).mockReturnValue(state as any)
+
+    const to = { ...route('/login?redirect=%2Fdashboard%2Frecipes'), query: { redirect: '/dashboard/recipes' } }
+    const pending = redirectAuthenticated(to)
+    await vi.advanceTimersByTimeAsync(300)
+    expect(navigateTo).not.toHaveBeenCalled()
+
+    finishLoading(state)
+    await vi.advanceTimersByTimeAsync(100)
+    await pending
+
+    expect(navigateTo).toHaveBeenCalledWith('/dashboard/recipes')
+  })
+
+  it.each([
+    ['require-auth', requireAuth as Middleware],
+    ['require-team', requireTeam as Middleware],
+    ['require-role', createRequireRoleMiddleware('admin') as Middleware],
+  ])('%s waits for the session restore on a hard nav and lets a signed-in user through', async (_name, middleware) => {
+    const state = hydratingState()
+    vi.mocked(useTeamAuth).mockReturnValue(state as any)
+
+    const pending = middleware(route('/dashboard/team'))
+    await vi.advanceTimersByTimeAsync(300)
+    expect(navigateTo).not.toHaveBeenCalled()
+
+    finishLoading(state)
+    await vi.advanceTimersByTimeAsync(100)
+
+    expect(await pending).toBeUndefined()
     expect(navigateTo).not.toHaveBeenCalled()
   })
 
