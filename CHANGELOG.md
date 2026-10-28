@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.9] - 2026-10-28
+
+### 🐛 Bug Fixes
+
+- **Remove the 2-second wait from every server-rendered page** — The global auth middleware (`auth.global.ts`) polled `isLoading` for up to 2 seconds before doing anything else, on every route including public ones. The team-auth state is only initialised in the browser, so on the server `isLoading` never clears and every SSR request waited the full timeout (logging `Auth loading timeout in middleware, proceeding anyway`). A signed-out request to a protected route waited twice, because the redirect to the login page runs the middleware again. The middleware now classifies the route first (public routes return immediately) and, on the server, decides from the cookie-based Supabase user (`useSupabaseUser()`) without waiting. On the client it still waits for the session restore before guarding protected routes, so the gh#52 fix is unchanged.
+- **`require-auth`, `require-team`, `require-role`, `requireSuperAdminForImpersonation` during SSR** — These waited 2–5 seconds on the server and then redirected *signed-in* users to the login page, because `currentUser` is always `null` on the server. On the server they now only redirect signed-out users (from the Supabase user) and leave team and role checks to the client, which runs route middleware again on hydration.
+- **`redirect-authenticated`, `impersonation`, `blockDuringImpersonation` and the factory variants** now return immediately on the server instead of waiting; their checks run on the client as before.
+- **Named middleware no longer misjudge a signed-in user on a hard navigation** — `redirect-authenticated`, `require-auth`, `require-team` and `require-role` broke out of their client-side wait as soon as `currentUser` (or team/role) was `!== undefined`, but those start as `null` during hydration, so the check fired on the first tick — the same bug gh#52 fixed in `auth.global`. Previously this was mostly hidden because the global middleware had already waited for `isLoading`; now that public routes skip that wait, it would have shown up (for example, a signed-in user opening `/login?redirect=…` stayed on the login page). The loops now poll `isLoading` only.
+
+### 🔧 Technical Changes
+
+- The team-auth `loading` flag is deliberately left `true` on the server: it is serialised into the payload, and the client relies on it to wait for the session restore on hydration.
+- New `src/runtime/utils/ssr.ts` (`isServerRender()`) so the server/client switch can be unit-tested. Re-enabled the skipped SSR middleware test and added `tests/middleware/ssr.test.ts`.
+
+## [0.7.8] - 2026-10-28
+
+### 🔧 Technical Changes
+
+- Upgrade to Nuxt 4.6.3: the `@nuxt/kit` dependency (and `nuxt` / `@nuxt/schema` dev dependencies) now require `^4.6.3`; Node 24 pinned via `.nvmrc`. See commit `14cf041`.
+
 ## [0.7.7] - 2026-05-18
 
 ### 🐛 Bug Fixes
