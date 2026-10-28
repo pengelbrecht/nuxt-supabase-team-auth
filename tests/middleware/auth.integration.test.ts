@@ -6,6 +6,8 @@ import authGlobal from '../../src/runtime/middleware/auth.global'
 import requireAuth from '../../src/runtime/middleware/require-auth'
 import requireTeam from '../../src/runtime/middleware/require-team'
 import { createRequireRoleMiddleware } from '../../src/runtime/middleware/require-role'
+import { isServerRender } from '../../src/runtime/utils/ssr'
+import { useSupabaseUser } from '../../src/runtime/composables/useSupabaseComposables'
 
 // Test interfaces
 interface MockRoute {
@@ -20,6 +22,15 @@ type MockNavigateTo = (path: string) => void
 // Mock useTeamAuth composable
 vi.mock('../../src/runtime/composables/useTeamAuth', () => ({
   useTeamAuth: vi.fn(),
+}))
+
+// Server/client switch and the cookie-based Supabase user used during SSR
+vi.mock('../../src/runtime/utils/ssr', () => ({
+  isServerRender: vi.fn(() => false),
+}))
+
+vi.mock('../../src/runtime/composables/useSupabaseComposables', () => ({
+  useSupabaseUser: vi.fn(() => ({ value: null })),
 }))
 
 // Mock runtime config with configurable teamAuth
@@ -391,11 +402,41 @@ describe('Middleware Integration Tests', () => {
       consoleErrorSpy.mockRestore()
     })
 
-    // Skipping this test as import.meta.server is hard to mock in Vitest
-    // The SSR skip functionality works in production but is difficult to test
-    it.skip('should handle server-side rendering gracefully', async () => {
-      const _result = await authGlobal(mockRoute)
-      expect(_result).toBeUndefined()
+    // Server-side rendering: the team-auth state is never initialised on the
+    // server, so isLoading stays true. The middleware must not wait for it and
+    // must decide from the cookie-based Supabase user instead.
+    // More SSR cases in ssr.test.ts.
+    it('should handle server-side rendering gracefully', async () => {
+      vi.mocked(isServerRender).mockReturnValue(true)
+      vi.mocked(useTeamAuth).mockReturnValue({
+        currentUser: { value: null },
+        currentTeam: { value: null },
+        currentRole: { value: null },
+        isLoading: { value: true },
+        isImpersonating: { value: false },
+        impersonationExpiresAt: { value: null },
+      })
+
+      try {
+        // Signed out: redirect to login straight away
+        vi.mocked(useSupabaseUser).mockReturnValue({ value: null } as any)
+        let start = performance.now()
+        await authGlobal(mockRoute)
+        expect(performance.now() - start).toBeLessThan(50)
+        expect(mockNavigateTo).toHaveBeenCalledWith('/signin?redirect=%2Fdashboard')
+
+        // Signed in: no redirect, no wait
+        vi.mocked(mockNavigateTo).mockClear()
+        vi.mocked(useSupabaseUser).mockReturnValue({ value: { id: 'user-123' } } as any)
+        start = performance.now()
+        const _result = await authGlobal(mockRoute)
+        expect(performance.now() - start).toBeLessThan(50)
+        expect(_result).toBeUndefined()
+        expect(mockNavigateTo).not.toHaveBeenCalled()
+      }
+      finally {
+        vi.mocked(isServerRender).mockReturnValue(false)
+      }
     })
 
     // Skipping this test as it takes too long and tests timeout behavior

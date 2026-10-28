@@ -1,4 +1,6 @@
 import { useTeamAuth } from '../composables/useTeamAuth'
+import { useSupabaseUser } from '../composables/useSupabaseComposables'
+import { isServerRender } from '../utils/ssr'
 import { navigateTo, defineNuxtRouteMiddleware, useRuntimeConfig } from '#imports'
 import type { RouteLocationNormalized } from 'vue-router'
 
@@ -7,6 +9,17 @@ import type { RouteLocationNormalized } from 'vue-router'
  * Redirects to login if user is not authenticated
  */
 export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
+  // Server: decide from the cookie-based Supabase user and never wait for
+  // `isLoading` (it only clears in the browser). The client runs this again
+  // on hydration.
+  if (isServerRender()) {
+    if (!useSupabaseUser().value) {
+      const loginPage = useRuntimeConfig().public.teamAuth?.loginPage || '/signin'
+      return navigateTo(`${loginPage}?redirect=${encodeURIComponent(to.fullPath)}`)
+    }
+    return
+  }
+
   const { currentUser, isLoading } = useTeamAuth()
 
   // More efficient auth loading wait with early exit

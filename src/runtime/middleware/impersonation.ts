@@ -1,4 +1,6 @@
 import { useTeamAuth } from '../composables/useTeamAuth'
+import { useSupabaseUser } from '../composables/useSupabaseComposables'
+import { isServerRender } from '../utils/ssr'
 import { navigateTo, defineNuxtRouteMiddleware } from '#imports'
 import type { RouteLocationNormalized } from 'vue-router'
 
@@ -7,6 +9,11 @@ import type { RouteLocationNormalized } from 'vue-router'
  * Blocks certain routes during impersonation and validates impersonation permissions
  */
 export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
+  // Client-only: impersonation and role state only exist in the browser, and
+  // `isLoading` never clears on the server. The client runs this again on
+  // hydration.
+  if (isServerRender()) return
+
   const { currentUser, currentRole, isImpersonating, isLoading } = useTeamAuth()
 
   // Wait for auth state to load
@@ -72,6 +79,16 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => 
  * Middleware specifically for impersonation start routes
  */
 export const requireSuperAdminForImpersonation = defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
+  // Server: only the authentication check can be made (from the cookie-based
+  // Supabase user); the role check is left to the client, which runs this
+  // again on hydration.
+  if (isServerRender()) {
+    if (!useSupabaseUser().value) {
+      return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
+    }
+    return
+  }
+
   const { currentUser, currentRole, isLoading } = useTeamAuth()
 
   // Wait for auth state to load
@@ -99,6 +116,9 @@ export const requireSuperAdminForImpersonation = defineNuxtRouteMiddleware(async
  * Middleware to block access during impersonation
  */
 export const blockDuringImpersonation = defineNuxtRouteMiddleware(async (_to: RouteLocationNormalized) => {
+  // Client-only, see the default export above.
+  if (isServerRender()) return
+
   const { isImpersonating, isLoading } = useTeamAuth()
 
   // Wait for auth state to load
@@ -133,6 +153,9 @@ export function createImpersonationRestriction(options: {
   checkSuperAdmin?: boolean
 } = {}) {
   return defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
+    // Client-only, see the default export above.
+    if (isServerRender()) return
+
     const { currentUser, currentRole, isImpersonating, isLoading } = useTeamAuth()
 
     // Wait for auth state to load

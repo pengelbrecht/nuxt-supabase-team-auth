@@ -1,4 +1,5 @@
 import { useTeamAuth } from '../composables/useTeamAuth'
+import { isServerRender } from '../utils/ssr'
 import { navigateTo, defineNuxtRouteMiddleware, useRuntimeConfig } from '#imports'
 import type { RouteLocationNormalized } from 'vue-router'
 
@@ -7,6 +8,11 @@ import type { RouteLocationNormalized } from 'vue-router'
  * Useful for login/signup pages that authenticated users shouldn't see
  */
 export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
+  // Client-only: the team-auth user is only known in the browser (on the
+  // server `currentUser` is always null and `isLoading` never clears), and the
+  // redirect check below uses `window`. The client runs this again on hydration.
+  if (isServerRender()) return
+
   const { currentUser, currentTeam, isLoading } = useTeamAuth()
 
   // More efficient auth loading wait with early exit
@@ -78,6 +84,9 @@ export function createRedirectAuthenticated(
   condition?: (user: unknown, team: unknown, route: RouteLocationNormalized) => boolean,
 ) {
   return defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
+    // Client-only, see the default export above.
+    if (isServerRender()) return
+
     const { currentUser, currentTeam, isLoading } = useTeamAuth()
 
     // More efficient auth loading wait with early exit

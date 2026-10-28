@@ -10,6 +10,7 @@ interface MockRoute {
   query?: Record<string, string>
   params?: Record<string, string>
   search?: string
+  readonly fullPath: string
 }
 
 type MockNavigateTo = (path: string) => void
@@ -49,12 +50,16 @@ describe('Auth Middleware Configuration Tests', () => {
     const { navigateTo: importsNavigateTo } = await vi.importMock('#imports')
     mockNavigateTo = importsNavigateTo
 
-    // Default mock route
+    // Default mock route. The middleware builds the login redirect from
+    // `to.fullPath`, so derive it from path + search like vue-router does.
     mockRoute = {
       path: '/some-random-route',
       query: {},
       params: {},
       search: '',
+      get fullPath() {
+        return this.path + (this.search || '')
+      },
     }
 
     // Default auth state - unauthenticated

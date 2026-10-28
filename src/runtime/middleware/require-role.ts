@@ -1,4 +1,6 @@
 import { useTeamAuth } from '../composables/useTeamAuth'
+import { useSupabaseUser } from '../composables/useSupabaseComposables'
+import { isServerRender } from '../utils/ssr'
 import { navigateTo, defineNuxtRouteMiddleware, useRuntimeConfig } from '#imports'
 import type { RouteLocationNormalized } from 'vue-router'
 
@@ -31,6 +33,18 @@ export function createRequireRoleMiddleware(
   } = {},
 ) {
   return defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
+    // Server: only the authentication check can be made (from the cookie-based
+    // Supabase user); role state only exists in the browser, so the role check
+    // is left to the client, which runs this again on hydration. Never wait for
+    // `isLoading` on the server (it only clears in the browser).
+    if (isServerRender()) {
+      if (!useSupabaseUser().value) {
+        const loginPage = useRuntimeConfig().public.teamAuth?.loginPage || '/signin'
+        return navigateTo(`${loginPage}?redirect=${encodeURIComponent(to.fullPath)}`)
+      }
+      return
+    }
+
     const { currentUser, currentRole, isLoading } = useTeamAuth()
 
     // More efficient auth loading wait with early exit

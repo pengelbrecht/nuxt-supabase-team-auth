@@ -379,15 +379,22 @@ if (error === 'insufficient_permissions') {
 
 ### Authentication State
 
-- Middleware waits for auth state to load before making decisions
+- On the client, middleware waits for auth state to load before making decisions
 - Handles loading states gracefully
-- Supports server-side rendering
+- Supports server-side rendering (see below)
+
+### Server-Side Rendering
+
+The team-auth state (`currentUser`, `currentTeam`, `currentRole`, `isLoading`) is only initialised in the browser, so on the server `isLoading` stays `true` for the whole request. The middleware therefore never waits for it during SSR:
+
+- `auth.global`, `require-auth`, `require-team`, `require-role` and `requireSuperAdminForImpersonation` check authentication on the server from the cookie-based Supabase user (`useSupabaseUser()`). A signed-out user on a protected route gets the login redirect from the server; a signed-in user is let through.
+- Team, role and impersonation checks, and `redirect-authenticated`, run on the client only. Nuxt runs route middleware again on hydration, where the full state is available.
 
 ## Performance
 
 ### Optimization Features
 
-- Global middleware skipped on server-side for performance
+- No waiting for auth state on the server; public routes return before any wait on the client
 - Auth state loading has timeout protection
 - Middleware execution is efficient and cached
 - Minimal API calls during route changes
