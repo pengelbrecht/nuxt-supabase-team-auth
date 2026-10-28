@@ -110,12 +110,9 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
     }
 
     // Configure runtime config before installing @nuxtjs/supabase
-    nuxt.options.runtimeConfig = defu(nuxt.options.runtimeConfig, {
-      supabaseUrl,
-      supabaseKey,
-      supabaseServiceKey: serviceKey,
-      public: {},
-    }) as typeof nuxt.options.runtimeConfig
+    nuxt.options.runtimeConfig.supabaseUrl ??= supabaseUrl
+    nuxt.options.runtimeConfig.supabaseKey ??= supabaseKey
+    nuxt.options.runtimeConfig.supabaseServiceKey ??= serviceKey
 
     nuxt.options.runtimeConfig.public = defu(nuxt.options.runtimeConfig.public || {}, {
       supabaseUrl,

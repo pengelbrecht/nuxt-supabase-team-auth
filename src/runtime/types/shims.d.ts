@@ -1,3 +1,4 @@
+/// <reference types="nuxt/app" />
 // Type shims for Nuxt auto-imports
 // These modules are provided by Nuxt at runtime
 
