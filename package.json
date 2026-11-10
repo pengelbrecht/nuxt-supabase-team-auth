@@ -19,6 +19,8 @@
     "dist",
     "src/runtime",
     "supabase",
+    "!supabase/.temp",
+    "!supabase/.branches",
     "README.md"
   ],
   "scripts": {
@@ -26,7 +28,7 @@
     "dev": "nuxi dev playground",
     "dev:build": "nuxt-module-build build --stub && nuxi dev playground",
     "dev:prepare": "nuxt-module-build build --stub && nuxi prepare playground",
-    "release": "pnpm run lint && pnpm run test && pnpm run prepack && changelogen --release && pnpm publish && git push --follow-tags",
+    "release": "pnpm run lint && pnpm run test && pnpm run prepack && changelogen --release && git push --follow-tags",
     "lint": "eslint . --ignore-pattern 'test-projects/**' --ignore-pattern '.deepsec/**' --ignore-pattern '.pnpm-store/**'",
     "lint:fix": "eslint . --fix --ignore-pattern 'test-projects/**' --ignore-pattern '.deepsec/**' --ignore-pattern '.pnpm-store/**'",
     "lint:md": "pnpm dlx markdownlint-cli README.md",
@@ -74,7 +76,6 @@
     "valibot": "^1.1.0"
   },
   "peerDependencies": {
-    "@nuxt/icon": "^1.0.0",
     "@nuxt/ui": "^4.0.0"
   },
   "devDependencies": {

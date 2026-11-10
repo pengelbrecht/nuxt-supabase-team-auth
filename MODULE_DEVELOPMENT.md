@@ -370,14 +370,11 @@ When GitHub Actions are failing (e.g., lockfile issues), use manual release:
 
 3. **Version Bump and Publish**:
    ```bash
-   # Bump version (creates git tag)
-   npm version patch  # or minor/major
-   
-   # Publish to npm
-   npm publish
-   
-   # Push changes and tags
-   git push --follow-tags
+   # Lint, test, bump version + changelog, tag, and push
+   pnpm release
+
+   # Pushing the v* tag runs .github/workflows/release.yml, which publishes to npm
+   # with trusted publishing (GitHub OIDC; no npm token) and creates the GitHub release.
    ```
 
 4. **Create GitHub Release**:

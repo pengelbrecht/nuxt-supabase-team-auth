@@ -5,6 +5,7 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
 
 env:
   NODE_VERSION: '22'
@@ -155,7 +156,9 @@ jobs:
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Manual only until the suite is revived: it starts a playground/ that no longer exists and
+    # expects the test project on :3001 (it runs on :3000), so it has never passed on main.
+    if: github.event_name == 'workflow_dispatch'
     services:
       postgres:
         image: postgres:15

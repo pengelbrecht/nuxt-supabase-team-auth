@@ -74,7 +74,8 @@
 - **NEVER publish without explicit user permission**
 - Always test changes in `./test-projects/minimal-nuxt-ui-app` first
 - Only publish after confirming everything works in the local test environment
-- Get explicit approval from user before running `pnpm publish`
+- Get explicit approval from user before running `pnpm release` / pushing a `v*` tag
+- Publishing happens in GitHub Actions (`release.yml`) via npm trusted publishing when a `v*` tag is pushed; `pnpm release` bumps, tags and pushes, it does not publish locally
 - This prevents breaking consumer applications with untested changes
 
 ## Database Schema (Stable)
