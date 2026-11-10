@@ -129,7 +129,9 @@ jobs:
       - name: Pack package
         id: pack
         run: |
-          TARBALL=$(npm pack --silent)
+          # The package was built in the previous step; skip prepack so its build log
+          # does not end up in TARBALL (GITHUB_OUTPUT rejects the multi-line value).
+          TARBALL=$(npm pack --ignore-scripts --json | jq -r '.[0].filename')
           echo "tarball=${TARBALL}" >> $GITHUB_OUTPUT
           echo "Created package: ${TARBALL}"
 
@@ -229,6 +231,12 @@ jobs:
     needs: [validate, build, release]
     if: github.repository == 'pengelbrecht/nuxt-supabase-team-auth' && startsWith(github.ref, 'refs/tags/v')
     environment: npm-publish
+    # npm trusted publishing: npm exchanges this job's GitHub OIDC token for a short-lived
+    # publish credential (configured on npmjs.com for release.yml + the npm-publish
+    # environment), so no NPM_TOKEN secret exists. It also attaches provenance.
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -236,7 +244,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          # Trusted publishing needs npm >= 11.5.1, which ships with Node 24.
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Setup pnpm
@@ -251,9 +260,7 @@ jobs:
         run: pnpm run build
 
       - name: Publish to NPM
-        run: pnpm publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --ignore-scripts
 
   notify:
     name: Post-Release Notification
