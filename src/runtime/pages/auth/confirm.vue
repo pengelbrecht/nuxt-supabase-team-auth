@@ -76,6 +76,88 @@
           </UButton>
         </div>
 
+        <!-- Expired / already-used link -->
+        <div
+          v-else-if="status === 'expired'"
+          class="space-y-4"
+        >
+          <div class="text-center">
+            <UIcon
+              name="i-lucide-clock-alert"
+              class="w-8 h-8 mx-auto text-amber-500"
+            />
+          </div>
+
+          <template v-if="confirmationType === 'invite' && teamId">
+            <template v-if="!resendSent">
+              <p class="text-gray-600 dark:text-gray-400 text-center">
+                This invitation link has expired or has already been used. Enter your email address and we'll send you a new link.
+              </p>
+              <UFormField
+                label="Email"
+                :error="resendError || undefined"
+              >
+                <UInput
+                  v-model="resendEmail"
+                  type="email"
+                  autocomplete="email"
+                  placeholder="you@example.com"
+                  class="w-full"
+                  :disabled="resendLoading"
+                  @keyup.enter="resendInvite"
+                />
+              </UFormField>
+              <UButton
+                size="lg"
+                class="w-full justify-center"
+                :loading="resendLoading"
+                :disabled="!resendEmail"
+                @click="resendInvite"
+              >
+                Send me a new invitation link
+              </UButton>
+            </template>
+            <p
+              v-else
+              class="text-gray-600 dark:text-gray-400 text-center"
+            >
+              If there's a pending invitation for {{ resendEmail }}, a new link is on its way. Check your inbox — the new link is valid for a limited time, so open it soon.
+            </p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 text-center">
+              Already set up your account? Sign in instead.
+            </p>
+          </template>
+
+          <template v-else-if="confirmationType === 'recovery'">
+            <p class="text-gray-600 dark:text-gray-400 text-center">
+              This password reset link has expired or has already been used. Request a new one below.
+            </p>
+            <UButton
+              size="lg"
+              class="w-full justify-center"
+              @click="goToForgotPassword"
+            >
+              Request a new reset link
+            </UButton>
+          </template>
+
+          <p
+            v-else
+            class="text-gray-600 dark:text-gray-400 text-center"
+          >
+            This link has expired or has already been used.
+          </p>
+
+          <UButton
+            variant="outline"
+            size="lg"
+            class="w-full justify-center"
+            @click="goToSignin"
+          >
+            Go to Sign In
+          </UButton>
+        </div>
+
         <!-- Error State -->
         <div
           v-else-if="status === 'error'"
@@ -113,6 +195,7 @@
 import { ref, onMounted } from 'vue'
 import { $fetch } from 'ofetch'
 import { useSupabaseClient, useSupabaseSession } from '../../composables/useSupabaseComposables'
+import { useTeamAuthConfig } from '../../composables/useTeamAuthConfig'
 import PasswordSetupForm from '../../components/PasswordSetupForm.vue'
 import ResetPasswordForm from '../../components/ResetPasswordForm.vue'
 import { useRoute, useRouter, definePageMeta, defineOptions } from '#imports'
@@ -121,9 +204,10 @@ const route = useRoute()
 const router = useRouter()
 const supabase = useSupabaseClient()
 const session = useSupabaseSession()
+const { loginPage } = useTeamAuthConfig()
 
 // State management
-const status = ref<'processing' | 'password-setup' | 'success' | 'error'>('processing')
+const status = ref<'processing' | 'password-setup' | 'success' | 'error' | 'expired'>('processing')
 const confirmationType = ref<'invite' | 'recovery' | 'email' | null>(null)
 const errorMessage = ref('')
 const teamName = ref('')
@@ -132,6 +216,10 @@ const userEmail = ref('')
 const inviteRole = ref('member')
 const currentSessionRef = ref(null as any)
 const sessionTokens = ref<{ access_token: string, refresh_token: string } | undefined>()
+const resendEmail = ref('')
+const resendLoading = ref(false)
+const resendSent = ref(false)
+const resendError = ref('')
 
 // Process the confirmation on mount
 onMounted(async () => {
@@ -140,11 +228,26 @@ onMounted(async () => {
     await supabase.auth.getSession()
 
     // Get URL parameters for non-hash confirmations
-    const { token_hash, type, error, error_description } = route.query
+    const { token_hash, type } = route.query
 
-    // Check for errors first
-    if (error) {
-      throw new Error(error_description as string || error as string || 'Confirmation failed')
+    // Supabase reports /verify failures (expired, already used, ...) as error params in the URL
+    // hash for the implicit flow, or in the query for PKCE. Check both before anything else.
+    const hashParams = new URLSearchParams(window.location.hash.substring(1))
+    const error = (route.query.error as string) || hashParams.get('error')
+    const errorCode = (route.query.error_code as string) || hashParams.get('error_code')
+    const errorDescription = (route.query.error_description as string) || hashParams.get('error_description')
+
+    if (error || errorCode) {
+      // type/team_id come from our own redirect_to, so they survive the error redirect
+      if (type === 'invite' || type === 'recovery') confirmationType.value = type
+      teamId.value = (route.query.team_id as string) || ''
+      window.history.replaceState(null, '', window.location.pathname + window.location.search)
+
+      if (errorCode === 'otp_expired' || /expired/i.test(errorDescription || '')) {
+        status.value = 'expired'
+        return
+      }
+      throw new Error(errorDescription || error || 'Confirmation failed')
     }
 
     // Handle hash-based invitations with streamlined approach
@@ -437,6 +540,8 @@ const getTitle = () => {
       return confirmationType.value === 'invite' ? 'Welcome!' : 'Password Reset Complete'
     case 'error':
       return 'Confirmation Failed'
+    case 'expired':
+      return confirmationType.value === 'invite' ? 'Invitation Link Expired' : 'Link Expired'
     default:
       return 'Confirmation'
   }
@@ -479,7 +584,35 @@ const goToDashboard = () => {
 }
 
 const goToSignin = () => {
-  router.push('/signin')
+  router.push(loginPage.value)
+}
+
+const goToForgotPassword = () => {
+  router.push('/auth/forgot-password')
+}
+
+const resendInvite = async () => {
+  resendError.value = ''
+  const email = resendEmail.value.trim()
+  if (!email.includes('@')) {
+    resendError.value = 'Please enter a valid email address'
+    return
+  }
+  resendLoading.value = true
+  try {
+    await $fetch('/api/auth/resend-invite', {
+      method: 'POST',
+      body: { email, team_id: teamId.value },
+    })
+    resendSent.value = true
+  }
+  catch (error: any) {
+    console.error('Resend invite failed:', error)
+    resendError.value = 'Something went wrong. Please try again, or ask your team admin to resend the invitation.'
+  }
+  finally {
+    resendLoading.value = false
+  }
 }
 
 // Set page meta
