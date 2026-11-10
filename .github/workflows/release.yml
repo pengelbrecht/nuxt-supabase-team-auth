@@ -75,6 +75,25 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      # Same as CI: the DB tests need the local Supabase and its URL and keys.
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.117.0
+
+      - name: Start Supabase
+        run: supabase start -x studio,imgproxy,vector,logflare,postgres-meta,supavisor
+
+      - name: Export Supabase env
+        run: |
+          eval "$(supabase status -o env)"
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "DATABASE_URL=$DB_URL"
+          } >> "$GITHUB_ENV"
+
       - name: Test
         run: pnpm run test
 
