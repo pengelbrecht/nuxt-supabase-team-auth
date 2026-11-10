@@ -439,6 +439,18 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
   // Deduplication for concurrent auth updates
   const lastProcessedEvent = ref<string>('')
 
+  // After a password sign-in, wait for the auth listener's SIGNED_IN handler to load the
+  // user, team and role. Without a registered listener (server side, unit tests) nothing
+  // would ever resolve the wait, so load the state directly instead of hanging.
+  const waitForSignedInState = async (user: SupabaseUser | null | undefined) => {
+    if (!authListenerRegistered) {
+      pendingAuthSync = null
+      if (user) await updateCompleteAuthState(user)
+      return
+    }
+    await pendingAuthSync?.promise
+  }
+
   // Initialize auth state once
   const initializeAuth = async () => {
     console.log('[useTeamAuth] 🚀 Starting auth initialization...')
@@ -495,6 +507,13 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           const eventKey = `${event}:${session?.user?.id || 'none'}:${session?.user?.email || 'none'}`
           if (lastProcessedEvent.value === eventKey) {
             console.log('[useTeamAuth] Skipping duplicate event:', eventKey)
+            // Signing in again as the user whose SIGNED_IN was already processed repeats the
+            // same key. The state is already loaded, so release the waiting signIn instead of
+            // leaving it (and the loading spinner) hanging.
+            if (pendingAuthSync && event === 'SIGNED_IN') {
+              pendingAuthSync.resolve()
+              pendingAuthSync = null
+            }
             return
           }
           lastProcessedEvent.value = eventKey
@@ -599,7 +618,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         pendingAuthSync = createDeferred()
 
         // Sign in the user after successful creation
-        const { error: signInError } = await getClient().auth.signInWithPassword({
+        const { data: signInData, error: signInError } = await getClient().auth.signInWithPassword({
           email,
           password,
         })
@@ -610,8 +629,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           throw { code: 'SIGNIN_AFTER_SIGNUP_FAILED', message: signInError.message }
         }
 
-        // Wait for auth listener to update state
-        await pendingAuthSync.promise
+        await waitForSignedInState(signInData?.user)
       }
       catch (error: unknown) {
         console.error('Sign up with team failed:', getErrorForLogging(error))
@@ -631,7 +649,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         // Create deferred for auth state sync
         pendingAuthSync = createDeferred()
 
-        const { data: _data, error } = await getClient().auth.signInWithPassword({
+        const { data, error } = await getClient().auth.signInWithPassword({
           email,
           password,
         })
@@ -642,8 +660,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
           throw { code: 'SIGNIN_FAILED', message: error.message }
         }
 
-        // Wait for auth listener to update state
-        await pendingAuthSync.promise
+        await waitForSignedInState(data?.user)
       }
       catch (error: unknown) {
         console.error('Sign in failed:', error)

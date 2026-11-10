@@ -116,7 +116,7 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.117.0
 
       - name: Start Supabase
         run: pnpm run db:start
@@ -197,7 +197,7 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.117.0
 
       - name: Start Supabase
         run: pnpm run db:start

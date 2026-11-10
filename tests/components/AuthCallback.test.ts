@@ -266,9 +266,10 @@ describe('AuthCallback', () => {
       await nextTick()
       await nextTick()
 
+      // Sign-in skips the success card and goes straight to the configured redirect
       expect(mockSupabaseClient.auth.getSession).toHaveBeenCalled()
-      expect(wrapper.text()).toContain('Welcome Back!')
-      expect(wrapper.text()).toContain('Successfully signed in with Google!')
+      expect(mockRouter.push).toHaveBeenCalledWith('/dashboard')
+      expect(wrapper.text()).not.toContain('Authentication Error')
     })
 
     it('should show correct processing message for signin', () => {
@@ -351,36 +352,27 @@ describe('AuthCallback', () => {
       await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
 
-      // With no mode, it defaults to signin and succeeds if session exists
-      expect(wrapper.text()).toContain('Welcome Back!')
-      expect(wrapper.text()).toContain('Successfully signed in with Google!')
+      // With no mode, it defaults to signin and redirects if a session exists
+      expect(mockRouter.push).toHaveBeenCalledWith('/dashboard')
+      expect(wrapper.text()).not.toContain('Authentication Error')
     })
   })
 
   describe('Navigation', () => {
-    it('should navigate to dashboard on success', async () => {
-      mockRoute.query = { mode: 'signin' }
-
-      mockSupabaseClient.auth.getSession.mockResolvedValue({
-        data: { session: mockSession },
-        error: null,
-      })
+    it('should navigate to the configured dashboard from the error card', async () => {
+      // Sign-in success redirects on its own (see 'should successfully process Google signin'),
+      // so the button path is exercised through the error card's "Continue to Dashboard".
+      mockRoute.query = { error: 'access_denied' }
 
       const wrapper = mount(AuthCallback, globalMountOptions)
 
-      // Wait for OAuth processing to complete - need longer timeout for polling
-      await new Promise(resolve => setTimeout(resolve, 150))
+      await new Promise(resolve => setTimeout(resolve, 0))
       await nextTick()
       await nextTick()
 
-      // Should show success state with button
-      expect(wrapper.text()).toContain('Welcome Back!')
-
-      // Click "Go to Dashboard" button
-      const button = wrapper.find('button')
-      expect(button.exists()).toBe(true)
-      expect(button.text()).toContain('Go to Dashboard')
-      await button.trigger('click')
+      const button = wrapper.findAll('button').find(b => b.text().includes('Continue to Dashboard'))
+      expect(button).toBeDefined()
+      await button!.trigger('click')
 
       expect(mockRouter.push).toHaveBeenCalledWith('/dashboard')
     })
@@ -431,14 +423,14 @@ describe('AuthCallback', () => {
       })
 
       const wrapper = mount(AuthCallback, globalMountOptions)
+      expect(wrapper.text()).toContain('Signing You In...')
 
       // Wait for OAuth processing to complete - need longer timeout for polling
       await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
       await nextTick()
 
-      expect(wrapper.text()).toContain('Welcome Back!')
-      expect(wrapper.text()).toContain('Successfully signed in with Google!')
+      expect(mockRouter.push).toHaveBeenCalledWith('/dashboard')
     })
   })
 
