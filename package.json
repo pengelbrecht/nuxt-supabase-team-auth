@@ -64,12 +64,6 @@
   "lint-staged": {
     "*.{ts,vue,js,mjs}": "eslint --fix --ignore-pattern 'test-projects/**'"
   },
-  "pnpm": {
-    "overrides": {
-      "cookie": "0.7.2",
-      "esbuild": ">=0.25.0"
-    }
-  },
   "dependencies": {
     "@nuxt/kit": "^4.6.3",
     "@nuxtjs/supabase": "^2.0.7",

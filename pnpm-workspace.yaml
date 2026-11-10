@@ -1,0 +1,12 @@
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true
+  msw: true
+  sharp: true
+  unrs-resolver: true
+  vue-demi: true
+
+# Moved from package.json "pnpm.overrides", which current pnpm (v12) ignores — it then silently dropped them from the lockfile.
+overrides:
+  cookie: '0.7.2'
+  esbuild: '>=0.25.0'

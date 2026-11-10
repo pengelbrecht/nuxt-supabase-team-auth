@@ -138,21 +138,21 @@ describe('Native Invitations Integration Tests', () => {
       expect(inviteData.user.user_metadata.role).toBe('member')
     })
 
-    it('should prevent duplicate invitations for same email', async () => {
+    it('should re-send, not duplicate, when the same email is invited again', async () => {
       const testEmail = `test-invite-duplicate-${Date.now()}@native-invitations-test.com`
 
-      // Create first invitation
-      await serviceClient.auth.admin.inviteUserByEmail(testEmail, {
+      const { data: first } = await serviceClient.auth.admin.inviteUserByEmail(testEmail, {
         data: { team_id: testTeam.id, role: 'member' },
       })
 
-      // Attempt to create second invitation
-      const { error } = await serviceClient.auth.admin.inviteUserByEmail(testEmail, {
+      // GoTrue re-sends the invite to a user who hasn't accepted yet (the invite-member edge
+      // function relies on this to resend expired links) and keeps the same user.
+      const { data: second, error } = await serviceClient.auth.admin.inviteUserByEmail(testEmail, {
         data: { team_id: testTeam.id, role: 'member' },
       })
 
-      expect(error).toBeTruthy()
-      expect(error.message).toContain('Database error saving new user')
+      expect(error).toBeNull()
+      expect(second.user?.id).toBe(first.user?.id)
     })
   })
 
