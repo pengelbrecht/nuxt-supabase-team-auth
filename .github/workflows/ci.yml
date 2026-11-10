@@ -106,9 +106,7 @@ jobs:
 
       # Skip containers the tests don't use: fewer image pulls (public.ecr.aws rate-limits them).
       - name: Start Supabase
-        run: |
-          sudo ss -ltnp | grep -E ':5432[0-9]' || echo "54320-54329 free"
-          supabase start -x studio,imgproxy,vector,logflare,postgres-meta,supavisor || { sudo ss -ltnp | grep -E ':5432[0-9]'; docker ps -a; exit 1; }
+        run: supabase start -x studio,imgproxy,vector,logflare,postgres-meta,supavisor
 
       # The DB tests talk to the local Supabase, so hand them its URL and keys.
       - name: Export Supabase env
