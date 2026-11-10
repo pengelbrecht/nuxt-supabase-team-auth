@@ -6,7 +6,9 @@
 [![Nuxt][nuxt-src]][nuxt-href]
 
 > **📚 Documentation Notice**  
-> This README is for **developers using this module in their applications**. If you're looking to contribute to the module itself, please see:
+> This README is for **developers using this module in their applications**. If you're looking to contribute to the
+> module itself, please see:
+>
 > - [MODULE_DEVELOPMENT.md](./MODULE_DEVELOPMENT.md) - Guide for module contributors
 > - [CONTRIBUTING.md](./docs/CONTRIBUTING.md) - Contribution guidelines and commit conventions
 
@@ -56,7 +58,8 @@ pnpm add nuxt-supabase-team-auth
 
 #### Required: Cookie Package Override
 
-Due to a [known dependency conflict](https://github.com/supabase/ssr/issues/62) between Nuxt and Supabase, you need to add a package override to your `package.json`:
+Due to a [known dependency conflict](https://github.com/supabase/ssr/issues/62) between Nuxt and Supabase, you need to
+add a package override to your `package.json`:
 
 ```json
 {
@@ -68,7 +71,8 @@ Due to a [known dependency conflict](https://github.com/supabase/ssr/issues/62) 
 }
 ```
 
-**Why is this needed?** Nuxt/Nitro uses `cookie@1.x` while `@supabase/ssr` expects `cookie@0.7.x`. This override ensures compatibility until Supabase resolves the upstream dependency conflict.
+**Why is this needed?** Nuxt/Nitro uses `cookie@1.x` while `@supabase/ssr` expects `cookie@0.7.x`. This override
+ensures compatibility until Supabase resolves the upstream dependency conflict.
 
 ### 2. Configure Nuxt
 
@@ -114,7 +118,8 @@ export default defineNuxtConfig({
 
 #### Route Protection Modes
 
-**Public by Default (Recommended)**
+##### Public by Default (Recommended)
+
 ```typescript
 teamAuth: {
   defaultProtection: 'public',       // Most routes are public
@@ -122,7 +127,8 @@ teamAuth: {
 }
 ```
 
-**Protected by Default**
+##### Protected by Default
+
 ```typescript
 teamAuth: {
   defaultProtection: 'protected',    // All routes require auth
@@ -131,6 +137,7 @@ teamAuth: {
 ```
 
 **Important Notes:**
+
 - The module automatically installs and configures `@nuxtjs/supabase` using the `installModule()` pattern
 - Route protection is configured in `teamAuth.defaultProtection` - no need to configure `@nuxtjs/supabase` separately
 - Environment variables are automatically detected from your `.env` file
@@ -164,7 +171,7 @@ export default defineNuxtConfig({
 | `requireLowercase` | `boolean` | `false` | Require at least one lowercase letter |
 | `requireNumbers` | `boolean` | `false` | Require at least one number |
 | `requireSpecialChars` | `boolean` | `false` | Require at least one special character |
-| `specialChars` | `string` | `!@#$%^&*()_+-=[]{}|;:,.<>?` | Define allowed special characters |
+| `specialChars` | `string` | `!@#$%^&*()_+-=[]{}\|;:,.<>?` | Define allowed special characters |
 | `helpText` | `string` | Auto-generated | Custom help text to display |
 | `customValidator` | `function` | `undefined` | Custom validation function |
 
@@ -241,6 +248,7 @@ SUPABASE_SERVICE_KEY=your-service-key        # For server operations
 ```
 
 **Environment Variables:**
+
 - `SUPABASE_URL` - Supabase project URL (used by both client and server)
 - `SUPABASE_ANON_KEY` - Supabase anon key (used by both client and server)
 - `SUPABASE_SERVICE_KEY` - Server-side service role key
@@ -517,7 +525,7 @@ The module automatically provides several authentication pages that you can use 
 The module provides a complete password reset flow:
 
 1. **User clicks "Forgot Password"** on your sign-in page
-2. **Module navigates to** `/auth/forgot-password` 
+2. **Module navigates to** `/auth/forgot-password`
 3. **User enters email** using `<ForgotPasswordForm />`
 4. **User receives email** with reset link
 5. **Reset link goes to** `/auth/confirm?type=recovery&...`
@@ -543,13 +551,14 @@ const handleForgotPassword = () => {
 </script>
 ```
 
-The `AuthSignIn` component includes a "Forgot password?" button by default that emits the `@forgot-password` event when clicked.
+The `AuthSignIn` component includes a "Forgot password?" button by default that emits the `@forgot-password` event
+when clicked.
 
 ### Team Invitation Flow
 
 1. **Admin invites user** via `<TeamMembersDialog />`
 2. **User receives email** with invitation link
-3. **Link goes to** `/accept-invite?token=...` 
+3. **Link goes to** `/accept-invite?token=...`
 4. **User sets password** using `<PasswordSetupForm />`
 5. **User joins team** automatically
 
@@ -783,7 +792,8 @@ const endImpersonation = async () => {
 
 ### ImpersonationBanner Component
 
-The `ImpersonationBanner` component provides a visual indicator when a super admin is impersonating another user. It automatically handles content displacement to ensure the banner remains visible without overlapping page content.
+The `ImpersonationBanner` component provides a visual indicator when a super admin is impersonating another user. It
+automatically handles content displacement to ensure the banner remains visible without overlapping page content.
 
 #### Features
 
@@ -883,6 +893,7 @@ The module depends on 7 Edge Functions for team management and authentication:
 ### Setup Commands
 
 **For Local Development:**
+
 ```bash
 # Start Supabase locally
 supabase start
@@ -892,6 +903,7 @@ supabase db reset
 ```
 
 **For Production/Cloud Deployment:**
+
 ```bash
 # Link to your Supabase project
 supabase link --project-ref your-project-ref
@@ -909,13 +921,16 @@ supabase functions deploy invite-member
 # ... (deploy all 7 functions)
 ```
 
-**⚠️ Important:** Both database migrations AND Edge Functions must be deployed for the module to work correctly. Missing Edge Functions will result in 404 errors when using team management features.
+**⚠️ Important:** Both database migrations AND Edge Functions must be deployed for the module to work correctly.
+Missing Edge Functions will result in 404 errors when using team management features.
 
 ## CLI Commands
 
-The module includes a CLI to simplify database setup and development tasks. After installing the module, the CLI is available in multiple ways:
+The module includes a CLI to simplify database setup and development tasks. After installing the module, the CLI is
+available in multiple ways:
 
 **For projects with the module installed:**
+
 ```bash
 # Via node_modules (direct)
 ./node_modules/.bin/team-auth init
@@ -933,6 +948,7 @@ npm exec team-auth init
 ```
 
 **For one-time usage or without local install:**
+
 ```bash
 # Via npx (downloads and runs)
 npx nuxt-supabase-team-auth init
@@ -953,6 +969,7 @@ npx nuxt-supabase-team-auth init --force
 ```
 
 **What it does:**
+
 - Copies all required database migrations to `supabase/migrations/`
 - Copies all Edge Functions to `supabase/functions/`
 - Detects conflicting tables and warns before proceeding
@@ -960,6 +977,7 @@ npx nuxt-supabase-team-auth init --force
 - Adds npm script shortcuts to your `package.json`
 
 **Prerequisites:**
+
 - Must be run from a Supabase project directory (with `supabase/config.toml`)
 - Run `supabase init` first if starting fresh
 
@@ -976,6 +994,7 @@ npx nuxt-supabase-team-auth migrate --dry-run
 ```
 
 **What it does:**
+
 - Compares your current module version with installed version
 - Copies only new migration files and Edge Functions
 - Updates version tracking to prevent duplicate applications
@@ -999,6 +1018,7 @@ npx nuxt-supabase-team-auth cleanup --team 12345678-1234-1234-1234-123456789abc
 ```
 
 **Safety features:**
+
 - Confirmation prompts for destructive operations
 - UUID validation for team IDs
 - Uses specialized Edge Functions to bypass RLS constraints
@@ -1021,6 +1041,7 @@ npx nuxt-supabase-team-auth db --users
 ### Usage Examples
 
 **Setting up a new project:**
+
 ```bash
 # 1. Create Supabase project
 supabase init
@@ -1036,6 +1057,7 @@ npx nuxt-supabase-team-auth db --status
 ```
 
 **Updating to a new module version:**
+
 ```bash
 # 1. Update the npm package
 pnpm update nuxt-supabase-team-auth
@@ -1049,6 +1071,7 @@ supabase functions deploy
 ```
 
 **Development workflow:**
+
 ```bash
 # Clean test data between tests
 npx nuxt-supabase-team-auth cleanup --test-data
@@ -1076,6 +1099,7 @@ After running the init command, you can add convenience scripts to your `package
 ```
 
 This allows team members to easily run commands:
+
 ```bash
 pnpm run setup     # Initialize team-auth
 pnpm run migrate   # Apply new migrations  
@@ -1236,6 +1260,7 @@ If you're updating from a previous version of this module (< v0.3.6), you need t
 #### Required Changes
 
 1. **Remove separate @nuxtjs/supabase configuration:**
+
 ```typescript
 // REMOVE: No longer needed - module handles this automatically
 supabase: {
@@ -1246,6 +1271,7 @@ supabase: {
 ```
 
 2. **Update teamAuth configuration:**
+
 ```typescript
 // BEFORE: Mixed configuration
 teamAuth: {
@@ -1268,6 +1294,7 @@ teamAuth: {
 ```
 
 3. **Environment variables remain the same:**
+
 ```bash
 # The module reads these standard env vars:
 SUPABASE_URL=...
@@ -1276,6 +1303,7 @@ SUPABASE_SERVICE_KEY=...
 ```
 
 4. **Add error handling to auth pages:**
+
 ```vue
 <!-- BEFORE: Only success handler -->
 <AuthSignIn @success="handleSignIn" />
@@ -1292,7 +1320,6 @@ const handleError = (error) => {
   toast.add({ title: 'Sign In Failed', description: error, color: 'red' })
 }
 </script>
-```
 ```
 
 #### Benefits of New Architecture
