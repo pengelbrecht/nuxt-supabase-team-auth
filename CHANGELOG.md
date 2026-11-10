@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.7.11
+
+[compare changes](https://github.com/pengelbrecht/nuxt-supabase-team-auth/compare/v0.7.10...v0.7.11)
+
+### 🤖 CI
+
+- **release:** Publish via npm trusted publishing; fix pack step; drop stale icon peer ([4eb2bee](https://github.com/pengelbrecht/nuxt-supabase-team-auth/commit/4eb2bee))
+
+### ❤️ Contributors
+
+- Peter Engelbrecht ([@pengelbrecht](http://github.com/pengelbrecht))
+
 ## v0.7.10
 
 [compare changes](https://github.com/pengelbrecht/nuxt-supabase-team-auth/compare/v0.7.9...v0.7.10)
