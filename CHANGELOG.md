@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.7.10
+
+[compare changes](https://github.com/pengelbrecht/nuxt-supabase-team-auth/compare/v0.7.9...v0.7.10)
+
+### 🚀 Enhancements
+
+- **confirm:** Explain expired links and let invitees request a new invite ([8d239c8](https://github.com/pengelbrecht/nuxt-supabase-team-auth/commit/8d239c8))
+
+### 🩹 Fixes
+
+- **invites:** Re-send on re-invite, page through all users, resend keeps role ([e0044b1](https://github.com/pengelbrecht/nuxt-supabase-team-auth/commit/e0044b1))
+- Stale callback tests, signIn hang without an auth listener, pin Supabase CLI in CI ([a70e6cc](https://github.com/pengelbrecht/nuxt-supabase-team-auth/commit/a70e6cc))
+
+### 🏡 Chore
+
+- Move pnpm overrides to pnpm-workspace.yaml ([9adb3e6](https://github.com/pengelbrecht/nuxt-supabase-team-auth/commit/9adb3e6))
+
+### ✅ Tests
+
+- Re-inviting a pending user re-sends instead of failing ([b993226](https://github.com/pengelbrecht/nuxt-supabase-team-auth/commit/b993226))
+
+### 🤖 CI
+
+- Run CI on the pnpm the repo uses; fix README markdown lint ([a70d481](https://github.com/pengelbrecht/nuxt-supabase-team-auth/commit/a70d481))
+- Run the DB tests against the local Supabase the job starts ([3d4e6d1](https://github.com/pengelbrecht/nuxt-supabase-team-auth/commit/3d4e6d1))
+- Diagnose Supabase port bind failure ([07d6809](https://github.com/pengelbrecht/nuxt-supabase-team-auth/commit/07d6809))
+- **release:** Start Supabase before the release tests ([f6d0229](https://github.com/pengelbrecht/nuxt-supabase-team-auth/commit/f6d0229))
+
+### ❤️ Contributors
+
+- Peter Engelbrecht ([@pengelbrecht](http://github.com/pengelbrecht))
+
 ## [0.7.9] - 2026-10-28
 
 ### 🐛 Bug Fixes
