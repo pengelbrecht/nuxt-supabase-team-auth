@@ -110,7 +110,12 @@ const router = useRouter()
 const status = ref<'processing' | 'success' | 'error'>('processing')
 const errorMessage = ref('')
 const teamName = ref('')
-const mode = ref<'signin' | 'signup' | 'invite-link' | 'unknown'>('unknown')
+// Known from the query string, so set it before the first render: the title and message
+// match the flow from the start instead of briefly reading "Signing You In...".
+const initialMode = route.query.mode
+const mode = ref<'signin' | 'signup' | 'invite-link'>(
+  initialMode === 'signup' || initialMode === 'invite-link' ? initialMode : 'signin',
+)
 
 // Get the team auth composable
 const { signUpWithTeam: _signUpWithTeam } = useTeamAuth()
@@ -125,22 +130,11 @@ const { redirectTo, loginPage } = useTeamAuthConfig()
 onMounted(async () => {
   try {
     // Extract query parameters
-    const { mode: queryMode, team_name, error, error_description } = route.query
+    const { team_name, error, error_description } = route.query
 
     // Check for OAuth errors first
     if (error) {
       throw new Error(error_description as string || error as string || 'OAuth authentication failed')
-    }
-
-    // Determine the flow mode
-    if (queryMode === 'signup') {
-      mode.value = 'signup'
-    }
-    else if (queryMode === 'invite-link') {
-      mode.value = 'invite-link'
-    }
-    else {
-      mode.value = 'signin'
     }
 
     console.log('OAuth callback - Mode:', mode.value, 'Team name:', team_name)
