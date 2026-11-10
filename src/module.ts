@@ -363,6 +363,11 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
         method: 'post',
         handler: resolver.resolve('./runtime/server/api/auth/sync-session.post'),
       })
+      nitroConfig.handlers.push({
+        route: '/api/auth/resend-invite',
+        method: 'post',
+        handler: resolver.resolve('./runtime/server/api/auth/resend-invite.post'),
+      })
     })
 
     // Add pages

@@ -10,9 +10,11 @@
 
 <script setup lang="ts">
 import ForgotPasswordForm from '../../components/ForgotPasswordForm.vue'
+import { useTeamAuthConfig } from '../../composables/useTeamAuthConfig'
 import { useRouter, definePageMeta, defineOptions } from '#imports'
 
 const router = useRouter()
+const { loginPage } = useTeamAuthConfig()
 
 // Handle successful password reset request
 const handleSuccess = (email: string) => {
@@ -26,7 +28,7 @@ const handleError = (error: string) => {
 
 // Navigate back to sign in
 const goToSignin = () => {
-  router.push('/signin')
+  router.push(loginPage.value)
 }
 
 // Set page meta

@@ -952,19 +952,15 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
         const pendingInvitations = await teamAuth.getPendingInvitations()
 
         // Find the specific invitation by user ID
-        const invitation = pendingInvitations.find((inv: { id: string, email: string, user_metadata?: Record<string, unknown> }) => inv.id === userId)
+        const invitation = pendingInvitations.find((inv: { id: string, email: string, role?: string }) => inv.id === userId)
 
         if (!invitation) {
           throw { code: 'INVITE_NOT_FOUND', message: 'Invitation not found' }
         }
 
-        // Revoke the old invitation
-        await teamAuth.revokeInvite(userId)
-
-        // Create a new invitation using the invite member method
-        // Extract role from user metadata or default to 'member'
-        const role = invitation.user_metadata?.team_role || 'member'
-        await teamAuth.inviteMember(invitation.email, role)
+        // invite-member re-sends to a pending invitee of the same team (fresh link, same user),
+        // so no revoke first. get-pending-invitations exposes the invited role as `role`.
+        await teamAuth.inviteMember(invitation.email, invitation.role || 'member')
       }
       catch (error: unknown) {
         console.error('Resend invite failed:', error)

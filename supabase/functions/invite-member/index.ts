@@ -1,6 +1,21 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+// listUsers() returns one page (50 by default), so a plain .find() misses anyone beyond it.
+// deno-lint-ignore no-explicit-any
+async function findUserByEmail(supabaseAdmin: any, email: string) {
+  const target = email.trim().toLowerCase()
+  const perPage = 1000
+  for (let page = 1; ; page++) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage })
+    if (error) throw error
+    const users = data?.users ?? []
+    const match = users.find((u: { email?: string }) => (u.email || '').toLowerCase() === target)
+    if (match) return match
+    if (users.length < perPage) return null
+  }
+}
+
 interface InviteMemberRequest {
   email: string
   team_id?: string
@@ -112,9 +127,12 @@ serve(async (req) => {
       )
     }
 
+    const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:3000'
+    // Use auth/confirm which processes email tokens and shows password setup
+    const redirectUrl = `${siteUrl}/auth/confirm?type=invite&team_id=${finalTeamId}`
+
     // Check if user is already a member or has a pending invitation
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
-    const existingUser = existingUsers?.users?.find(u => u.email === email)
+    const existingUser = await findUserByEmail(supabaseAdmin, email)
 
     if (existingUser) {
       // Check if user is already a team member
@@ -135,13 +153,56 @@ serve(async (req) => {
         )
       }
 
-      // Check if user has unconfirmed invitation (email_confirmed_at is null)
-      // Fixed: existingUser is the user object directly, not wrapped in .user
+      // Unconfirmed user = pending invitation. Invite links expire, and expired invites drop out
+      // of the pending list, so re-inviting the same person to the same team must re-send the
+      // invitation (fresh token, current role/inviter) instead of failing with a 409.
       if (!existingUser.email_confirmed_at) {
+        if (existingUser.user_metadata?.team_id !== finalTeamId) {
+          return new Response(
+            JSON.stringify({ error: 'User already has a pending invitation to another team' }),
+            {
+              status: 409,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          )
+        }
+
+        const inviteMetadata = {
+          ...existingUser.user_metadata,
+          team_id: finalTeamId,
+          invited_by: user.id,
+          invited_by_email: user.email,
+          role: inviteRole,
+        }
+        // GoTrue does not overwrite metadata when re-inviting an existing user, so set it first.
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+          user_metadata: inviteMetadata,
+        })
+        const { error: resendError } = updateError
+          ? { error: updateError }
+          : await supabaseAdmin.auth.admin.inviteUserByEmail(existingUser.email, {
+              data: inviteMetadata,
+              redirectTo: redirectUrl,
+            })
+
+        if (resendError) {
+          return new Response(
+            JSON.stringify({ error: 'Failed to resend invitation', details: resendError.message }),
+            {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          )
+        }
+
         return new Response(
-          JSON.stringify({ error: 'User already has a pending invitation' }),
+          JSON.stringify({
+            success: true,
+            resent: true,
+            message: 'Invitation re-sent',
+            team: { id: finalTeamId, name: existingUser.user_metadata?.team_name },
+          }),
           {
-            status: 409,
             headers: { 'Content-Type': 'application/json' },
           },
         )
@@ -229,13 +290,6 @@ serve(async (req) => {
     }
 
     // Send invite using Supabase's built-in system for NEW users
-    const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:3000'
-    // Use auth/confirm which processes email tokens and shows password setup
-    const redirectUrl = `${siteUrl}/auth/confirm?type=invite&team_id=${finalTeamId}`
-
-    console.log('SITE_URL env var:', Deno.env.get('SITE_URL'))
-    console.log('Computed site URL:', siteUrl)
-    console.log('Full redirect URL:', redirectUrl)
 
     const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       email,
