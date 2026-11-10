@@ -106,7 +106,19 @@ serve(async (req) => {
     }
 
     // Get all users with null email_confirmed_at (pending invitations)
-    const { data: allUsers, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
+    // listUsers() returns one page (50 by default); page through everyone.
+    // deno-lint-ignore no-explicit-any
+    const allUsers: { users: any[] } = { users: [] }
+    let usersError: { message: string } | null = null
+    for (let page = 1; ; page++) {
+      const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 })
+      if (error) {
+        usersError = error
+        break
+      }
+      allUsers.users.push(...(data?.users ?? []))
+      if ((data?.users ?? []).length < 1000) break
+    }
 
     if (usersError) {
       return new Response(
