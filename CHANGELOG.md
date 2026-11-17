@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.8.0
+
+[compare changes](https://github.com/pengelbrecht/nuxt-supabase-team-auth/compare/v0.7.11...v0.8.0)
+
+### 🚀 Enhancements
+
+- Custom team roles via module option ([baf54c3](https://github.com/pengelbrecht/nuxt-supabase-team-auth/commit/baf54c3))
+
+### ❤️ Contributors
+
+- Peter Engelbrecht ([@pengelbrecht](http://github.com/pengelbrecht))
+
 ## v0.7.11
 
 [compare changes](https://github.com/pengelbrecht/nuxt-supabase-team-auth/compare/v0.7.10...v0.7.11)
