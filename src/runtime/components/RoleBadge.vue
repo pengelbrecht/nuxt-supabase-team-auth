@@ -10,6 +10,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
+import { formatRole, isCustomRole } from '../utils/roles'
 
 // Props
 interface Props {
@@ -30,11 +32,9 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // Computed properties
-const formattedRole = computed(() => {
-  if (!props.role) return 'Unknown'
-  if (props.role === 'super_admin') return 'Super Admin'
-  return props.role.charAt(0).toUpperCase() + props.role.slice(1)
-})
+const { customRoles } = useTeamAuthConfig()
+
+const formattedRole = computed(() => formatRole(props.role, customRoles.value))
 
 const badgeColor = computed(() => {
   // Pending invitations get warning color (orange/amber)
@@ -48,7 +48,7 @@ const badgeColor = computed(() => {
     case 'owner': return 'secondary'
     case 'admin': return 'info'
     case 'member': return 'neutral'
-    default: return 'warning'
+    default: return isCustomRole(props.role, customRoles.value) ? 'success' : 'warning'
   }
 })
 

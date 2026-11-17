@@ -5,6 +5,18 @@ import { nextTick, ref } from 'vue'
 import { useTeamAuth, resetTeamAuthState } from '../../src/runtime/composables/useTeamAuth'
 import { resetSessionState } from '../../src/runtime/composables/useSession'
 
+// Mutable runtime config so tests can declare `customRoles`
+const runtimeConfigState = vi.hoisted(() => ({ customRoles: [] as Array<{ value: string, label: string }> }))
+vi.mock('#imports', () => ({
+  useState: vi.fn(),
+  useToast: vi.fn(() => ({ add: vi.fn() })),
+  navigateTo: vi.fn(),
+  defineNuxtRouteMiddleware: (fn: any) => fn,
+  useRuntimeConfig: () => ({
+    public: { teamAuth: { loginPage: '/signin', customRoles: runtimeConfigState.customRoles } },
+  }),
+}))
+
 // Mock $fetch globally
 global.$fetch = vi.fn().mockImplementation(async (url: string, _options: any) => {
   // Default success responses for common API endpoints
@@ -587,6 +599,75 @@ describe('useTeamAuth', () => {
 
       expect(mockSupabaseClient.from).toHaveBeenCalledWith('team_members')
       expect(mockUpdate).toHaveBeenCalledWith({ role: 'admin' })
+    })
+
+    describe('custom roles', () => {
+      const declare = () => {
+        runtimeConfigState.customRoles = [{ value: 'menu_editor', label: 'Menu editor' }]
+      }
+      afterEach(() => {
+        runtimeConfigState.customRoles = []
+      })
+
+      const mockUpdateChain = () => {
+        const mockUpdate = vi.fn(() => ({
+          eq: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              neq: vi.fn().mockResolvedValue({ error: null }),
+            })),
+          })),
+        }))
+        mockSupabaseClient.from.mockReturnValue({ update: mockUpdate })
+        return mockUpdate
+      }
+
+      it('owner can assign a declared custom role', async () => {
+        declare()
+        setupAuthenticatedState({ role: 'owner' })
+        const mockUpdate = mockUpdateChain()
+        const { updateMemberRole } = useTeamAuth(mockSupabaseClient)
+        await nextTick()
+
+        await expect(updateMemberRole('user-789', 'menu_editor')).resolves.toBeUndefined()
+        expect(mockUpdate).toHaveBeenCalledWith({ role: 'menu_editor' })
+      })
+
+      it('rejects an undeclared role', async () => {
+        setupAuthenticatedState({ role: 'owner' })
+        const { updateMemberRole } = useTeamAuth(mockSupabaseClient)
+        await nextTick()
+
+        await expect(updateMemberRole('user-789', 'menu_editor')).rejects.toThrow('Invalid role')
+      })
+
+      it('admin cannot assign a custom role', async () => {
+        declare()
+        setupAuthenticatedState({ role: 'admin' })
+        const { updateMemberRole } = useTeamAuth(mockSupabaseClient)
+        await nextTick()
+
+        await expect(updateMemberRole('user-789', 'menu_editor')).rejects.toThrow('Only owners')
+      })
+
+      it('owner can invite with a declared custom role', async () => {
+        declare()
+        setupAuthenticatedState({ role: 'owner' })
+        const mockFetch = getMockFetch()
+        mockFetch.mockResolvedValue({ success: true })
+        const { inviteMember } = useTeamAuth(mockSupabaseClient)
+        await nextTick()
+        await expect(inviteMember('a@example.com', 'menu_editor')).resolves.toBeUndefined()
+        expect(mockFetch).toHaveBeenCalledWith('/api/invite-member', expect.objectContaining({
+          body: expect.objectContaining({ role: 'menu_editor' }),
+        }))
+      })
+
+      it('invite rejects undeclared roles', async () => {
+        setupAuthenticatedState({ role: 'owner' })
+        const { inviteMember } = useTeamAuth(mockSupabaseClient)
+        await nextTick()
+        await expect(inviteMember('a@example.com', 'menu_editor')).rejects.toThrow('Invalid role')
+      })
     })
 
     it('should transfer ownership', async () => {

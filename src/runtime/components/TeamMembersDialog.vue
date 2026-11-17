@@ -257,6 +257,12 @@ import ConfirmDialog from './ConfirmDialog.vue'
 import EditUserModal from './EditUserModal.vue'
 import FormDialog from './FormDialog.vue'
 import RoleBadge from './RoleBadge.vue'
+import { useTeamAuthConfig } from '../composables/useTeamAuthConfig'
+import {
+  formatRole as formatRoleLabel,
+  getAvailableRoleOptions as buildAvailableRoleOptions,
+  getInviteRoleOptions as buildInviteRoleOptions,
+} from '../utils/roles'
 import { useToast } from '#imports'
 
 // Props
@@ -275,6 +281,7 @@ const emit = defineEmits<{
 
 // Get auth state and composable functions
 const { currentUser, currentRole, currentTeam, teamMembers, inviteMember, getAvatarFallback, getTeamMembers, updateMemberRole, removeMember, revokeInvite, getPendingInvitations } = useTeamAuth()
+const { customRoles } = useTeamAuthConfig()
 
 // Watch modelValue changes
 watch(() => props.modelValue, () => {
@@ -360,72 +367,14 @@ const getAvailableRoleOptions = (member: TeamMemberWithProfile) => {
     return []
   }
 
-  const baseOptions = [
-    { label: 'Member', value: 'member' },
-    { label: 'Admin', value: 'admin' },
-  ]
-
-  // Super admins can assign any role except super_admin
-  if (currentRole.value === 'super_admin') {
-    return [
-      ...baseOptions,
-      { label: 'Owner', value: 'owner' },
-    ]
-  }
-
-  // Owners can assign any role except super_admin (RLS line 66)
-  if (currentRole.value === 'owner') {
-    return [
-      ...baseOptions,
-      { label: 'Owner', value: 'owner' },
-    ]
-  }
-
-  // Admins can only assign 'member' or 'admin' roles (RLS line 62)
-  // AND can only modify users who are currently 'member' (RLS line 63)
-  if (currentRole.value === 'admin' && member.role === 'member') {
-    return baseOptions // member, admin only
-  }
-
-  return []
+  return buildAvailableRoleOptions(currentRole.value, member.role, customRoles.value)
 }
 
 // Get available role options for inviting new members (RLS INSERT restrictions)
-const getInviteRoleOptions = computed(() => {
-  // Super admins can invite with any role except super_admin
-  if (currentRole.value === 'super_admin') {
-    return [
-      { label: 'Member', value: 'member' },
-      { label: 'Admin', value: 'admin' },
-      { label: 'Owner', value: 'owner' },
-    ]
-  }
-
-  // Owners can invite members or admins (RLS line 40)
-  if (currentRole.value === 'owner') {
-    return [
-      { label: 'Member', value: 'member' },
-      { label: 'Admin', value: 'admin' },
-    ]
-  }
-
-  // Admins can invite members or admins (consistent with their UPDATE permissions)
-  if (currentRole.value === 'admin') {
-    return [
-      { label: 'Member', value: 'member' },
-      { label: 'Admin', value: 'admin' },
-    ]
-  }
-
-  return []
-})
+const getInviteRoleOptions = computed(() => buildInviteRoleOptions(currentRole.value, customRoles.value))
 
 // Helper functions
-const formatRole = (role: string | null | undefined) => {
-  if (!role) return 'Unknown'
-  if (role === 'super_admin') return 'Super Admin'
-  return role.charAt(0).toUpperCase() + role.slice(1)
-}
+const formatRole = (role: string | null | undefined) => formatRoleLabel(role, customRoles.value)
 
 const getMemberInitials = (member: TeamMemberWithProfile) => {
   return getAvatarFallback({

@@ -85,7 +85,8 @@ export function createRequireRoleMiddleware(
     }
 
     // Check role permissions
-    const userRoleLevel = ROLE_HIERARCHY[currentRole.value as TeamRole]
+    // Unknown/custom roles (declared via the customRoles module option) count as member (level 1)
+    const userRoleLevel = ROLE_HIERARCHY[currentRole.value as TeamRole] ?? 1
     const requiredRoleLevel = ROLE_HIERARCHY[requiredRole]
 
     if (!userRoleLevel || !requiredRoleLevel) {

@@ -4,6 +4,7 @@ import type { User, Profile, Team, TeamMember, TeamAuth } from '../types'
 import { useSessionSync } from './useSessionSync'
 import { useSession } from './useSession'
 import { useSupabaseClient } from './useSupabaseComposables'
+import { isCustomRole, type CustomRole } from '../utils/roles'
 import { useToast, useState, useRuntimeConfig } from '#imports'
 import type { AuthChangeEvent, Session as SupabaseSession } from '@supabase/supabase-js'
 // Types - we'll get the actual client and user from @nuxtjs/supabase composables
@@ -224,6 +225,17 @@ const createInitialAuthState = () => {
     // State management
     loading: true,
     initialized: false,
+  }
+}
+
+/** Custom roles declared via the `customRoles` module option (empty if none/unavailable). */
+function getCustomRoles(): CustomRole[] {
+  try {
+    const roles = (useRuntimeConfig()?.public?.teamAuth as { customRoles?: CustomRole[] } | undefined)?.customRoles
+    return Array.isArray(roles) ? roles : []
+  }
+  catch {
+    return []
   }
 }
 
@@ -790,8 +802,9 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       }
 
       // Validate role
+      const customRoles = getCustomRoles()
       const validRoles = ['member', 'admin']
-      if (!validRoles.includes(role)) {
+      if (!validRoles.includes(role) && !isCustomRole(role, customRoles)) {
         throw new Error('Invalid role. Must be member or admin')
       }
 
@@ -803,6 +816,11 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       // Check permissions - only admin and owner can invite
       if (!currentRole.value || !['admin', 'owner', 'super_admin'].includes(currentRole.value)) {
         throw new Error('You do not have permission to invite members')
+      }
+
+      // Custom roles can only be invited by owners and super admins
+      if (isCustomRole(role, customRoles) && !['owner', 'super_admin'].includes(currentRole.value)) {
+        throw new Error('Only owners can invite members with this role')
       }
 
       try {
@@ -1202,13 +1220,14 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       return mappedMembers
     },
 
-    updateMemberRole: async (userId: string, newRole: 'owner' | 'admin' | 'member' | 'super_admin') => {
+    updateMemberRole: async (userId: string, newRole: string) => {
       if (!currentTeam.value) {
         throw new Error('No current team available')
       }
 
+      const customRoles = getCustomRoles()
       const validRoles = ['member', 'admin', 'owner']
-      if (!validRoles.includes(newRole)) {
+      if (!validRoles.includes(newRole) && !isCustomRole(newRole, customRoles)) {
         throw new Error('Invalid role')
       }
 
@@ -1218,6 +1237,11 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       }
 
       // Only owners can promote to admin or change ownership
+      // Custom roles can only be assigned by owners and super admins
+      if (isCustomRole(newRole, customRoles) && !['owner', 'super_admin'].includes(currentRole.value)) {
+        throw new Error('Only owners can assign this role')
+      }
+
       if (newRole === 'admin' && currentRole.value !== 'owner') {
         throw new Error('Only owners can promote members to admin')
       }
@@ -1241,7 +1265,7 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
 
         // Update the reactive state immediately
         const updatedMembers = authState.value.teamMembers.map(member =>
-          member.user_id === userId ? { ...member, role: newRole } : member,
+          member.user_id === userId ? { ...member, role: newRole as TeamMember['role'] } : member,
         )
 
         authState.value = {

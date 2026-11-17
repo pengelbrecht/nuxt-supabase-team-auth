@@ -1,5 +1,6 @@
 import { computed } from 'vue'
 import type { SocialProvidersConfig } from '../types'
+import type { CustomRole } from '../utils/roles'
 import { useRuntimeConfig } from '#imports'
 
 interface TeamAuthConfig {
@@ -8,6 +9,7 @@ interface TeamAuthConfig {
   supabaseUrl?: string
   supabaseKey?: string
   socialProviders?: SocialProvidersConfig
+  customRoles?: CustomRole[]
 }
 
 /**
@@ -23,6 +25,9 @@ export function useTeamAuthConfig() {
   const loginPage = computed(() => config.value.loginPage || '/signin')
   const supabaseUrl = computed(() => config.value.supabaseUrl)
   const supabaseKey = computed(() => config.value.supabaseKey)
+
+  // Extra team roles declared by the consuming app (module option `customRoles`)
+  const customRoles = computed<CustomRole[]>(() => config.value.customRoles || [])
 
   // Social providers configuration with defaults
   const socialProviders = computed<SocialProvidersConfig>(() => {
@@ -52,6 +57,7 @@ export function useTeamAuthConfig() {
     supabaseUrl,
     supabaseKey,
     socialProviders,
+    customRoles,
     isGoogleEnabled,
     isGithubEnabled,
     hasAnySocialProvider,

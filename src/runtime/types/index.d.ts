@@ -177,6 +177,7 @@ export interface TeamAuthModuleConfig {
   debug?: boolean
   redirectTo?: string
   socialProviders?: SocialProvidersConfig
+  customRoles?: Array<{ value: string, label: string }>
 }
 
 // Note: $teamAuthClient plugin types removed - now using @nuxtjs/supabase's useSupabaseClient()

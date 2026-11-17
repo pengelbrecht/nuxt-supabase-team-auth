@@ -223,6 +223,30 @@ passwordPolicy: {
 minimum_password_length = 8  # Should match your minLength
 ```
 
+#### Custom team roles
+
+If your app added extra values to the Postgres `team_role` enum, declare them with the `customRoles` option so the UI knows about them:
+
+```typescript
+export default defineNuxtConfig({
+  teamAuth: {
+    customRoles: [
+      { value: 'editor', label: 'Editor' }, // value = enum value in Postgres
+    ],
+  },
+})
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `value` | `string` | The `team_role` enum value (must exist in your database) |
+| `label` | `string` | Display name used by `<RoleBadge />` and the role dropdowns |
+
+- Custom roles can be assigned (`updateMemberRole`) and invited (`inviteMember`) by **owners and super admins** only; admin behaviour is unchanged.
+- In `require-role` middleware they rank at the `member` level (1).
+- `<RoleBadge />` shows them in the `success` colour. Roles that are not declared still render readably (`menu_editor` becomes "Menu editor").
+- Your own RLS policies and database functions remain responsible for what the role may actually do.
+
 ### 3. Add Required App Structure
 
 Ensure your `app.vue` has the `<UApp>` wrapper (should already exist in Nuxt UI apps):
@@ -642,6 +666,7 @@ type Role = 'super_admin' | 'owner' | 'admin' | 'member'
 - **Owner** - Full team control, can manage all members
 - **Admin** - Can invite members and manage team settings  
 - **Member** - Basic team access
+- **Custom roles** - Declared via the `customRoles` module option; level 1 (like member)
 
 ### Error Handling
 

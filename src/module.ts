@@ -2,6 +2,7 @@ import { defineNuxtModule, createResolver, addImports, addComponentsDir, install
 import type { NuxtModule } from '@nuxt/schema'
 import { defu } from 'defu'
 import type { PasswordPolicy } from './runtime/types/password-policy'
+import type { CustomRole } from './runtime/utils/roles'
 
 export interface ModuleOptions {
   /**
@@ -59,6 +60,14 @@ export interface ModuleOptions {
    * Password policy configuration
    */
   passwordPolicy?: PasswordPolicy
+  /**
+   * Extra `team_role` enum values your app added in Postgres beyond
+   * member/admin/owner/super_admin. Declared roles get the given label in
+   * badges and dropdowns, can be assigned/invited by owners and super admins,
+   * and rank as level 1 (like member) in role middleware.
+   * @example [{ value: 'editor', label: 'Editor' }]
+   */
+  customRoles?: CustomRole[]
 }
 
 const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
@@ -76,6 +85,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
     publicRoutes: [], // Additional public routes beyond auth pages
     protectedRoutes: ['/dashboard'], // Default protected routes
     emailTemplates: {},
+    customRoles: [],
     socialProviders: {
       google: {
         enabled: true, // Default enabled for backward compatibility
@@ -244,6 +254,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
         publicRoutes: options.publicRoutes,
         socialProviders: options.socialProviders,
         passwordPolicy: options.passwordPolicy,
+        customRoles: options.customRoles,
       },
     )
 
