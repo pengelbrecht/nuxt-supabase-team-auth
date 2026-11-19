@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.8.1
+
+[compare changes](https://github.com/pengelbrecht/nuxt-supabase-team-auth/compare/v0.8.0...v0.8.1)
+
+### 🚀 Enhancements
+
+- Remove member deactivates instead of deleting the account ([3e34495](https://github.com/pengelbrecht/nuxt-supabase-team-auth/commit/3e34495))
+
+### 📖 Documentation
+
+- Wrap long README lines (markdownlint MD013) ([181aa6a](https://github.com/pengelbrecht/nuxt-supabase-team-auth/commit/181aa6a))
+
+### ❤️ Contributors
+
+- Lars <lars@gunnersen.net>
+
 ## v0.8.0
 
 [compare changes](https://github.com/pengelbrecht/nuxt-supabase-team-auth/compare/v0.7.11...v0.8.0)
