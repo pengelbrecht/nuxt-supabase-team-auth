@@ -1300,16 +1300,17 @@ export function useTeamAuth(injectedClient?: SupabaseClient): TeamAuth {
       try {
         authState.value = { ...authState.value, loading: true }
 
-        // Delete the user account - this will cascade to profiles and team_members
+        // Remove from this team; a member left in no team has their login
+        // blocked. The account is kept (their name stays on what they made).
         const headers = await createAuthHeaders()
         const response = await $fetch('/api/delete-user', {
           method: 'POST',
           headers,
-          body: { userId },
+          body: { userId, teamId: currentTeam.value.id },
         })
 
         if (!response.success) {
-          throw { code: 'DELETE_USER_FAILED', message: response.error || 'Failed to delete user' }
+          throw { code: 'REMOVE_MEMBER_FAILED', message: response.error || 'Failed to remove member' }
         }
 
         // Update the reactive state immediately

@@ -225,9 +225,22 @@ serve(async (req) => {
         )
       }
 
-      // User exists but has no team membership - this shouldn't normally happen
-      // but if it does, we can add them to this team
+      // User exists but has no team membership: a removed (deactivated) member
+      // being invited back. Lift the login block, then add them to this team.
       console.log(`Adding existing user ${email} with no team membership to team ${finalTeamId}`)
+
+      if (existingUser.banned_until) {
+        const { error: unbanError } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, { ban_duration: 'none' })
+        if (unbanError) {
+          return new Response(
+            JSON.stringify({ error: 'Failed to reactivate user', details: unbanError.message }),
+            {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          )
+        }
+      }
 
       const { error: memberError } = await supabaseAdmin
         .from('team_members')
