@@ -229,10 +229,10 @@
   <!-- Confirmation Modal for Member Deletion -->
   <ConfirmDialog
     v-model="showConfirmModal"
-    title="Delete Team Member"
-    :message="`Are you sure you want to delete ${memberToDelete?.profile?.full_name || memberToDelete?.profile?.email || 'this member'}? This will permanently delete their account and all associated data. This action cannot be undone.`"
+    title="Remove Team Member"
+    :message="`Are you sure you want to remove ${memberToDelete?.profile?.full_name || memberToDelete?.profile?.email || 'this member'}? They will no longer be able to sign in. Their account is kept, so what they created still shows their name. You can invite them again later.`"
     cancel-text="Cancel"
-    confirm-text="Delete Member"
+    confirm-text="Remove Member"
     confirm-color="error"
     :loading="isDeletingMember"
     @confirm="confirmDeleteMember"
@@ -445,9 +445,9 @@ const getMemberActions = (member: any) => {
     onSelect: () => handleEditMember(member),
   })
 
-  // Delete user action (always show, but disable for current user)
+  // Remove member action (always show, but disable for current user)
   actions.push({
-    label: 'Delete Member',
+    label: 'Remove Member',
     icon: 'i-lucide-trash-2',
     disabled: isCurrentUser || !canDelete,
     onSelect: () => handleRemoveMember(member),
